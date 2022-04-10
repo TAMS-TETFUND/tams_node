@@ -2,13 +2,15 @@ import re
 from pathlib import Path
 import os
 import json
+import numpy as np
+
 from django.db.models import Value
 from django.db.models.functions import Upper, Replace
 from django.contrib.auth.models import AbstractUser
 from django.core.exceptions import ValidationError
 from django.db import models
+
 from manage import init_django
-import numpy as np
 
 init_django()
 
@@ -30,6 +32,11 @@ SESSION_FORMAT = r"{}".format(config_dict["SESSION_FORMAT"])
 class Semester(models.IntegerChoices):
     FIRST = 1, 'First Semester'
     SECOND = 2, 'Second Semester'
+
+
+class Sex(models.IntegerChoices):
+    MALE = 1, 'Male'
+    FEMALE = 2, 'Female'
 
 
 class StaffTitle(models.Model):
@@ -112,6 +119,7 @@ class Student(models.Model):
         OVERSTAY = 4, 'Overstay'
         WITHDRAWN = 5, 'Withdrawn'
         SUSPENDED = 6, 'Suspended'
+    
 
     id = models.BigAutoField(primary_key=True)
     reg_number = models.CharField(max_length=12, unique=True)
@@ -124,12 +132,7 @@ class Student(models.Model):
     level_of_study = models.IntegerField(null=True, blank=True)
     fingerprint_template = models.CharField(max_length=512, null=True, blank=True)
     face_encodings = models.CharField(max_length=3000, null=True, blank=True)
-    # mode_of_admission
-    # sex
-    # nationality
-    # state_of_origin
-    # lga_of_origin
-    
+    sex = models.IntegerField(choices=Sex.choices)
 
     def __str__(self):
         return f"{self.first_name} {self.last_name} ({self.reg_number}), {self.admission_status}"

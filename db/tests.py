@@ -1,12 +1,16 @@
+from datetime import timedelta
+
 from django.test import TestCase
 from django.db.utils import IntegrityError
 from django.utils import timezone
-from datetime import timedelta
 from django.core.exceptions import ValidationError
-from manage import init_django
+
 from .models import (Faculty, StaffTitle, Department, Staff, Student, Semester,
                      Course, AcademicSession, AttendanceRecord, AttendanceSession,
-                    CourseRegistration)
+                    CourseRegistration, Sex)
+
+from manage import init_django
+
 init_django()
 
 
@@ -14,7 +18,6 @@ class SemesterTestCase(TestCase):
     def test_semester_vals(self):
         self.assertEqual(Semester.FIRST, 1)
         self.assertEqual(Semester.SECOND, 2)
-        # self.assertEqual()
 
 
 class FacultyTestCase(TestCase):
@@ -223,7 +226,7 @@ class AttendanceRecordTestCase(TestCase):
                         unit_load=3, semester=Semester.SECOND)
         student_obj = Student.objects.create(reg_number="2001/123456", first_name="Chudi",
                         last_name="Gambo", possible_grad_yr=2022, level_of_study=2,
-                        department=dept_obj)
+                        department=dept_obj, sex=Sex.MALE)
         att_session = AttendanceSession.objects.create(initiator=staff_obj, 
                 course=course_obj, session=acad_session,
                 event_type=AttendanceSession.EventType.LECTURE, )
@@ -249,7 +252,7 @@ class CourseRegistrationTestCase(TestCase):
                         alias="ECE", faculty=faculty_obj)
         student_obj = Student.objects.create(reg_number="2001/123456", first_name="Chudi",
                         last_name="Gambo", possible_grad_yr=2022, level_of_study=2,
-                        department=dept_obj)
+                        department=dept_obj, sex=Sex.MALE)
         
         CourseRegistration.objects.create(session=acad_session, semester=Semester.SECOND,
                     course=course_obj, student=student_obj)
@@ -267,7 +270,7 @@ class CourseRegistrationTestCase(TestCase):
                         alias="ECE", faculty=faculty_obj)
         student_obj = Student.objects.create(reg_number="2001/123456", first_name="Chudi",
                         last_name="Gambo", possible_grad_yr=2022, level_of_study=2,
-                        department=dept_obj)
+                        department=dept_obj, sex=Sex.MALE)
 
         reg_details = { "session": acad_session, "semester": Semester.FIRST, 
                         "course":course_obj, "student":student_obj}
