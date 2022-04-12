@@ -1,0 +1,8 @@
+==================================ENROLLMENT INTERFACE ====================================
+Detailed specification of the enrollment interface of the system
+1.  The enrollment interface could also exist on the node devices
+2.  Only an admin/staff authorized to facilitate enrollment would be allowed to use the 
+    interface. 
+3.  It would require a connection to the server.
+
+===========================================================================================

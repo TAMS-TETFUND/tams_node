@@ -1,0 +1,51 @@
+================Details of the Attendance GUI Interface========================
+===========================Home================================================
+    1.  Take Attendance
+    2.  Continue a previous attendance-taking session
+
+
+===========================Take Attendance=====================================
+    1.  Lecture
+    2.  Exam
+    3.  Continuous Assessment
+    4.  Lab
+
+===========================Lecture=============================================
+    +   Faculty -  What faculty is the course under?
+    +   Department
+    +   Course
+    +   initiator - 
+    ****is it really necessary in all scenarios that a staff has to start 
+        an attendance-taking session?
+    +   Start time - should not be earlier than the current date
+    +   Duration (added to start time to get stop time)
+    +   session
+    +   Preferred Biometric mode (Fingerprint/Face) - Might be a system setting
+
+===========================Attendance Session====================================
+    +   Poll for QR code - (Prompt student to present QR code on class admit card/ID card)
+    
+    ===On successful read
+        ====On successful student record retrieval
+            + Poll for biometric info of student
+            ====On successful verification save attendance record for student
+            - Return to Poll for QR code
+            - Increment count of student attendance marked for the current attendance session 
+                (which is displayed on the attendance session window)
+
+            ===On unsuccessful verification, if only one biometric verification mode is available, 
+                prompt user to re-try
+                - If successful follow Procedure described above
+                -else inform the user he was unsessful the second time
+                **The user should not be allowed to re-enter the same registration number at the 
+                    "Poll for QR Code" stage**
+
+    ====If read not successful
+        ===Prompt student to use the onscreen keyboard for manual entry
+            - Follow Procedure described above for handling the user's interaction with the 
+                system from this point
+
+===============================Exam=====================================================
+For a Faculty course, a staff of a different Department might initiate the attendance-taking session
+for the examination. In fact, the assumption that a staff of a different department cannot start A
+session for a course from a different department is wrong.

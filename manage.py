@@ -13,7 +13,7 @@ def init_django():
         INSTALLED_APPS=[
             'django.contrib.auth',
 	    	'django.contrib.contenttypes',
-            'db',
+            'db'
         ],
         DATABASES={
             'default':{
