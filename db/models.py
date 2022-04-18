@@ -1,22 +1,25 @@
-import re
-from pathlib import Path
-import os
 import json
-import numpy as np
+import os
+from pathlib import Path
+import re
 
-from django.db.models import Value
+import numpy as np
+from django.db.models import Value, Q, F
 from django.db.models.functions import Upper, Replace
 from django.contrib.auth.models import AbstractUser
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.utils import timezone
 
 from manage import init_django
 
 init_django()
 
 
-#configuring the staff_number and studnet reg number format
-config_file_path = os.path.join(Path(os.path.abspath(__file__)).parent.parent.parent, "config.json")
+# configuring the staff_number and studnet reg number format
+config_file_path = os.path.join(
+    Path(os.path.abspath(__file__)).parent.parent, "config.json"
+)
 
 if not os.path.exists(config_file_path):
     raise FileNotFoundError("File: config.json not found")
@@ -30,13 +33,13 @@ SESSION_FORMAT = r"{}".format(config_dict["SESSION_FORMAT"])
 
 
 class Semester(models.IntegerChoices):
-    FIRST = 1, 'First Semester'
-    SECOND = 2, 'Second Semester'
+    FIRST = 1, "First Semester"
+    SECOND = 2, "Second Semester"
 
 
 class Sex(models.IntegerChoices):
-    MALE = 1, 'Male'
-    FEMALE = 2, 'Female'
+    MALE = 1, "Male"
+    FEMALE = 2, "Female"
 
 
 class StaffTitle(models.Model):
@@ -44,11 +47,13 @@ class StaffTitle(models.Model):
     title_full = models.CharField(max_length=50)
     title = models.CharField(max_length=25)
 
-
     class Meta:
-        ordering = ['title']
+        ordering = ["title"]
         constraints = [
-            models.UniqueConstraint(Upper(Replace('title', Value('.'), Value(''))), name='unique_title')
+            models.UniqueConstraint(
+                Upper(Replace("title", Value("."), Value(""))),
+                name="unique_title",
+            )
         ]
 
     def __str__(self):
@@ -59,11 +64,11 @@ class Faculty(models.Model):
     id = models.BigAutoField(primary_key=True)
     name = models.CharField(max_length=500)
 
-
     class Meta:
         constraints = [
-            models.UniqueConstraint(Upper('name'), name='unique_faculty_name')
+            models.UniqueConstraint(Upper("name"), name="unique_faculty_name")
         ]
+
 
 class Department(models.Model):
     id = models.BigAutoField(primary_key=True)
@@ -73,15 +78,21 @@ class Department(models.Model):
 
     class Meta:
         constraints = [
-            models.UniqueConstraint(Upper('name'), name='unique_department_name'),
-            models.UniqueConstraint(Upper('alias'), name='unique_department_short_name')
+            models.UniqueConstraint(
+                Upper("name"), name="unique_department_name"
+            ),
+            models.UniqueConstraint(
+                Upper("alias"), name="unique_department_short_name"
+            ),
         ]
 
 
 class AppUser(AbstractUser):
     id = models.BigAutoField(primary_key=True)
     other_names = models.CharField(max_length=255, null=True, blank=True)
-    fingerprint_template = models.CharField(max_length=3000, null=True, blank=True)
+    fingerprint_template = models.CharField(
+        max_length=3000, null=True, blank=True
+    )
     face_encodings = models.CharField(max_length=3000, null=True, blank=True)
 
 
@@ -94,7 +105,9 @@ class Staff(AppUser):
     def clean(self):
         self.staff_number = self.staff_number.upper()
         if not Staff.is_valid_staff_number(self.staff_number):
-            raise ValidationError({'staff_number':'Invalid staff number provided'})
+            raise ValidationError(
+                {"staff_number": "Invalid staff number provided"}
+            )
 
     def save(self, *args, **kwargs):
         self.full_clean()
@@ -110,16 +123,13 @@ class AppAdmin(AppUser):
 
 
 class Student(models.Model):
-
-
     class AdmissionStatus(models.IntegerChoices):
-        REGULAR = 1, 'Regular'
-        GRADUATE = 2, 'Graduated'
-        EXTERNAL = 3, 'External'
-        OVERSTAY = 4, 'Overstay'
-        WITHDRAWN = 5, 'Withdrawn'
-        SUSPENDED = 6, 'Suspended'
-    
+        REGULAR = 1, "Regular"
+        GRADUATE = 2, "Graduated"
+        EXTERNAL = 3, "External"
+        OVERSTAY = 4, "Overstay"
+        WITHDRAWN = 5, "Withdrawn"
+        SUSPENDED = 6, "Suspended"
 
     id = models.BigAutoField(primary_key=True)
     reg_number = models.CharField(max_length=12, unique=True)
@@ -128,31 +138,37 @@ class Student(models.Model):
     other_names = models.CharField(max_length=255, null=True, blank=True)
     department = models.ForeignKey(to=Department, on_delete=models.CASCADE)
     possible_grad_yr = models.IntegerField()
-    admission_status = models.IntegerField(choices=AdmissionStatus.choices, default=AdmissionStatus.REGULAR)
+    admission_status = models.IntegerField(
+        choices=AdmissionStatus.choices, default=AdmissionStatus.REGULAR
+    )
     level_of_study = models.IntegerField(null=True, blank=True)
-    fingerprint_template = models.CharField(max_length=512, null=True, blank=True)
+    fingerprint_template = models.CharField(
+        max_length=512, null=True, blank=True
+    )
     face_encodings = models.CharField(max_length=3000, null=True, blank=True)
     sex = models.IntegerField(choices=Sex.choices)
 
     def __str__(self):
-        return f"{self.first_name} {self.last_name} ({self.reg_number}), {self.admission_status}"
+        return f"{self.first_name} {self.last_name} ({self.reg_number}),\
+            {self.admission_status}"
 
     @staticmethod
     def face_enc_to_str(encodings):
         """Convert face encodings from numpy array to string"""
-        encodings_str = ','.join(str(item) for item in encodings)
+        encodings_str = ",".join(str(item) for item in encodings)
         return encodings_str
-    
+
     @staticmethod
     def str_to_face_enc(enc_str):
         """Convert encodings formatted as a string to numpy array"""
-        encodings = np.array([float(item) for item in enc_str.split(',')])
+        encodings = np.array([float(item) for item in enc_str.split(",")])
         return encodings
 
     def clean(self):
         if not Student.is_valid_student_reg_number(self.reg_number):
             raise ValidationError(
-                {'reg_number':'Invalid student registration number provided'})
+                {"reg_number": "Invalid student registration number provided"}
+            )
 
     def save(self, *args, **kwargs):
         self.clean()
@@ -167,26 +183,24 @@ class Course(models.Model):
     id = models.BigAutoField(primary_key=True)
     code = models.CharField(max_length=8)
     title = models.CharField(max_length=255)
+    level_of_study = models.IntegerField()
+    department = models.ForeignKey(to=Department, on_delete=models.CASCADE)
     unit_load = models.IntegerField()
-    semester = models.IntegerField(Semester.choices)
+    semester = models.IntegerField(choices=Semester.choices)
     elective = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
 
     class Meta:
         constraints = [
-            models.UniqueConstraint(fields=['code', 'title', 'unit_load'], name='unique_course_details')
+            models.UniqueConstraint(
+                fields=["code", "title", "unit_load"],
+                name="unique_course_details",
+            ),
+            models.CheckConstraint(
+                check=Q(semester__in=Semester.values),
+                name="check_valid_semester",
+            ),
         ]
-
-    def clean(self):
-        semester_list = [a for a, b in (item for item in Semester.choices)]
-        if self.semester not in semester_list:
-            raise ValidationError(
-                {'semester': 'Invalid semester value'}
-            )
-
-    def save(self, *args, **kwargs):
-        self.clean()
-        return super(Course, self).save(*args, **kwargs)
 
 
 class AcademicSession(models.Model):
@@ -194,12 +208,9 @@ class AcademicSession(models.Model):
     session = models.CharField(max_length=10, unique=True)
     is_current_session = models.BooleanField(default=False)
 
-
     def clean(self):
         if not AcademicSession.is_valid_session(self.session):
-            raise ValidationError(
-                {'session': 'Invalid session value'}
-            )
+            raise ValidationError({"session": "Invalid session value"})
 
     def save(self, *args, **kwargs):
         self.clean
@@ -210,72 +221,69 @@ class AcademicSession(models.Model):
                 qs = qs.exclude(pk=self.pk)
 
             qs.update(is_current_session=False)
-#       super(AcademicSession, self).save(*args, **kwargs)
         super().save(*args, **kwargs)
 
     @staticmethod
     def is_valid_session(session):
         if re.search(SESSION_FORMAT, session):
-            session_yrs = session.split('/')
+            session_yrs = session.split("/")
             if (int(session_yrs[1]) - int(session_yrs[0])) == 1:
                 return True
         return False
 
 
 class AttendanceSession(models.Model):
-
     class EventType(models.IntegerChoices):
-        LECTURE = 1, 'Lecture'
-        LAB = 2, 'Lab'
-        QUIZ = 3, 'Quiz/Continuous Assessment'
-        EXAMINATION = 4, 'Examination'
+        LECTURE = 1, "Lecture"
+        LAB = 2, "Lab"
+        QUIZ = 3, "Test"
+        EXAMINATION = 4, "Exam"
 
     id = models.BigAutoField(primary_key=True)
-    initiator = models.ForeignKey(to=AppUser, on_delete=models.CASCADE)
+    initiator = models.ForeignKey(
+        to=AppUser, on_delete=models.CASCADE, null=True, blank=True
+    )
     course = models.ForeignKey(to=Course, on_delete=models.CASCADE)
     session = models.ForeignKey(to=AcademicSession, on_delete=models.CASCADE)
     event_type = models.IntegerField(EventType.choices)
-    start_time = models.DateTimeField(blank=True, null=True)
-    stop_time = models.DateTimeField(blank=True, null=True)
+    start_time = models.DateTimeField(default=timezone.now())
+    duration = models.DurationField()
     created_on = models.DateTimeField(auto_now_add=True)
+    recurring = models.BooleanField(default=False)
 
     class Meta:
         constraints = [
-            models.UniqueConstraint(fields=['course', 'session', 'start_time','stop_time'],
-                                name="unique_attendance_session")
+            models.UniqueConstraint(
+                fields=["course", "session", "start_time", "duration"],
+                name="unique_attendance_session",
+            ),
+            models.CheckConstraint(
+                check=Q(start_time__lt=(F("start_time") + F("duration"))),
+                name="check_valid_stop_time",
+            ),
         ]
 
 
-    def clean(self):
-        if (self.stop_time != None) and (self.start_time != None):
-            if self.stop_time < self.start_time:
-                raise ValueError(
-                    {'stop_time': "Stop time cannot be set to be earlier than start time"}
-                )
-
-    def save(self, *args, **kwargs):
-        self.clean()
-        return super(AttendanceSession, self).save(*args, **kwargs)
-
-
-class AttendanceRecord(models.Model):    
-
+class AttendanceRecord(models.Model):
     class RecordTypes(models.IntegerChoices):
-        SIGN_IN = 1, 'Sign In'
-        SIGN_OUT = 2, 'Sign Out'
+        SIGN_IN = 1, "Sign In"
+        SIGN_OUT = 2, "Sign Out"
 
     id = models.BigAutoField(primary_key=True)
-    attendance_session = models.ForeignKey(to=AttendanceSession, on_delete=models.CASCADE)
+    attendance_session = models.ForeignKey(
+        to=AttendanceSession, on_delete=models.CASCADE
+    )
     student = models.ForeignKey(to=Student, on_delete=models.CASCADE)
     record_type = models.IntegerField(RecordTypes.choices)
     logged_by = models.DateTimeField(auto_now_add=True)
-    is_valid = models.BooleanField(default = True)
-
+    is_valid = models.BooleanField(default=True)
 
     class Meta:
         constraints = [
-            models.UniqueConstraint(fields=['attendance_session', 'student',
-                                            'record_type'], name="unique_attendance_record")
+            models.UniqueConstraint(
+                fields=["attendance_session", "student", "record_type"],
+                name="unique_attendance_record",
+            ),
         ]
 
 
@@ -288,7 +296,10 @@ class CourseRegistration(models.Model):
 
     class Meta:
         constraints = [
-            models.UniqueConstraint(fields=['student', 'course', 'session'], name="unique_course_registration")
+            models.UniqueConstraint(
+                fields=["student", "course", "session"],
+                name="unique_course_registration",
+            )
         ]
 
     def clean(self):

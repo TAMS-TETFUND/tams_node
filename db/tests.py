@@ -125,23 +125,35 @@ class CourseTestCase(TestCase):
     def test_unique_course_details_constraint(self):
         """Attempting to create 2 courses with the same title, code, and 
             unit load"""
+        new_faculty = Faculty.objects.create(name="Engineering")
+        new_dept = Department.objects.create(name="Electronic Engineering", 
+                                            alias="ECE", faculty=new_faculty)
         new_course = Course.objects.create(code="ECE 272", 
                             title="Introduction to Engineering Programming",
+                            level_of_study=2,
+                            department=new_dept,
                             unit_load=3, semester=Semester.SECOND)
         course_details = {
                             "code":"ECE 272", 
                             "title":"Introduction to Engineering Programming",
+                            "level_of_study":2,
+                            "department":new_dept,
                             "unit_load":3, "semester":Semester.SECOND}
         self.assertRaises(IntegrityError, Course.objects.create,**course_details)
 
     def test_semester_field_validation_constraint(self):
         """Attempting to create a course with semester set to value not defined
             in Semester class"""
+        new_faculty = Faculty.objects.create(name="Engineering")
+        new_dept = Department.objects.create(name="Electronic Engineering", 
+                                            alias="ECE", faculty=new_faculty)
         course_details = {
                             "code":"ECE 273", 
                             "title":"Introduction to Engineering Programming",
+                            "level_of_study":2,
+                            "department":new_dept,
                             "unit_load":3, "semester":3}
-        self.assertRaises(ValidationError, Course.objects.create,**course_details)
+        self.assertRaises(IntegrityError, Course.objects.create,**course_details)
 
 
 class AcademicSessionTestCase(TestCase):
@@ -176,16 +188,17 @@ class AttendanceSessionTestCase(TestCase):
                         staff_number="SS.123654", department=dept_obj)
         acad_session = AcademicSession.objects.create(session="2020/2021", is_current_session=True)
         course_obj = Course.objects.create(code="ECE 272", title="Introduction to Engineering Programming",
+                        level_of_study=2, department=dept_obj,
                         unit_load=3, semester=Semester.SECOND)
         start_time = timezone.now()
         att_session = AttendanceSession.objects.create(initiator=staff_obj, 
                 course=course_obj, session=acad_session,
                 event_type=AttendanceSession.EventType.LECTURE, start_time=start_time,
-                stop_time=(start_time+timedelta(hours=2)))
+                duration=timedelta(hours=2))
         att_session_details = {
             "initiator":staff_obj, "course":course_obj, "session":acad_session, 
             "event_type": AttendanceSession.EventType.LECTURE, "start_time":start_time,
-            "stop_time": start_time + timedelta(hours=2)
+            "duration": timedelta(hours=2)
         }
         self.assertRaises(IntegrityError, AttendanceSession.objects.create, **att_session_details)
 
@@ -199,15 +212,16 @@ class AttendanceSessionTestCase(TestCase):
                         staff_number="SS.123654", department=dept_obj)
         acad_session = AcademicSession.objects.create(session="2020/2021", is_current_session=True)
         course_obj = Course.objects.create(code="ECE 272", title="Introduction to Engineering Programming",
+                        level_of_study=2, department=dept_obj,
                         unit_load=3, semester=Semester.SECOND)
         start_time = timezone.now()
         # attempting to set stop time to be earlier than start time
         att_session_details = {
             "initiator":staff_obj, "course":course_obj, "session":acad_session, 
             "event_type": AttendanceSession.EventType.LECTURE, "start_time":start_time,
-            "stop_time": start_time-timedelta(hours=2)
+            "duration": timedelta(microseconds=0)
         }
-        self.assertRaises(ValueError, AttendanceSession.objects.create, **att_session_details)
+        self.assertRaises(IntegrityError, AttendanceSession.objects.create, **att_session_details)
         
 
 class AttendanceRecordTestCase(TestCase):
@@ -223,13 +237,15 @@ class AttendanceRecordTestCase(TestCase):
                         staff_number="SS.123654", department=dept_obj)
         acad_session = AcademicSession.objects.create(session="2020/2021", is_current_session=True)
         course_obj = Course.objects.create(code="ECE 272", title="Introduction to Engineering Programming",
+                        level_of_study=2, department=dept_obj,
                         unit_load=3, semester=Semester.SECOND)
         student_obj = Student.objects.create(reg_number="2001/123456", first_name="Chudi",
                         last_name="Gambo", possible_grad_yr=2022, level_of_study=2,
                         department=dept_obj, sex=Sex.MALE)
         att_session = AttendanceSession.objects.create(initiator=staff_obj, 
-                course=course_obj, session=acad_session,
-                event_type=AttendanceSession.EventType.LECTURE, )
+                                course=course_obj, session=acad_session,
+                                event_type=AttendanceSession.EventType.LECTURE,
+                                start_time=timezone.now(), duration=timedelta(hours=1) )
 
         AttendanceRecord.objects.create(attendance_session=att_session, 
                     student=student_obj, record_type=AttendanceRecord.RecordTypes.SIGN_IN)
@@ -246,10 +262,11 @@ class CourseRegistrationTestCase(TestCase):
     def test_duplicate_course_reg(self):
         faculty_obj = Faculty.objects.create(name="Engineering")
         acad_session = AcademicSession.objects.create(session="2020/2021", is_current_session=True)
-        course_obj = Course.objects.create(code="ECE 272", title="Introduction to Engineering Programming",
-                        unit_load=3, semester=Semester.SECOND)
         dept_obj = Department.objects.create(name="Electronic Engineering",
                         alias="ECE", faculty=faculty_obj)
+        course_obj = Course.objects.create(code="ECE 272", title="Introduction to Engineering Programming",
+                        level_of_study=2, department=dept_obj,
+                        unit_load=3, semester=Semester.SECOND)
         student_obj = Student.objects.create(reg_number="2001/123456", first_name="Chudi",
                         last_name="Gambo", possible_grad_yr=2022, level_of_study=2,
                         department=dept_obj, sex=Sex.MALE)
@@ -264,10 +281,11 @@ class CourseRegistrationTestCase(TestCase):
     def test_semester_match_validation(self):
         faculty_obj = Faculty.objects.create(name="Engineering")
         acad_session = AcademicSession.objects.create(session="2020/2021", is_current_session=True)
-        course_obj = Course.objects.create(code="ECE 272", title="Introduction to Engineering Programming",
-                        unit_load=3, semester=Semester.SECOND)
         dept_obj = Department.objects.create(name="Electronic Engineering",
                         alias="ECE", faculty=faculty_obj)
+        course_obj = Course.objects.create(code="ECE 272", title="Introduction to Engineering Programming",
+                        level_of_study=2, department=dept_obj,
+                        unit_load=3, semester=Semester.SECOND)
         student_obj = Student.objects.create(reg_number="2001/123456", first_name="Chudi",
                         last_name="Gambo", possible_grad_yr=2022, level_of_study=2,
                         department=dept_obj, sex=Sex.MALE)
