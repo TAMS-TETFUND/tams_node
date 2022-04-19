@@ -20,15 +20,19 @@ CURRENT_DIR = os.path.abspath(__file__)
 CONFIG_FILE = os.path.join(Path(CURRENT_DIR).parent, "config.ini")
 SCREEN_SIZE = (480, 320)
 ICON_SIZE = {"h": 125, "w": 70}
+SYMBOL_UP = "▲"
+SYMBOL_DOWN = "▼"
 
+# loading the application icons
 icons_path = os.path.join(Path(CURRENT_DIR).parent, "icons.json")
 with open(icons_path, "r") as data:
     icon_dict = json.loads(data.read())
 
-SYMBOL_UP = "▲"
-SYMBOL_DOWN = "▼"
+# setting GUI's theme
+sg.theme("LightGreen6")  # Dark, LightGreen6
+ICON_BUTTON_COLOR = (sg.theme_background_color(), sg.theme_background_color())
 
-
+# initializing the configparser object
 app_config = configparser.ConfigParser()
 app_config.read(CONFIG_FILE)
 
@@ -51,10 +55,7 @@ def image_file_to_bytes(image64, size):
     return imgbytes
 
 
-sg.theme("LightGreen6")  # Dark, LightGreen6
-wcolor = (sg.theme_background_color(), sg.theme_background_color())
-# The home window
-def make_window_home():
+def home_win():
 
     fingerprint_icon = icon_dict["fingerprint"]
     users_icon = icon_dict["users"]
@@ -66,9 +67,9 @@ def make_window_home():
                 image_data=image_file_to_bytes(
                     fingerprint_icon, (ICON_SIZE["h"], ICON_SIZE["w"])
                 ),
-                button_color=wcolor,
+                button_color=ICON_BUTTON_COLOR,
                 font="Any 15",
-                key="New",
+                key="new_event",
             ),
             sg.Push(),
         ],
@@ -81,9 +82,10 @@ def make_window_home():
                 image_data=image_file_to_bytes(
                     users_icon, (ICON_SIZE["h"], ICON_SIZE["w"])
                 ),
-                button_color=wcolor,
+                button_color=ICON_BUTTON_COLOR,
                 font="Any 15",
                 pad=(0, 0),
+                key="continue_attendance",
             ),
             sg.Push(),
         ],
@@ -96,7 +98,7 @@ def make_window_home():
                 image_data=image_file_to_bytes(
                     schedule_icon, (ICON_SIZE["h"], ICON_SIZE["w"])
                 ),
-                button_color=wcolor,
+                button_color=ICON_BUTTON_COLOR,
                 font="Any 15",
                 key="Schedule",
             ),
@@ -128,12 +130,10 @@ def make_window_home():
         grab_anywhere=True,
         finalize=True,
     )
-    # home_window.maximize()
     return window
 
 
-# The 'Choose Event' Window
-def make_window_event_menu():
+def event_menu_win():
     exam_icon = icon_dict["graduation_cap"]
     test_icon = icon_dict["test_script"]
     lab_icon = icon_dict["lab"]
@@ -146,7 +146,7 @@ def make_window_event_menu():
                 image_data=image_file_to_bytes(
                     lecture_icon, (ICON_SIZE["h"], ICON_SIZE["w"])
                 ),
-                button_color=wcolor,
+                button_color=ICON_BUTTON_COLOR,
                 font="Any 15",
                 key="Lecture",
             ),
@@ -162,7 +162,7 @@ def make_window_event_menu():
                 image_data=image_file_to_bytes(
                     lab_icon, (ICON_SIZE["h"], ICON_SIZE["w"])
                 ),
-                button_color=wcolor,
+                button_color=ICON_BUTTON_COLOR,
                 font="Any 15",
             ),
             sg.Push(),
@@ -177,7 +177,7 @@ def make_window_event_menu():
                 image_data=image_file_to_bytes(
                     test_icon, (ICON_SIZE["h"], ICON_SIZE["w"])
                 ),
-                button_color=wcolor,
+                button_color=ICON_BUTTON_COLOR,
                 font="Any 15",
             ),
             sg.Push(),
@@ -192,7 +192,7 @@ def make_window_event_menu():
                 image_data=image_file_to_bytes(
                     exam_icon, (ICON_SIZE["h"], ICON_SIZE["w"])
                 ),
-                button_color=wcolor,
+                button_color=ICON_BUTTON_COLOR,
                 font="Any 15",
             ),
             sg.Push(),
@@ -214,7 +214,7 @@ def make_window_event_menu():
         ],
         [sg.VPush()],
         [sg.Text("_" * 80)],
-        [sg.Push(), sg.Button("<< Back", key="Back"), sg.Push()],
+        [sg.Push(), sg.Button("<< Back", key="back"), sg.Push()],
     ]
 
     window = sg.Window(
@@ -226,67 +226,80 @@ def make_window_event_menu():
         grab_anywhere=True,
         finalize=True,
     )
-    # event_menu_window.maximize()
     return window
 
 
-def make_event_details_window():
-    """here user will provide details for creating the attendance
-    session he will confirm the session, semester,
-    **faculty/department the course belongs to - to filter the
-        course list the course for which the attendance session
-        is being created start time and duration of the event
-    """
+def academic_session_details_win():
+    """Window for setting academic session details"""
     layout = [
-        [sg.Push(), sg.Text("Event Details"), sg.Push()],
+        [sg.Push(), sg.Text("Academic Session Details"), sg.Push()],
         [sg.Text("_" * 80)],
         [sg.VPush()],
         [
-            sg.Push(),
             sg.Text("Select Current Session:  "),
-            sg.InputCombo(
+            sg.Combo(
                 utils.get_all_academic_sessions(),
                 default_value=utils.get_all_academic_sessions()[0],
                 enable_events=True,
                 key="current_session",
+                expand_y=True,
             ),
-            sg.Push(),
         ],
         [
-            sg.Push(),
             sg.Text("Select Current Semester: "),
             sg.Combo(
                 utils.get_semesters(),
                 default_value=utils.get_semesters()[0],
                 enable_events=True,
                 key="current_semester",
+                expand_y=True,
             ),
-            sg.Push(),
         ],
+        [sg.VPush()],
+        [sg.Push(), sg.Button("Next >>", key="next"), sg.Push()],
+    ]
+
+    window = sg.Window(
+        "Academic Session Details",
+        layout,
+        size=SCREEN_SIZE,
+        no_titlebar=True,
+        keep_on_top=True,
+        grab_anywhere=True,
+        finalize=True,
+    )
+    return window
+
+
+def event_details_win():
+    """Window for users to specify the details of the event to
+    be created
+    """
+    layout = [
+        [sg.Push(), sg.Text("Event Details"), sg.Push()],
+        [sg.Text("_" * 80)],
+        [sg.VPush()],
         [
-            sg.Push(),
             sg.Text("What Faculty administers the course:  "),
             sg.InputCombo(
                 utils.get_all_faculties(),
                 default_value="--select--",
                 enable_events=True,
                 key="course_faculty",
+                expand_y=True,
             ),
-            sg.Push(),
         ],
         [
-            sg.Push(),
             sg.Text("What Department administers the course:  "),
             sg.InputCombo(
                 utils.get_all_departments(),
                 default_value="--select--",
                 enable_events=True,
                 key="course_department",
+                expand_y=True,
             ),
-            sg.Push(),
         ],
         [
-            sg.Push(),
             sg.Text("Select Course:  "),
             sg.InputCombo(
                 utils.get_all_courses(
@@ -297,8 +310,33 @@ def make_event_details_window():
                 default_value="--select--",
                 enable_events=True,
                 key="selected_course",
+                expand_y=True,
             ),
-            sg.Push(),
+        ],
+        [
+            sg.Text("Start Time: "),
+            sg.Spin(
+                values=[str(a).zfill(2) for a in range(0, 24)],
+                initial_value="08",
+                expand_x=True,
+                expand_y=True,
+            ),
+            sg.Spin(
+                values=[str(a).zfill(2) for a in range(0, 60)],
+                initial_value="00",
+                expand_x=True,
+                expand_y=True,
+            ),
+        ],
+        [
+            sg.Text("Duration: "),
+            sg.Spin(
+                values=[str(a).zfill(2) for a in range(0, 12)],
+                initial_value="01",
+                expand_x=True,
+                expand_y=True,
+            ),
+            sg.Text("Hours"),
         ],
         [
             sg.Push(),
@@ -318,11 +356,10 @@ def make_event_details_window():
         grab_anywhere=True,
         finalize=True,
     )
-
     return window
 
 
-def make_window_verify_att_initiator():
+def verify_attendance_initiator_win():
     """Here the initiator of the attendance session"""
     verify_user_icon = icon_dict["verify_user"]
     fingerprint_icon = icon_dict["fingerprint"]
@@ -333,7 +370,7 @@ def make_window_verify_att_initiator():
                 image_data=image_file_to_bytes(
                     verify_user_icon, (ICON_SIZE["h"], ICON_SIZE["w"])
                 ),
-                button_color=wcolor,
+                button_color=ICON_BUTTON_COLOR,
                 font="Any 15",
             ),
             sg.Push(),
@@ -348,7 +385,7 @@ def make_window_verify_att_initiator():
                 image_data=image_file_to_bytes(
                     fingerprint_icon, (ICON_SIZE["h"], ICON_SIZE["w"])
                 ),
-                button_color=wcolor,
+                button_color=ICON_BUTTON_COLOR,
                 font="Any 15",
             ),
             sg.Push(),
@@ -367,7 +404,7 @@ def make_window_verify_att_initiator():
         [sg.Push(), sg.Column(column1), sg.Column(column2), sg.Push()],
         [sg.VPush()],
         [sg.Text("_" * 80)],
-        [sg.Push(), sg.Button("<< Back", key="Back"), sg.Push()],
+        [sg.Push(), sg.Button("<< Back", key="back"), sg.Push()],
     ]
     window = sg.Window(
         "Verify Attendance Initiator",
@@ -378,35 +415,46 @@ def make_window_verify_att_initiator():
         grab_anywhere=True,
         finalize=True,
     )
-
     return window
 
 
 def main():
-    home_window = make_window_home()
+    home_window = home_win()
     event_menu_window = None
-    verify_att_initiator_window = None
+    verify_attendance_initiator_window = None
     event_details_window = None
+    academic_session_details_window = None
 
     while True:
         window, event, values = sg.read_all_windows()
-        if event == sg.WIN_CLOSED:
-            break
 
-        if event == "New" and not event_menu_window:
-            event_menu_window = make_window_event_menu()
-            home_window.hide()
+        # Home window logic
+        if window == home_window:
+            if event == "new_event":
+                event_menu_window = event_menu_win()
+                home_window.hide()
+            if event == "continue_attendance":
+                break
 
+        # Event menu window logic
         if window == event_menu_window:
-            if event in (sg.WIN_CLOSED, "Back"):
+            if event in (sg.WIN_CLOSED, "back"):
                 home_window.un_hide()
                 event_menu_window.close()
                 event_menu_window = None
             if event in ("Lecture", "Exam", "Lab", "Test"):
-                event_details_window = make_event_details_window()
+                academic_session_details_window = academic_session_details_win()
                 event_menu_window.close()
                 event_menu_window = None
 
+        # academic session details window logic
+        if window == academic_session_details_window:
+            if event == "next":
+                event_details_window = event_details_win()
+                academic_session_details_window.close()
+                academic_session_details_window = None
+
+        # event details window logic
         if window == event_details_window:
             if event == "course_faculty":
                 if window["course_faculty"].get() in ("--select--", None):
@@ -437,15 +485,15 @@ def main():
                 event_details_window.close()
                 event_details_window = None
 
-        if window == verify_att_initiator_window:
-            if event in (sg.WIN_CLOSED, "Back"):
-                event_menu_window = make_window_event_menu()
-                verify_att_initiator_window.close()
-                verify_att_initiator_window = None
+        # attendance initiator verification window logic
+        if window == verify_attendance_initiator_window:
+            if event in (sg.WIN_CLOSED, "back"):
+                event_menu_window = event_menu_win()
+                verify_attendance_initiator_window.close()
+                verify_attendance_initiator_window = None
 
-        if window == home_window:
-            if event in ("Continue Existing Attendance-Taking Session"):
-                break
+        if event == sg.WIN_CLOSED:
+            break
     home_window.close()
 
 
