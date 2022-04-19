@@ -11,10 +11,10 @@
     4.  Lab
 
 ===========================Lecture=============================================
+    +   initiator - begin by verifying the identity of the attendance session initiator
     +   Faculty -  What faculty is the course under?
     +   Department
     +   Course
-    +   initiator - 
     ****is it really necessary in all scenarios that a staff has to start 
         an attendance-taking session?
     +   Start time - should not be earlier than the current date
@@ -49,3 +49,14 @@
 For a Faculty course, a staff of a different Department might initiate the attendance-taking session
 for the examination. In fact, the assumption that a staff of a different department cannot start A
 session for a course from a different department is wrong.
+================================Useability==================================================
+    +   there should be a 'Scheduled Events' feature where scheduled events and recurring events will
+        be listed (sorted according to the days of the week)
+    +   Only a lecture/Lab event can be a recurring event.
+    +   Any one can schedule an event but only a duly registered staff can activate/initialize it.
+    +   Can more than one staff access the same scheduled event? Once a staff initializes a scheduled event
+        should he/she be the only person allowed to reactivate/continue the session in the event of a disruption
+        in the attendance-taking session? - Yes
+==================================Suggestions============================================
+system will be more useable if user could set a particular event as recurring (weekly)
+a button for starting a scheduled event on the homepage

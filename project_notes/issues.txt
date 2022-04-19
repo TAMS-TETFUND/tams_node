@@ -2,3 +2,6 @@ The Django ORM does not strip whitespaces from inputs in models fields of type C
 This means extra care must be taken to restrict interfaces that will populate the databases
     from being able to update data that has not been thoroughly cleaned/stripped/trimmed
     - A more holistic solution is also a priority for the project
+
+
+#Icons color was changed to rgb(3, 27, 1)
