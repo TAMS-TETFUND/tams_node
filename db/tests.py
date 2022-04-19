@@ -33,7 +33,6 @@ class SemesterTestCase(TestCase):
 
 class FacultyTestCase(TestCase):
     def setUp(self):
-        # create test objects with names "Engineering"
         Faculty.objects.create(name="Engineering")
 
     def test_successful_faculty_creation(self):
@@ -41,7 +40,7 @@ class FacultyTestCase(TestCase):
         self.assertEqual(engr.name, "Engineering")
 
     def test_unique_faculty_constraint(self):
-        # trying to create another faculty object with name "Engineering"
+        """test creating a duplicate Faculty object"""
         self.assertRaises(
             IntegrityError, Faculty.objects.create, name="engineering"
         )
@@ -52,7 +51,7 @@ class StaffTitleTestCase(TestCase):
         StaffTitle.objects.create(title="Prof", title_full="Professor")
 
     def test_unique_title_constraint(self):
-        # try to create another StaffTitle object where title is "Prof." (ending with a period)
+        """Test creating a duplicate StaffTitle object"""
         self.assertRaises(
             IntegrityError,
             StaffTitle.objects.create,
@@ -75,6 +74,7 @@ class DepartmentTestCase(TestCase):
         )
 
     def test_unique_department_constraint(self):
+        """Test creating a duplicate department object"""
         engrng2 = Faculty.objects.create(name="Engineering")
         self.assertRaises(
             IntegrityError,
@@ -87,7 +87,9 @@ class DepartmentTestCase(TestCase):
         )
 
     def test_unique_dept_short_name(self):
-        # try to create another Department object with same short name (alias) as the one created in setUp()
+        """Test creating a department object with identical alias as 
+        an existing object
+        """
         self.assertRaises(
             IntegrityError,
             Department.objects.create,
@@ -105,11 +107,7 @@ class StaffTestCase(TestCase):
         self.assertTrue(Staff.is_valid_staff_number("ss.123456"))
 
     def test_custom_clean(self):
-        """Testing the custom clean method of the Staff class.
-        The method is expected to:
-        1.  Validate the format of staff number provided
-        2.  Transform the staff number to Uppercase
-        """
+        """Testing the custom clean method of the Staff class"""
         new_title = StaffTitle.objects.create(title="Mr")
         dept = Department.objects.create(
             name="Electronic",
@@ -177,8 +175,9 @@ class StaffTestCase(TestCase):
 
 class StudentTestCase(TestCase):
     def test_reg_number_validation(self):
-        """testing the Student.is_valid_student_reg_number with
-        various values of student registration numbers"""
+        """Testing the Student.is_valid_student_reg_number with
+        various values of student registration numbers
+        """
         self.assertTrue(Student.is_valid_student_reg_number("1999/123456"))
         self.assertFalse(Student.is_valid_student_reg_number("99/123456"))
         self.assertFalse(Student.is_valid_student_reg_number("123456"))
@@ -216,7 +215,8 @@ class CourseTestCase(TestCase):
 
     def test_semester_field_validation_constraint(self):
         """Attempting to create a course with semester set to value not defined
-        in Semester class"""
+        in Semester class
+        """
         new_faculty = Faculty.objects.create(name="Engineering")
         new_dept = Department.objects.create(
             name="Electronic Engineering", alias="ECE", faculty=new_faculty
@@ -241,13 +241,15 @@ class AcademicSessionTestCase(TestCase):
         )
 
     def test_session_format(self):
+        """Test session validation method"""
         self.assertTrue(AcademicSession.is_valid_session("2020/2021"))
         self.assertFalse(AcademicSession.is_valid_session("2001_2002"))
         self.assertFalse(AcademicSession.is_valid_session("2001/2003"))
 
     def test_is_current_session_change(self):
         """Ensure that when a new AcademicSession object is marked as current session,
-        only that object and no other is marked as current session"""
+        only that object and no other is marked as current session
+        """
         AcademicSession.objects.create(
             session="2020/2021", is_current_session=True
         )
@@ -257,6 +259,7 @@ class AcademicSessionTestCase(TestCase):
         self.assertEqual(current_session, "2020/2021")
 
     def test_duplicate_session_creation(self):
+        """Test duplicate session creation"""
         session_details = {"session": "2019/2020", "is_current_session": False}
         self.assertRaises(
             IntegrityError, AcademicSession.objects.create, **session_details
@@ -265,6 +268,7 @@ class AcademicSessionTestCase(TestCase):
 
 class AttendanceSessionTestCase(TestCase):
     def test_duplicate_attendance_session_creation(self):
+        """Test duplicate attendance session creation"""
         faculty_obj = Faculty.objects.create(name="Engineering")
         dept_obj = Department.objects.create(
             name="Electronic Engineering", alias="ECE", faculty=faculty_obj
