@@ -1,0 +1,5 @@
+{
+    "STAFF_NO_FORMAT": "^[S]{2}.",
+    "STUDENT_REG_NO_FORMAT": "^[0-9]{4}\/[0-9]{6}$",
+    "SESSION_FORMAT": "^[0-9]{4}\/[0-9]{4}$"
+}
