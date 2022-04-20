@@ -59,12 +59,23 @@ class BaseGUIWindow:
         return imgbytes
     
     @classmethod
-    def get_icon(cls, icon_name):
+    def get_icon(cls, icon_name, size_ratio=1):
         icons_path = os.path.join(Path(CURRENT_DIR).parent, "icons.json")
         with open(icons_path, "r") as data:
             icon_dict = json.loads(data.read())
         icon = icon_dict[icon_name]
-        return cls._image_file_to_bytes(icon, (cls.ICON_SIZE["h"], cls.ICON_SIZE["w"]))
+        return cls._image_file_to_bytes(icon, (cls.ICON_SIZE["h"] * size_ratio, cls.ICON_SIZE["w"] * size_ratio))
+
+    @classmethod
+    def window_init_dict(cls):
+        init_dict = {
+            "size":cls.SCREEN_SIZE,
+            "no_titlebar":True,
+            "keep_on_top":True,
+            "grab_anywhere":True,
+            "finalize":True
+        }
+        return init_dict
 
 
 class HomeWindow(BaseGUIWindow):
@@ -98,7 +109,7 @@ class HomeWindow(BaseGUIWindow):
         layout = [
             [
                 sg.Push(),
-                sg.Button(image_data=cls.get_icon("power"), button_color=cls.ICON_BUTTON_COLOR, key="quit"),
+                sg.Button(image_data=cls.get_icon("power", 0.5), button_color=cls.ICON_BUTTON_COLOR, key="quit"),
             ],
             [sg.VPush()],
             [
@@ -116,8 +127,7 @@ class HomeWindow(BaseGUIWindow):
         window = sg.Window(
             "Home Window",
             layout,
-            size=cls.SCREEN_SIZE,
-            finalize=True,
+            **cls.window_init_dict()
         )
         return window
     
@@ -152,8 +162,7 @@ class AnotherWindow(BaseGUIWindow):
         window = sg.Window(
             "Another Window",
             layout,
-            size=cls.SCREEN_SIZE,
-            finalize=True,
+            **cls.window_init_dict()
         )
         return window
     
