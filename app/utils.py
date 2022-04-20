@@ -1,12 +1,13 @@
 import os
+import time
+from pathlib import Path
+from configparser import ConfigParser
 
 # from picamera.array import PiRGBArray
 # from picamera import PiCamera
-# from db.models import Student, Staff
 import cv2
 import face_recognition
 import numpy as np
-import time
 
 from manage import init_django
 
@@ -21,6 +22,11 @@ from db.models import (
     Semester,
     Department,
 )
+
+CURRENT_DIR = os.path.abspath(__file__)
+CONFIG_FILE = os.path.join(Path(CURRENT_DIR).parent, "config.ini")
+app_config = ConfigParser()
+app_config.read(CONFIG_FILE)
 
 
 def get_semesters():
@@ -75,37 +81,18 @@ def filter_courses(dept):
 
 
 def staff_face_verification(captured_image):
-    """Begin by getting all Staff objects that have face encodings to create the
-    list for comparison
+    """Staff Facial identification"""
+    try:
+        staff_number = app_config["new_event"]["initiator_staff_num"]
+    except:
+        print("something went wrong")
 
-    Then, capture a picture with the camera. Ensuring that only one face is
-        in the captured image
+    try:
+        staff = Staff.objects.get(staff_number=staff_number)
+    except:
+        print(f"No staff registered with staff number {staff_number}")
 
-    Then, compare the image with all elements of the list created in (1) above
-    Return the details of the best match (if any)
-    """
-    all_staff = list(
-        Staff.objects.exclude(face_encodings__isnull=True).exclude(
-            face_encodings__exact=""
-        )
-    )
-    all_staff_face_enc = list(
-        enc
-        for enc in [
-            Staff.str_to_face_enc(item.face_encodings) for item in all_staff
-        ]
-    )
-
-    loaded_image_file = face_recognition.loaded_image_file(captured_image)
-    if len(face_recognition.face_encodings(loaded_image_file)) > 1:
-        pass
-        # too many faces in the picture
-    elif len(face_recognition.face_encodings(loaded_image_file)) <= 0:
-        pass
-        # no face in the picture
-    elif len(face_recognition.face_encodings(loaded_image_file)) == 1:
-        pass
-        # exactly one face in the picture
+    staff_face_enc = Student.str_to_face_enc(staff.face_encodings)
 
 
 def staff_fingerprint_verification():
