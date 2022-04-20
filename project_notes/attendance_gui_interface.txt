@@ -60,3 +60,12 @@ session for a course from a different department is wrong.
 ==================================Suggestions============================================
 system will be more useable if user could set a particular event as recurring (weekly)
 a button for starting a scheduled event on the homepage
+
+=======================================implementation=================================
+For the sake of maintainability, GUI solution should be class-based. 
+
+Every window will be a class
+Every window could be based on a base class where general functionalities like input validation would be 
+    implemented
+There could be a GUI class where the main loop of the program resides or the main loop could
+    be just a function.
