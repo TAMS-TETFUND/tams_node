@@ -69,3 +69,5 @@ Every window could be based on a base class where general functionalities like i
     implemented
 There could be a GUI class where the main loop of the program resides or the main loop could
     be just a function.
+
+the window dispatcher can be made into a class. How?
