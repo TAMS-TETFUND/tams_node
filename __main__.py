@@ -3,6 +3,6 @@ import os
 
 sys.path.append(".")
 
-from app import test_gui
+from app import gui
 
-test_gui.main()
+gui.main()
