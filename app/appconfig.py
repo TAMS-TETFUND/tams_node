@@ -16,6 +16,6 @@ class AppConfigParser(configparser.ConfigParser):
         super(AppConfigParser, self).__init__()
         self.read(self.CONFIG_FILE)
 
-    def save_config(self):
+    def save(self):
         with open(self.CONFIG_FILE, "w") as configfile:
             self.write(configfile)
