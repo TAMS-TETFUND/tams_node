@@ -2,7 +2,6 @@ from picamera.array import PiRGBArray
 from picamera import PiCamera
 import cv2
 
-
 class Camera(PiCamera):
     def __init__(self):
         super(Camera, self).__init__()
@@ -10,7 +9,9 @@ class Camera(PiCamera):
         self.framerate = 32
 
     @property
-    def raw_capture(self, size=self.resolution):
+    def raw_capture(self, size=None):
+        if size is None:
+            size = self.resolution
         return PiRGBArray(self, size)
 
     def capture(self, format="bgr", use_video_port=True):
