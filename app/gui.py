@@ -9,6 +9,7 @@ import PySimpleGUI as sg
 
 from manage import init_django
 from app.appconfigparser import AppConfigParser
+
 init_django()
 
 from db.models import (
@@ -19,7 +20,7 @@ from db.models import (
     Course,
     Faculty,
     Semester,
-    Department
+    Department,
 )
 
 
@@ -36,7 +37,10 @@ window_dispatch = {}
 class BaseGUIWindow:
     SCREEN_SIZE = (480, 320)
     ICON_SIZE = {"h": 125, "w": 70}
-    ICON_BUTTON_COLOR = (sg.theme_background_color(), sg.theme_background_color())
+    ICON_BUTTON_COLOR = (
+        sg.theme_background_color(),
+        sg.theme_background_color(),
+    )
 
     @staticmethod
     def confirm_exit():
@@ -48,9 +52,9 @@ class BaseGUIWindow:
         if clicked == "OK":
             return False
         if clicked in ("Cancel", None):
-            pass        
+            pass
         return True
-    
+
     @staticmethod
     def _image_file_to_bytes(image64, size):
         image_file = io.BytesIO(base64.b64decode(image64))
@@ -60,59 +64,79 @@ class BaseGUIWindow:
         img.save(bio, format="PNG")
         imgbytes = bio.getvalue()
         return imgbytes
-    
+
     @classmethod
     def get_icon(cls, icon_name, size_ratio=1):
-        icons_path = os.path.join(Path(os.path.abspath(__file__)).parent, "icons.json")
+        icons_path = os.path.join(
+            Path(os.path.abspath(__file__)).parent, "icons.json"
+        )
         with open(icons_path, "r") as data:
             icon_dict = json.loads(data.read())
         icon = icon_dict[icon_name]
-        return cls._image_file_to_bytes(icon, (cls.ICON_SIZE["h"] * size_ratio, cls.ICON_SIZE["w"] * size_ratio))
+        return cls._image_file_to_bytes(
+            icon,
+            (cls.ICON_SIZE["h"] * size_ratio, cls.ICON_SIZE["w"] * size_ratio),
+        )
 
     @classmethod
     def window_init_dict(cls):
         init_dict = {
-            "size":cls.SCREEN_SIZE,
-            "no_titlebar":True,
-            "keep_on_top":True,
-            "grab_anywhere":True,
-            "finalize":True
+            "size": cls.SCREEN_SIZE,
+            "no_titlebar": True,
+            "keep_on_top": True,
+            "grab_anywhere": True,
+            "finalize": True,
         }
         return init_dict
 
 
 class HomeWindow(BaseGUIWindow):
-
     @classmethod
     def window(cls):
         column1 = [
             [
                 sg.Push(),
-                sg.Button(image_data=cls.get_icon("fingerprint"), button_color=cls.ICON_BUTTON_COLOR, key="new_event"),
-                sg.Push()
+                sg.Button(
+                    image_data=cls.get_icon("fingerprint"),
+                    button_color=cls.ICON_BUTTON_COLOR,
+                    key="new_event",
+                ),
+                sg.Push(),
             ],
-            [sg.Push(), sg.Text("New Event"), sg.Push()]
+            [sg.Push(), sg.Text("New Event"), sg.Push()],
         ]
         column2 = [
             [
                 sg.Push(),
-                sg.Button(image_data=cls.get_icon("users"), button_color=cls.ICON_BUTTON_COLOR, key="continue_attendance"),
-                sg.Push()
+                sg.Button(
+                    image_data=cls.get_icon("users"),
+                    button_color=cls.ICON_BUTTON_COLOR,
+                    key="continue_attendance",
+                ),
+                sg.Push(),
             ],
-            [sg.Push(), sg.Text("Continue Attendance"), sg.Push()]
+            [sg.Push(), sg.Text("Continue Attendance"), sg.Push()],
         ]
         column3 = [
             [
                 sg.Push(),
-                sg.Button(image_data=cls.get_icon("schedule"), button_color=cls.ICON_BUTTON_COLOR, key="schedule"),
-                sg.Push()
+                sg.Button(
+                    image_data=cls.get_icon("schedule"),
+                    button_color=cls.ICON_BUTTON_COLOR,
+                    key="schedule",
+                ),
+                sg.Push(),
             ],
-            [sg.Push(), sg.Text("Scheduled/Recurring Events"), sg.Push()]
+            [sg.Push(), sg.Text("Scheduled/Recurring Events"), sg.Push()],
         ]
         layout = [
             [
                 sg.Push(),
-                sg.Button(image_data=cls.get_icon("power", 0.5), button_color=cls.ICON_BUTTON_COLOR, key="quit"),
+                sg.Button(
+                    image_data=cls.get_icon("power", 0.5),
+                    button_color=cls.ICON_BUTTON_COLOR,
+                    key="quit",
+                ),
             ],
             [sg.VPush()],
             [
@@ -120,27 +144,23 @@ class HomeWindow(BaseGUIWindow):
                 sg.Column(column1),
                 sg.Column(column2),
                 sg.Column(column3),
-                sg.Push()
+                sg.Push(),
             ],
             [sg.VPush()],
             [sg.Text("_" * 80)],
             [sg.Push(), sg.Text("TAMS© 2022"), sg.Push()],
         ]
 
-        window = sg.Window(
-            "Home Window",
-            layout,
-            **cls.window_init_dict()
-        )
+        window = sg.Window("Home Window", layout, **cls.window_init_dict())
         return window
-    
+
     @staticmethod
     def loop(window, event, values):
         global window_dispatch
         if event == "new_event":
-            window_dispatch.update({'event_menu_win': EventMenuWindow.window()})
-            window_dispatch['home_win'].close()
-            window_dispatch['home_win'] = None
+            window_dispatch.update({"event_menu_win": EventMenuWindow.window()})
+            window_dispatch["home_win"].close()
+            window_dispatch["home_win"] = None
 
         if event == "quit":
             return HomeWindow.confirm_exit()
@@ -148,47 +168,66 @@ class HomeWindow(BaseGUIWindow):
 
 
 class EventMenuWindow(BaseGUIWindow):
-
     @classmethod
     def window(cls):
         column1 = [
             [
                 sg.Push(),
-                sg.Button(image_data=cls.get_icon("lecture"), button_color=cls.ICON_BUTTON_COLOR, key="lecture"),
-                sg.Push()
+                sg.Button(
+                    image_data=cls.get_icon("lecture"),
+                    button_color=cls.ICON_BUTTON_COLOR,
+                    key="lecture",
+                ),
+                sg.Push(),
             ],
-            [sg.Push(), sg.Text("Lecture"), sg.Push()]
+            [sg.Push(), sg.Text("Lecture"), sg.Push()],
         ]
 
         column2 = [
             [
                 sg.Push(),
-                sg.Button(image_data=cls.get_icon("lab"), button_color=cls.ICON_BUTTON_COLOR, key="lab"),
-                sg.Push()
+                sg.Button(
+                    image_data=cls.get_icon("lab"),
+                    button_color=cls.ICON_BUTTON_COLOR,
+                    key="lab",
+                ),
+                sg.Push(),
             ],
-            [sg.Push(), sg.Text("Lab"), sg.Push()]
+            [sg.Push(), sg.Text("Lab"), sg.Push()],
         ]
 
         column3 = [
             [
                 sg.Push(),
-                sg.Button(image_data=cls.get_icon("test_script"), button_color=cls.ICON_BUTTON_COLOR, key="test"),
-                sg.Push()
+                sg.Button(
+                    image_data=cls.get_icon("test_script"),
+                    button_color=cls.ICON_BUTTON_COLOR,
+                    key="test",
+                ),
+                sg.Push(),
             ],
-            [sg.Push(), sg.Text("Test"), sg.Push()]
+            [sg.Push(), sg.Text("Test"), sg.Push()],
         ]
 
         column4 = [
             [
                 sg.Push(),
-                sg.Button(image_data=cls.get_icon("graduation_cap"), button_color=cls.ICON_BUTTON_COLOR, key="exam"),
-                sg.Push()
+                sg.Button(
+                    image_data=cls.get_icon("graduation_cap"),
+                    button_color=cls.ICON_BUTTON_COLOR,
+                    key="exam",
+                ),
+                sg.Push(),
             ],
-            [sg.Push(), sg.Text("Exam"), sg.Push()]
+            [sg.Push(), sg.Text("Exam"), sg.Push()],
         ]
 
         layout = [
-            [sg.Push(), sg.Text("Take Attendance for:", font="Any 20"), sg.Push()],
+            [
+                sg.Push(),
+                sg.Text("Take Attendance for:", font="Any 20"),
+                sg.Push(),
+            ],
             [sg.Text("_" * 80)],
             [sg.VPush()],
             [
@@ -204,28 +243,24 @@ class EventMenuWindow(BaseGUIWindow):
             [sg.Push(), sg.Button("<< Back", key="back"), sg.Push()],
         ]
 
-        window = sg.Window(
-            "Event Menu",
-            layout,
-            **cls.window_init_dict()
-        )
+        window = sg.Window("Event Menu", layout, **cls.window_init_dict())
         return window
 
     @staticmethod
     def loop(window, event, values):
         global window_dispatch, app_config
         if event in (sg.WIN_CLOSED, "back"):
-            window_dispatch['home_win'] = HomeWindow.window()
-            window_dispatch['event_menu_win'].close()
-            window_dispatch['event_menu_win'] = None
+            window_dispatch["home_win"] = HomeWindow.window()
+            window_dispatch["event_menu_win"].close()
+            window_dispatch["event_menu_win"] = None
         if event in ("lecture", "exam", "lab", "test"):
-            app_config['new_event'] = {}
-            app_config['new_event']['type'] = event
+            app_config["new_event"] = {}
+            app_config["new_event"]["type"] = event
             if event in ("lecure", "lab"):
                 recurring = sg.popup_yes_no(
                     f"Is this {event} a weekly activity?",
                     title="Event detail",
-                    keep_on_top=True
+                    keep_on_top=True,
                 )
                 if recurring == "Yes":
                     app_config["new_event"]["recurring"] = "True"
@@ -235,14 +270,17 @@ class EventMenuWindow(BaseGUIWindow):
                     pass
 
             app_config.save()
-            window_dispatch.update({"academic_session_details_win": AcademicSessionDetailsWindow.window()})
+            window_dispatch.update(
+                {
+                    "academic_session_details_win": AcademicSessionDetailsWindow.window()
+                }
+            )
             window_dispatch["event_menu_win"].close()
             window_dispatch["event_menu_win"] = None
         return True
 
 
 class AcademicSessionDetailsWindow(BaseGUIWindow):
-
     @classmethod
     def window(cls):
         layout = [
@@ -253,7 +291,9 @@ class AcademicSessionDetailsWindow(BaseGUIWindow):
                 sg.Text("Select Current Session:  "),
                 sg.Combo(
                     AcademicSession.get_all_academic_sessions(),
-                    default_value=AcademicSession.get_all_academic_sessions()[0],
+                    default_value=AcademicSession.get_all_academic_sessions()[
+                        0
+                    ],
                     enable_events=True,
                     key="current_session",
                     expand_y=True,
@@ -280,9 +320,7 @@ class AcademicSessionDetailsWindow(BaseGUIWindow):
         ]
 
         window = sg.Window(
-            "Academic Session Details",
-            layout,
-            **cls.window_init_dict()
+            "Academic Session Details", layout, **cls.window_init_dict()
         )
         return window
 
@@ -293,7 +331,9 @@ class AcademicSessionDetailsWindow(BaseGUIWindow):
             app_config["DEFAULT"]["semester"] = values["current_semester"]
             app_config["DEFAULT"]["session"] = values["current_session"]
             app_config.save()
-            window_dispatch.update({"event_detail_win": EventDetailWindow.window()})
+            window_dispatch.update(
+                {"event_detail_win": EventDetailWindow.window()}
+            )
         elif event == "back":
             window_dispatch.update({"event_menu_win": EventMenuWindow.window()})
         elif event == "cancel":
@@ -306,7 +346,6 @@ class AcademicSessionDetailsWindow(BaseGUIWindow):
 
 
 class EventDetailWindow(BaseGUIWindow):
-
     @classmethod
     def window(cls):
         layout = [
@@ -389,25 +428,35 @@ class EventDetailWindow(BaseGUIWindow):
             [sg.VPush()],
         ]
 
-        window = sg.Window(
-            "Event Details",
-            layout,
-            **cls.window_init_dict()
-        )
+        window = sg.Window("Event Details", layout, **cls.window_init_dict())
         return window
 
     @staticmethod
     def loop(window, event, values):
         if event == "course_faculty":
             if values["course_faculty"] in ("--select--", None):
-                window["course_department"].update(values=Department.get_all_departments(), value="--select--")
+                window["course_department"].update(
+                    values=Department.get_all_departments(), value="--select--"
+                )
             else:
-                window["course_department"].update(values=Department.filter_departments(values["course_faculty"]), value="--select--")
+                window["course_department"].update(
+                    values=Department.filter_departments(
+                        values["course_faculty"]
+                    ),
+                    value="--select--",
+                )
         if event == "course_department":
             if values["course_department"] in ("--select--", None):
-                window["selected_course"].update(values=Course.get_all_courses(), value="--select--")
+                window["selected_course"].update(
+                    values=Course.get_all_courses(), value="--select--"
+                )
             else:
-                window["selected_course"].update(values=Course.filter_courses(dept=values["course_department"]), value="--select--")
+                window["selected_course"].update(
+                    values=Course.filter_courses(
+                        dept=values["course_department"]
+                    ),
+                    value="--select--",
+                )
         if event == "pick_date":
             event_date = sg.popup_get_date()
             if event is None:
@@ -418,22 +467,26 @@ class EventDetailWindow(BaseGUIWindow):
                 )
         if event in ("Start Event", "Schedule Event"):
             app_config["new_event"]["course"] = values["selected_course"]
-            app_config["new_event"]["start_time"] = values["start_hour"] + ":" + values["start_minute"]
+            app_config["new_event"]["start_time"] = (
+                values["start_hour"] + ":" + values["start_minute"]
+            )
             app_config["new_event"]["start_date"] = values["start_date"]
             app_config["new_event"]["duration"] = values["duration"]
             app_config.save()
 
             if event == "Start Event":
-                window_dispatch.update({"staff_number_input_win": StaffNumberInputWindow.window()})
+                window_dispatch.update(
+                    {"staff_number_input_win": StaffNumberInputWindow.window()}
+                )
             if event == "Schedule Event":
                 window_dispatch.update({"home_win": HomeWindow.window()})
             window_dispatch["event_detail_win"].close()
             window_dispatch["event_detail_win"] = None
         return True
 
-class VerifyAttendanceInitiatorWindow(BaseGUIWindow):
 
-    @classmethod 
+class VerifyAttendanceInitiatorWindow(BaseGUIWindow):
+    @classmethod
     def window(cls):
         column1 = [
             [
@@ -441,11 +494,11 @@ class VerifyAttendanceInitiatorWindow(BaseGUIWindow):
                 sg.Button(
                     image_data=cls.get_icon("face_scanner"),
                     button_color=cls.ICON_BUTTON_COLOR,
-                    key="facial_verification"
+                    key="facial_verification",
                 ),
                 sg.Push(),
             ],
-            [sg.Push(), sg.Text("Face ID"), sg.Push()]
+            [sg.Push(), sg.Text("Face ID"), sg.Push()],
         ]
 
         column2 = [
@@ -454,16 +507,18 @@ class VerifyAttendanceInitiatorWindow(BaseGUIWindow):
                 sg.Button(
                     image_data=cls.get_icon("fingerprint"),
                     button_color=cls.ICON_BUTTON_COLOR,
-                    key="fingerprint_verification"
+                    key="fingerprint_verification",
                 ),
                 sg.Push(),
             ],
-            [sg.Push(), sg.Text("Fingerprint"), sg.Push()]
+            [sg.Push(), sg.Text("Fingerprint"), sg.Push()],
         ]
 
         layout = [
             [
-                sg.Text("Only registered staff can initiate attendance taking."),
+                sg.Text(
+                    "Only registered staff can initiate attendance taking."
+                ),
                 sg.Push(),
             ],
             [sg.Text("Verify identity via:"), sg.Push()],
@@ -476,12 +531,10 @@ class VerifyAttendanceInitiatorWindow(BaseGUIWindow):
         ]
 
         window = sg.Window(
-            "Verify Attendance Initiator",
-            layout,
-            **cls.window_init_dict()
+            "Verify Attendance Initiator", layout, **cls.window_init_dict()
         )
         return window
-        
+
     @staticmethod
     def loop(window, event, values):
         global window_dispatch, app_config
@@ -489,11 +542,15 @@ class VerifyAttendanceInitiatorWindow(BaseGUIWindow):
             window_dispatch.update({"home_win": HomeWindow.window()})
             window_dispatch["verify_attendance_initiator_win"].close()
             window_dispatch["verify_attendance_initiator_win"] = None
-            sg.popup("Event has been saved as a scheduled event", title="Event saved", keep_on_top=True)
+            sg.popup(
+                "Event has been saved as a scheduled event",
+                title="Event saved",
+                keep_on_top=True,
+            )
         return True
 
+
 class StaffNumberInputWindow(BaseGUIWindow):
-    
     @classmethod
     def window(cls):
         INPUT_BUTTON_SIZE = (10, 2)
@@ -543,9 +600,7 @@ class StaffNumberInputWindow(BaseGUIWindow):
         ]
 
         window = sg.Window(
-            "Staff Number Input",
-            layout,
-            **cls.window_init_dict()
+            "Staff Number Input", layout, **cls.window_init_dict()
         )
         return window
 
@@ -556,7 +611,11 @@ class StaffNumberInputWindow(BaseGUIWindow):
             window_dispatch.update({"home_win": HomeWindow.window()})
             window_dispatch["staff_number_input_win"].close()
             window_dispatch["staff_number_input_win"] = None
-            sg.popup("Event has been saved as a scheduled event", title="Event saved", keep_on_top=True)
+            sg.popup(
+                "Event has been saved as a scheduled event",
+                title="Event saved",
+                keep_on_top=True,
+            )
             return True
 
         keys_entered = None
@@ -567,33 +626,48 @@ class StaffNumberInputWindow(BaseGUIWindow):
             keys_entered = ""
         elif event == "submit":
             keys_entered = values["staff_number_input"]
-            app_config["new_event"]["initiator_staff_num"] = "SS." + keys_entered
+            app_config["new_event"]["initiator_staff_num"] = (
+                "SS." + keys_entered
+            )
             app_config.save()
-            window_dispatch.update({"verify_attendance_initiator_win": VerifyAttendanceInitiatorWindow.window()})
+            window_dispatch.update(
+                {
+                    "verify_attendance_initiator_win": VerifyAttendanceInitiatorWindow.window()
+                }
+            )
             window_dispatch["staff_number_input_win"].close()
             window_dispatch["staff_number_input_win"] = None
             return True
         window["staff_number_input"].update(keys_entered)
         return True
 
+
 def main():
     global window_dispatch
-    window_dispatch.update({'home_win': HomeWindow.window()})
+    window_dispatch.update({"home_win": HomeWindow.window()})
     while True:
         window, event, values = sg.read_all_windows()
         window_loop_exit_code = True
-        if window == window_dispatch.get('home_win'):
+        if window == window_dispatch.get("home_win"):
             window_loop_exit_code = HomeWindow.loop(window, event, values)
-        if window == window_dispatch.get('event_menu_win'):
+        if window == window_dispatch.get("event_menu_win"):
             window_loop_exit_code = EventMenuWindow.loop(window, event, values)
-        if window == window_dispatch.get('event_detail_win'):
-            window_loop_exit_code = EventDetailWindow.loop(window, event, values)
-        if window == window_dispatch.get('academic_session_details_win'):
-            window_loop_exit_code = AcademicSessionDetailsWindow.loop(window, event, values)
-        if window == window_dispatch.get('verify_attendance_initiator_win'):
-            window_loop_exit_code = VerifyAttendanceInitiatorWindow.loop(window, event, values)
-        if window == window_dispatch.get('staff_number_input_win'):
-            window_loop_exit_code = StaffNumberInputWindow.loop(window, event, values)
+        if window == window_dispatch.get("event_detail_win"):
+            window_loop_exit_code = EventDetailWindow.loop(
+                window, event, values
+            )
+        if window == window_dispatch.get("academic_session_details_win"):
+            window_loop_exit_code = AcademicSessionDetailsWindow.loop(
+                window, event, values
+            )
+        if window == window_dispatch.get("verify_attendance_initiator_win"):
+            window_loop_exit_code = VerifyAttendanceInitiatorWindow.loop(
+                window, event, values
+            )
+        if window == window_dispatch.get("staff_number_input_win"):
+            window_loop_exit_code = StaffNumberInputWindow.loop(
+                window, event, values
+            )
 
         if not window_loop_exit_code:
             break
