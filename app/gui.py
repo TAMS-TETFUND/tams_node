@@ -2,673 +2,604 @@ import io
 import json
 import os
 import base64
-import configparser
 from pathlib import Path
 
 from PIL import Image, ImageDraw, ImageTk, ImageFont
 import PySimpleGUI as sg
 
-from app import utils
-
 from manage import init_django
-
+from app.appconfigparser import AppConfigParser
 init_django()
 
-from db.models import AttendanceSession
+from db.models import (
+    AttendanceSession,
+    AcademicSession,
+    Student,
+    Staff,
+    Course,
+    Faculty,
+    Semester,
+    Department
+)
 
-CURRENT_DIR = os.path.abspath(__file__)
-CONFIG_FILE = os.path.join(Path(CURRENT_DIR).parent, "config.ini")
-SCREEN_SIZE = (480, 320)
-ICON_SIZE = {"h": 125, "w": 70}
-SYMBOL_UP = "▲"
-SYMBOL_DOWN = "▼"
 
-# loading the application icons
-icons_path = os.path.join(Path(CURRENT_DIR).parent, "icons.json")
-with open(icons_path, "r") as data:
-    icon_dict = json.loads(data.read())
-
-# setting GUI's theme
-sg.theme("LightGreen6")  # Dark, LightGreen6
-ICON_BUTTON_COLOR = (sg.theme_background_color(), sg.theme_background_color())
+# set application-wide theme
+sg.theme("LightGreen6")
 
 # initializing the configparser object
-app_config = configparser.ConfigParser()
-app_config.read(CONFIG_FILE)
+app_config = AppConfigParser()
+
+# variable for managing gui window objects
+window_dispatch = {}
 
 
-def save_config(parser_obj: configparser):
-    """Function for saving the configparser object
-    as changes are made in the application
-    """
-    with open(CONFIG_FILE, "w") as configfile:
-        parser_obj.write(configfile)
+class BaseGUIWindow:
+    SCREEN_SIZE = (480, 320)
+    ICON_SIZE = {"h": 125, "w": 70}
+    ICON_BUTTON_COLOR = (sg.theme_background_color(), sg.theme_background_color())
+
+    @staticmethod
+    def confirm_exit():
+        clicked = sg.popup_ok_cancel(
+            "System will shutdown. Do you want to continue?",
+            title="Shutdown",
+            keep_on_top=True,
+        )
+        if clicked == "OK":
+            return False
+        if clicked in ("Cancel", None):
+            pass        
+        return True
+    
+    @staticmethod
+    def _image_file_to_bytes(image64, size):
+        image_file = io.BytesIO(base64.b64decode(image64))
+        img = Image.open(image_file)
+        img.thumbnail(size, Image.ANTIALIAS)
+        bio = io.BytesIO()
+        img.save(bio, format="PNG")
+        imgbytes = bio.getvalue()
+        return imgbytes
+    
+    @classmethod
+    def get_icon(cls, icon_name, size_ratio=1):
+        icons_path = os.path.join(Path(os.path.abspath(__file__)).parent, "icons.json")
+        with open(icons_path, "r") as data:
+            icon_dict = json.loads(data.read())
+        icon = icon_dict[icon_name]
+        return cls._image_file_to_bytes(icon, (cls.ICON_SIZE["h"] * size_ratio, cls.ICON_SIZE["w"] * size_ratio))
+
+    @classmethod
+    def window_init_dict(cls):
+        init_dict = {
+            "size":cls.SCREEN_SIZE,
+            "no_titlebar":True,
+            "keep_on_top":True,
+            "grab_anywhere":True,
+            "finalize":True
+        }
+        return init_dict
 
 
-def image_file_to_bytes(image64, size):
-    image_file = io.BytesIO(base64.b64decode(image64))
-    img = Image.open(image_file)
-    img.thumbnail(size, Image.ANTIALIAS)
-    bio = io.BytesIO()
-    img.save(bio, format="PNG")
-    imgbytes = bio.getvalue()
-    return imgbytes
+class HomeWindow(BaseGUIWindow):
+
+    @classmethod
+    def window(cls):
+        column1 = [
+            [
+                sg.Push(),
+                sg.Button(image_data=cls.get_icon("fingerprint"), button_color=cls.ICON_BUTTON_COLOR, key="new_event"),
+                sg.Push()
+            ],
+            [sg.Push(), sg.Text("New Event"), sg.Push()]
+        ]
+        column2 = [
+            [
+                sg.Push(),
+                sg.Button(image_data=cls.get_icon("users"), button_color=cls.ICON_BUTTON_COLOR, key="continue_attendance"),
+                sg.Push()
+            ],
+            [sg.Push(), sg.Text("Continue Attendance"), sg.Push()]
+        ]
+        column3 = [
+            [
+                sg.Push(),
+                sg.Button(image_data=cls.get_icon("schedule"), button_color=cls.ICON_BUTTON_COLOR, key="schedule"),
+                sg.Push()
+            ],
+            [sg.Push(), sg.Text("Scheduled/Recurring Events"), sg.Push()]
+        ]
+        layout = [
+            [
+                sg.Push(),
+                sg.Button(image_data=cls.get_icon("power", 0.5), button_color=cls.ICON_BUTTON_COLOR, key="quit"),
+            ],
+            [sg.VPush()],
+            [
+                sg.Push(),
+                sg.Column(column1),
+                sg.Column(column2),
+                sg.Column(column3),
+                sg.Push()
+            ],
+            [sg.VPush()],
+            [sg.Text("_" * 80)],
+            [sg.Push(), sg.Text("TAMS© 2022"), sg.Push()],
+        ]
+
+        window = sg.Window(
+            "Home Window",
+            layout,
+            **cls.window_init_dict()
+        )
+        return window
+    
+    @staticmethod
+    def loop(window, event, values):
+        global window_dispatch
+        if event == "new_event":
+            window_dispatch.update({'event_menu_win': EventMenuWindow.window()})
+            window_dispatch['home_win'].close()
+            window_dispatch['home_win'] = None
+
+        if event == "quit":
+            return HomeWindow.confirm_exit()
+        return True
 
 
-def home_win():
+class EventMenuWindow(BaseGUIWindow):
 
-    fingerprint_icon = icon_dict["fingerprint"]
-    users_icon = icon_dict["users"]
-    schedule_icon = icon_dict["schedule"]
-    power_icon = icon_dict["power"]
-    column1 = [
-        [
-            sg.Push(),
-            sg.Button(
-                image_data=image_file_to_bytes(
-                    fingerprint_icon, (ICON_SIZE["h"], ICON_SIZE["w"])
+    @classmethod
+    def window(cls):
+        column1 = [
+            [
+                sg.Push(),
+                sg.Button(image_data=cls.get_icon("lecture"), button_color=cls.ICON_BUTTON_COLOR, key="lecture"),
+                sg.Push()
+            ],
+            [sg.Push(), sg.Text("Lecture"), sg.Push()]
+        ]
+
+        column2 = [
+            [
+                sg.Push(),
+                sg.Button(image_data=cls.get_icon("lab"), button_color=cls.ICON_BUTTON_COLOR, key="lab"),
+                sg.Push()
+            ],
+            [sg.Push(), sg.Text("Lab"), sg.Push()]
+        ]
+
+        column3 = [
+            [
+                sg.Push(),
+                sg.Button(image_data=cls.get_icon("test_script"), button_color=cls.ICON_BUTTON_COLOR, key="test"),
+                sg.Push()
+            ],
+            [sg.Push(), sg.Text("Test"), sg.Push()]
+        ]
+
+        column4 = [
+            [
+                sg.Push(),
+                sg.Button(image_data=cls.get_icon("graduation_cap"), button_color=cls.ICON_BUTTON_COLOR, key="exam"),
+                sg.Push()
+            ],
+            [sg.Push(), sg.Text("Exam"), sg.Push()]
+        ]
+
+        layout = [
+            [sg.Push(), sg.Text("Take Attendance for:", font="Any 20"), sg.Push()],
+            [sg.Text("_" * 80)],
+            [sg.VPush()],
+            [
+                sg.Push(),
+                sg.Column(column1),
+                sg.Column(column2),
+                sg.Column(column3),
+                sg.Column(column4),
+                sg.Push(),
+            ],
+            [sg.VPush()],
+            [sg.Text("_" * 80)],
+            [sg.Push(), sg.Button("<< Back", key="back"), sg.Push()],
+        ]
+
+        window = sg.Window(
+            "Event Menu",
+            layout,
+            **cls.window_init_dict()
+        )
+        return window
+
+    @staticmethod
+    def loop(window, event, values):
+        global window_dispatch, app_config
+        if event in (sg.WIN_CLOSED, "back"):
+            window_dispatch['home_win'] = HomeWindow.window()
+            window_dispatch['event_menu_win'].close()
+            window_dispatch['event_menu_win'] = None
+        if event in ("lecture", "exam", "lab", "test"):
+            app_config['new_event'] = {}
+            app_config['new_event']['type'] = event
+            if event in ("lecure", "lab"):
+                recurring = sg.popup_yes_no(
+                    f"Is this {event} a weekly activity?",
+                    title="Event detail",
+                    keep_on_top=True
+                )
+                if recurring == "Yes":
+                    app_config["new_event"]["recurring"] = "True"
+                elif recurring == "No":
+                    app_config["new_event"]["recurring"] = "False"
+                else:
+                    pass
+
+            app_config.save()
+            window_dispatch.update({"academic_session_details_win": AcademicSessionDetailsWindow.window()})
+            window_dispatch["event_menu_win"].close()
+            window_dispatch["event_menu_win"] = None
+        return True
+
+
+class AcademicSessionDetailsWindow(BaseGUIWindow):
+
+    @classmethod
+    def window(cls):
+        layout = [
+            [sg.Push(), sg.Text("Academic Session Details"), sg.Push()],
+            [sg.Text("_" * 80)],
+            [sg.VPush()],
+            [
+                sg.Text("Select Current Session:  "),
+                sg.Combo(
+                    AcademicSession.get_all_academic_sessions(),
+                    default_value=AcademicSession.get_all_academic_sessions()[0],
+                    enable_events=True,
+                    key="current_session",
+                    expand_y=True,
                 ),
-                button_color=ICON_BUTTON_COLOR,
-                key="new_event",
-            ),
-            sg.Push(),
-        ],
-        [sg.Push(), sg.Text("New Event"), sg.Push()],
-    ]
-    column2 = [
-        [
-            sg.Push(),
-            sg.Button(
-                image_data=image_file_to_bytes(
-                    users_icon, (ICON_SIZE["h"], ICON_SIZE["w"])
+            ],
+            [
+                sg.Text("Select Current Semester: "),
+                sg.Combo(
+                    Semester.labels,
+                    default_value=Semester.labels[0],
+                    enable_events=True,
+                    key="current_semester",
+                    expand_y=True,
                 ),
-                button_color=ICON_BUTTON_COLOR,
-                pad=(0, 0),
-                key="continue_attendance",
-            ),
-            sg.Push(),
-        ],
-        [sg.Push(), sg.Text("Continue Attendance"), sg.Push()],
-    ]
-    column3 = [
-        [
-            sg.Push(),
-            sg.Button(
-                image_data=image_file_to_bytes(
-                    schedule_icon, (ICON_SIZE["h"], ICON_SIZE["w"])
+            ],
+            [sg.VPush()],
+            [
+                sg.Push(),
+                sg.Button("<< Back", key="back"),
+                sg.Button("Next >>", key="next"),
+                sg.Button("Cancel", key="cancel"),
+                sg.Push(),
+            ],
+        ]
+
+        window = sg.Window(
+            "Academic Session Details",
+            layout,
+            **cls.window_init_dict()
+        )
+        return window
+
+    @staticmethod
+    def loop(window, event, values):
+        global window_dispatch, app_config
+        if event == "next":
+            app_config["DEFAULT"]["semester"] = values["current_semester"]
+            app_config["DEFAULT"]["session"] = values["current_session"]
+            app_config.save()
+            window_dispatch.update({"event_detail_win": EventDetailWindow.window()})
+        elif event == "back":
+            window_dispatch.update({"event_menu_win": EventMenuWindow.window()})
+        elif event == "cancel":
+            window_dispatch.update({"home_win": HomeWindow.window()})
+        else:
+            return True
+        window_dispatch["academic_session_details_win"].close()
+        window_dispatch["academic_session_details_win"] = None
+        return True
+
+
+class EventDetailWindow(BaseGUIWindow):
+
+    @classmethod
+    def window(cls):
+        layout = [
+            [sg.Push(), sg.Text("Event Details"), sg.Push()],
+            [sg.Text("_" * 80)],
+            [sg.VPush()],
+            [
+                sg.Text("What Faculty administers the course:  "),
+                sg.InputCombo(
+                    Faculty.get_all_faculties(),
+                    default_value="--select--",
+                    enable_events=True,
+                    key="course_faculty",
+                    expand_y=True,
                 ),
-                button_color=ICON_BUTTON_COLOR,
-                key="Schedule",
-            ),
-            sg.Push(),
-        ],
-        [sg.Push(), sg.Text("Scheduled/Recurring Events"), sg.Push()],
-    ]
-
-    layout = [
-        [
-            sg.Push(),
-            sg.Button(
-                image_data=image_file_to_bytes(
-                    power_icon, (ICON_SIZE["h"] * 0.5, ICON_SIZE["w"] * 0.5)
+            ],
+            [
+                sg.Text("What Department administers the course:  "),
+                sg.InputCombo(
+                    Department.get_all_departments(),
+                    default_value="--select--",
+                    enable_events=True,
+                    key="course_department",
+                    expand_y=True,
                 ),
-                button_color=ICON_BUTTON_COLOR,
-                key="quit",
-            ),
-        ],
-        [sg.VPush()],
-        [
-            sg.Push(),
-            sg.Column(column1),
-            sg.Column(column2),
-            sg.Column(column3),
-            sg.Push(),
-        ],
-        [sg.VPush()],
-        [sg.Text("_" * 80)],
-        [sg.Push(), sg.Text("TAMS© 2022"), sg.Push()],
-    ]
-
-    window = sg.Window(
-        "Home Window",
-        layout,
-        size=SCREEN_SIZE,
-        no_titlebar=True,
-        keep_on_top=True,
-        grab_anywhere=True,
-        finalize=True,
-    )
-    return window
-
-
-def event_menu_win():
-    exam_icon = icon_dict["graduation_cap"]
-    test_icon = icon_dict["test_script"]
-    lab_icon = icon_dict["lab"]
-    lecture_icon = icon_dict["lecture"]
-
-    column1 = [
-        [
-            sg.Push(),
-            sg.Button(
-                image_data=image_file_to_bytes(
-                    lecture_icon, (ICON_SIZE["h"], ICON_SIZE["w"])
+            ],
+            [
+                sg.Text("Select Course:  "),
+                sg.InputCombo(
+                    Course.get_all_courses(
+                        semester=app_config.get("DEFAULT", "semester")
+                    ),
+                    default_value="--select--",
+                    enable_events=True,
+                    key="selected_course",
+                    expand_y=True,
                 ),
-                button_color=ICON_BUTTON_COLOR,
-                key="lecture",
-            ),
-            sg.Push(),
-        ],
-        [sg.Push(), sg.Text("Lecture"), sg.Push()],
-    ]
-
-    column2 = [
-        [
-            sg.Push(),
-            sg.Button(
-                image_data=image_file_to_bytes(
-                    lab_icon, (ICON_SIZE["h"], ICON_SIZE["w"])
+            ],
+            [
+                sg.Text("Start Time: "),
+                sg.Spin(
+                    values=[str(a).zfill(2) for a in range(0, 24)],
+                    initial_value="08",
+                    expand_x=True,
+                    expand_y=True,
+                    key="start_hour",
                 ),
-                button_color=ICON_BUTTON_COLOR,
-                key="lab",
-            ),
-            sg.Push(),
-        ],
-        [sg.Push(), sg.Text("Lab"), sg.Push()],
-    ]
-
-    column3 = [
-        [
-            sg.Push(),
-            sg.Button(
-                image_data=image_file_to_bytes(
-                    test_icon, (ICON_SIZE["h"], ICON_SIZE["w"])
+                sg.Spin(
+                    values=[str(a).zfill(2) for a in range(0, 60)],
+                    initial_value="00",
+                    expand_x=True,
+                    expand_y=True,
+                    key="start_minute",
                 ),
-                button_color=ICON_BUTTON_COLOR,
-                key="test",
-            ),
-            sg.Push(),
-        ],
-        [sg.Push(), sg.Text("Test"), sg.Push()],
-    ]
-
-    column4 = [
-        [
-            sg.Push(),
-            sg.Button(
-                image_data=image_file_to_bytes(
-                    exam_icon, (ICON_SIZE["h"], ICON_SIZE["w"])
+                sg.Input(key="start_date", size=(20, 1), expand_y=True),
+                sg.Button(
+                    image_data=cls.get_icon("calendar", 0.25),
+                    button_color=cls.ICON_BUTTON_COLOR,
+                    key="pick_date",
+                    expand_y=True,
                 ),
-                button_color=ICON_BUTTON_COLOR,
-                key="exam",
-            ),
-            sg.Push(),
-        ],
-        [sg.Push(), sg.Text("Exam"), sg.Push()],
-    ]
-
-    layout = [
-        [sg.Push(), sg.Text("Take Attendance for:", font="Any 20"), sg.Push()],
-        [sg.Text("_" * 80)],
-        [sg.VPush()],
-        [
-            sg.Push(),
-            sg.Column(column1),
-            sg.Column(column2),
-            sg.Column(column3),
-            sg.Column(column4),
-            sg.Push(),
-        ],
-        [sg.VPush()],
-        [sg.Text("_" * 80)],
-        [sg.Push(), sg.Button("<< Back", key="back"), sg.Push()],
-    ]
-
-    window = sg.Window(
-        "Event Menu",
-        layout,
-        size=SCREEN_SIZE,
-        no_titlebar=True,
-        keep_on_top=True,
-        grab_anywhere=True,
-        finalize=True,
-    )
-    return window
-
-
-def academic_session_details_win():
-    """Window for setting academic session details"""
-    layout = [
-        [sg.Push(), sg.Text("Academic Session Details"), sg.Push()],
-        [sg.Text("_" * 80)],
-        [sg.VPush()],
-        [
-            sg.Text("Select Current Session:  "),
-            sg.Combo(
-                utils.get_all_academic_sessions(),
-                default_value=utils.get_all_academic_sessions()[0],
-                enable_events=True,
-                key="current_session",
-                expand_y=True,
-            ),
-        ],
-        [
-            sg.Text("Select Current Semester: "),
-            sg.Combo(
-                utils.get_semesters(),
-                default_value=utils.get_semesters()[0],
-                enable_events=True,
-                key="current_semester",
-                expand_y=True,
-            ),
-        ],
-        [sg.VPush()],
-        [
-            sg.Push(),
-            sg.Button("<< Back", key="back"),
-            sg.Button("Next >>", key="next"),
-            sg.Button("Cancel", key="cancel"),
-            sg.Push(),
-        ],
-    ]
-
-    window = sg.Window(
-        "Academic Session Details",
-        layout,
-        size=SCREEN_SIZE,
-        no_titlebar=True,
-        keep_on_top=True,
-        grab_anywhere=True,
-        finalize=True,
-    )
-    return window
-
-
-def event_details_win():
-    """Window for users to specify the details of the event to
-    be created
-    """
-    calendar_icon = icon_dict["calendar"]
-    layout = [
-        [sg.Push(), sg.Text("Event Details"), sg.Push()],
-        [sg.Text("_" * 80)],
-        [sg.VPush()],
-        [
-            sg.Text("What Faculty administers the course:  "),
-            sg.InputCombo(
-                utils.get_all_faculties(),
-                default_value="--select--",
-                enable_events=True,
-                key="course_faculty",
-                expand_y=True,
-            ),
-        ],
-        [
-            sg.Text("What Department administers the course:  "),
-            sg.InputCombo(
-                utils.get_all_departments(),
-                default_value="--select--",
-                enable_events=True,
-                key="course_department",
-                expand_y=True,
-            ),
-        ],
-        [
-            sg.Text("Select Course:  "),
-            sg.InputCombo(
-                utils.get_all_courses(
-                    semester=app_config.get(
-                        "DEFAULT", "semester", fallback=utils.get_semesters()[0]
-                    )
+            ],
+            [
+                sg.Text("Duration: "),
+                sg.Spin(
+                    values=[str(a).zfill(2) for a in range(0, 12)],
+                    initial_value="01",
+                    expand_x=True,
+                    expand_y=True,
+                    key="duration",
                 ),
-                default_value="--select--",
-                enable_events=True,
-                key="selected_course",
-                expand_y=True,
-            ),
-        ],
-        [
-            sg.Text("Start Time: "),
-            sg.Spin(
-                values=[str(a).zfill(2) for a in range(0, 24)],
-                initial_value="08",
-                expand_x=True,
-                expand_y=True,
-                key="start_hour",
-            ),
-            sg.Spin(
-                values=[str(a).zfill(2) for a in range(0, 60)],
-                initial_value="00",
-                expand_x=True,
-                expand_y=True,
-                key="start_minute",
-            ),
-            sg.Input(key="start_date", size=(20, 1), expand_y=True),
-            sg.Button(
-                image_data=image_file_to_bytes(
-                    calendar_icon,
-                    (ICON_SIZE["h"] * 0.25, ICON_SIZE["w"] * 0.25),
+                sg.Text("Hours"),
+            ],
+            [
+                sg.Push(),
+                sg.Button("Start Event"),
+                sg.Button("Schedule Event"),
+                sg.Push(),
+            ],
+            [sg.VPush()],
+        ]
+
+        window = sg.Window(
+            "Event Details",
+            layout,
+            **cls.window_init_dict()
+        )
+        return window
+
+    @staticmethod
+    def loop(window, event, values):
+        if event == "course_faculty":
+            if values["course_faculty"] in ("--select--", None):
+                window["course_department"].update(values=Department.get_all_departments(), value="--select--")
+            else:
+                window["course_department"].update(values=Department.filter_departments(values["course_faculty"]), value="--select--")
+        if event == "course_department":
+            if values["course_department"] in ("--select--", None):
+                window["selected_course"].update(values=Course.get_all_courses(), value="--select--")
+            else:
+                window["selected_course"].update(values=Course.filter_courses(dept=values["course_department"]), value="--select--")
+        if event == "pick_date":
+            event_date = sg.popup_get_date()
+            if event is None:
+                return True
+            else:
+                window["start_date"].update(
+                    value=f"{event_date[1]}-{event_date[0]}-{event_date[2]}"
+                )
+        if event in ("Start Event", "Schedule Event"):
+            app_config["new_event"]["course"] = values["selected_course"]
+            app_config["new_event"]["start_time"] = values["start_hour"] + ":" + values["start_minute"]
+            app_config["new_event"]["start_date"] = values["start_date"]
+            app_config["new_event"]["duration"] = values["duration"]
+            app_config.save()
+
+            if event == "Start Event":
+                window_dispatch.update({"staff_number_input_win": StaffNumberInputWindow.window()})
+            if event == "Schedule Event":
+                window_dispatch.update({"home_win": HomeWindow.window()})
+            window_dispatch["event_detail_win"].close()
+            window_dispatch["event_detail_win"] = None
+        return True
+
+class VerifyAttendanceInitiatorWindow(BaseGUIWindow):
+
+    @classmethod 
+    def window(cls):
+        column1 = [
+            [
+                sg.Push(),
+                sg.Button(
+                    image_data=cls.get_icon("face_scanner"),
+                    button_color=cls.ICON_BUTTON_COLOR,
+                    key="facial_verification"
                 ),
-                button_color=ICON_BUTTON_COLOR,
-                key="pick_date",
-                expand_y=True,
-            ),
-        ],
-        [
-            sg.Text("Duration: "),
-            sg.Spin(
-                values=[str(a).zfill(2) for a in range(0, 12)],
-                initial_value="01",
-                expand_x=True,
-                expand_y=True,
-                key="duration",
-            ),
-            sg.Text("Hours"),
-        ],
-        [
-            sg.Push(),
-            sg.Button("Start Event"),
-            sg.Button("Schedule Event"),
-            sg.Push(),
-        ],
-        [sg.VPush()],
-    ]
+                sg.Push(),
+            ],
+            [sg.Push(), sg.Text("Face ID"), sg.Push()]
+        ]
 
-    window = sg.Window(
-        "Event Details",
-        layout,
-        size=SCREEN_SIZE,
-        no_titlebar=True,
-        keep_on_top=True,
-        grab_anywhere=True,
-        finalize=True,
-    )
-    return window
-
-
-def verify_attendance_initiator_win():
-    """Here the initiator of the attendance session"""
-    face_scanner_icon = icon_dict["face_scanner"]
-    fingerprint_icon = icon_dict["fingerprint"]
-    column1 = [
-        [
-            sg.Push(),
-            sg.Button(
-                image_data=image_file_to_bytes(
-                    face_scanner_icon, (ICON_SIZE["h"], ICON_SIZE["w"])
+        column2 = [
+            [
+                sg.Push(),
+                sg.Button(
+                    image_data=cls.get_icon("fingerprint"),
+                    button_color=cls.ICON_BUTTON_COLOR,
+                    key="fingerprint_verification"
                 ),
-                button_color=ICON_BUTTON_COLOR,
-                key="facial_verification",
-            ),
-            sg.Push(),
-        ],
-        [sg.Push(), sg.Text("Face ID"), sg.Push()],
-    ]
+                sg.Push(),
+            ],
+            [sg.Push(), sg.Text("Fingerprint"), sg.Push()]
+        ]
 
-    column2 = [
-        [
-            sg.Push(),
-            sg.Button(
-                image_data=image_file_to_bytes(
-                    fingerprint_icon, (ICON_SIZE["h"], ICON_SIZE["w"])
+        layout = [
+            [
+                sg.Text("Only registered staff can initiate attendance taking."),
+                sg.Push(),
+            ],
+            [sg.Text("Verify identity via:"), sg.Push()],
+            [sg.Text("_" * 80)],
+            [sg.VPush()],
+            [sg.Push(), sg.Column(column1), sg.Column(column2), sg.Push()],
+            [sg.VPush()],
+            [sg.Text("_" * 80)],
+            [sg.Push(), sg.Button("<< Back", key="back"), sg.Push()],
+        ]
+
+        window = sg.Window(
+            "Verify Attendance Initiator",
+            layout,
+            **cls.window_init_dict()
+        )
+        return window
+        
+    @staticmethod
+    def loop(window, event, values):
+        global window_dispatch, app_config
+        if event in (sg.WIN_CLOSED, "back"):
+            window_dispatch.update({"home_win": HomeWindow.window()})
+            window_dispatch["verify_attendance_initiator_win"].close()
+            window_dispatch["verify_attendance_initiator_win"] = None
+            sg.popup("Event has been saved as a scheduled event", title="Event saved", keep_on_top=True)
+        return True
+
+class StaffNumberInputWindow(BaseGUIWindow):
+    
+    @classmethod
+    def window(cls):
+        INPUT_BUTTON_SIZE = (10, 2)
+        column1 = [
+            [
+                sg.Button("1", s=INPUT_BUTTON_SIZE),
+                sg.Button("2", s=INPUT_BUTTON_SIZE),
+                sg.Button("3", s=INPUT_BUTTON_SIZE),
+            ],
+            [
+                sg.Button("4", s=INPUT_BUTTON_SIZE),
+                sg.Button("5", s=INPUT_BUTTON_SIZE),
+                sg.Button("6", s=INPUT_BUTTON_SIZE),
+            ],
+            [
+                sg.Button("7", s=INPUT_BUTTON_SIZE),
+                sg.Button("8", s=INPUT_BUTTON_SIZE),
+                sg.Button("9", s=INPUT_BUTTON_SIZE),
+            ],
+            [
+                sg.Button("Submit", key="submit", s=INPUT_BUTTON_SIZE),
+                sg.Button("0", s=INPUT_BUTTON_SIZE),
+                sg.Button("Clear", key="clear", s=INPUT_BUTTON_SIZE),
+            ],
+        ]
+
+        layout = [
+            [
+                sg.Text(
+                    "Only registered staff can initiate attendance taking.",
+                    justification="center",
+                )
+            ],
+            [sg.Text("_" * 80)],
+            [sg.VPush()],
+            [
+                sg.Push(),
+                sg.Text("Staff Number:    SS."),
+                sg.Input(
+                    size=(15, 1), justification="left", key="staff_number_input"
                 ),
-                button_color=ICON_BUTTON_COLOR,
-                key="fingerprint_verification",
-            ),
-            sg.Push(),
-        ],
-        [sg.Push(), sg.Text("Fingerprint"), sg.Push()],
-    ]
+                sg.Push(),
+            ],
+            [sg.Push(), sg.Column(column1), sg.Push()],
+            [sg.VPush()],
+            [sg.Push(), sg.Button("<< Back", key="back"), sg.Push()],
+        ]
 
-    layout = [
-        [
-            sg.Text("Only registered staff can initiate attendance taking."),
-            sg.Push(),
-        ],
-        [sg.Text("Verify identity via:"), sg.Push()],
-        [sg.Text("_" * 80)],
-        [sg.VPush()],
-        [sg.Push(), sg.Column(column1), sg.Column(column2), sg.Push()],
-        [sg.VPush()],
-        [sg.Text("_" * 80)],
-        [sg.Push(), sg.Button("<< Back", key="back"), sg.Push()],
-    ]
-    window = sg.Window(
-        "Verify Attendance Initiator",
-        layout,
-        size=SCREEN_SIZE,
-        no_titlebar=True,
-        keep_on_top=True,
-        grab_anywhere=True,
-        finalize=True,
-    )
-    return window
+        window = sg.Window(
+            "Staff Number Input",
+            layout,
+            **cls.window_init_dict()
+        )
+        return window
 
+    @staticmethod
+    def loop(window, event, values):
+        global window_dispatch, app_config
+        if event == "back":
+            window_dispatch.update({"home_win": HomeWindow.window()})
+            window_dispatch["staff_number_input_win"].close()
+            window_dispatch["staff_number_input_win"] = None
+            sg.popup("Event has been saved as a scheduled event", title="Event saved", keep_on_top=True)
+            return True
 
-def staff_number_input_win():
-    input_button_size = (10, 2)
-    column1 = [
-        [
-            sg.Button("1", s=input_button_size),
-            sg.Button("2", s=input_button_size),
-            sg.Button("3", s=input_button_size),
-        ],
-        [
-            sg.Button("4", s=input_button_size),
-            sg.Button("5", s=input_button_size),
-            sg.Button("6", s=input_button_size),
-        ],
-        [
-            sg.Button("7", s=input_button_size),
-            sg.Button("8", s=input_button_size),
-            sg.Button("9", s=input_button_size),
-        ],
-        [
-            sg.Button("Submit", key="submit", s=input_button_size),
-            sg.Button("0", s=input_button_size),
-            sg.Button("Clear", key="clear", s=input_button_size),
-        ],
-    ]
-    layout = [
-        [
-            sg.Text(
-                "Only registered staff can initiate attendance taking.",
-                justification="center",
-            )
-        ],
-        [sg.Text("_" * 80)],
-        [sg.VPush()],
-        [
-            sg.Push(),
-            sg.Text("Staff Number:    SS."),
-            sg.Input(
-                size=(15, 1), justification="left", key="staff_number_input"
-            ),
-            sg.Push(),
-        ],
-        [sg.Push(), sg.Column(column1), sg.Push()],
-        [sg.VPush()],
-        [sg.Push(), sg.Button("<< Back", key="back"), sg.Push()],
-    ]
-    window = sg.Window(
-        "Staff Number Input",
-        layout,
-        size=SCREEN_SIZE,
-        no_titlebar=True,
-        keep_on_top=True,
-        grab_anywhere=True,
-        finalize=True,
-    )
-    return window
-
+        keys_entered = None
+        if event in "0123456789":
+            keys_entered = values["staff_number_input"]
+            keys_entered += event
+        elif event == "clear":
+            keys_entered = ""
+        elif event == "submit":
+            keys_entered = values["staff_number_input"]
+            app_config["new_event"]["initiator_staff_num"] = "SS." + keys_entered
+            app_config.save()
+            window_dispatch.update({"verify_attendance_initiator_win": VerifyAttendanceInitiatorWindow.window()})
+            window_dispatch["staff_number_input_win"].close()
+            window_dispatch["staff_number_input_win"] = None
+            return True
+        window["staff_number_input"].update(keys_entered)
+        return True
 
 def main():
-    home_window = home_win()
-    event_menu_window = None
-    verify_attendance_initiator_window = None
-    event_details_window = None
-    academic_session_details_window = None
-    staff_number_input_window = None
-
+    global window_dispatch
+    window_dispatch.update({'home_win': HomeWindow.window()})
     while True:
         window, event, values = sg.read_all_windows()
+        window_loop_exit_code = True
+        if window == window_dispatch.get('home_win'):
+            window_loop_exit_code = HomeWindow.loop(window, event, values)
+        if window == window_dispatch.get('event_menu_win'):
+            window_loop_exit_code = EventMenuWindow.loop(window, event, values)
+        if window == window_dispatch.get('event_detail_win'):
+            window_loop_exit_code = EventDetailWindow.loop(window, event, values)
+        if window == window_dispatch.get('academic_session_details_win'):
+            window_loop_exit_code = AcademicSessionDetailsWindow.loop(window, event, values)
+        if window == window_dispatch.get('verify_attendance_initiator_win'):
+            window_loop_exit_code = VerifyAttendanceInitiatorWindow.loop(window, event, values)
+        if window == window_dispatch.get('staff_number_input_win'):
+            window_loop_exit_code = StaffNumberInputWindow.loop(window, event, values)
 
-        # Home window logic
-        if window == home_window:
-            if event == "new_event":
-                event_menu_window = event_menu_win()
-                home_window.hide()
-            if event == "quit":
-                clicked = sg.popup_ok_cancel(
-                    "System will shutdown. Do you want to continue?",
-                    title="Shutdown",
-                    keep_on_top=True,
-                )
-                if clicked == "OK":
-                    print("OK pressed")
-                    break
-                if clicked == "Cancel":
-                    print("Cancel pressed")
-                if clicked == None:
-                    print("Didn't start no'ing ")
-                continue
-
-        # Event menu window logic
-        if window == event_menu_window:
-            if event in (sg.WIN_CLOSED, "back"):
-                home_window.un_hide()
-                event_menu_window.close()
-                event_menu_window = None
-            if event in ("lecture", "exam", "lab", "test"):
-                # save the selected event type in configparser object
-                app_config["new_event"] = {}
-                app_config["new_event"]["type"] = event
-                if event in ("lecture", "lab"):
-                    recurring = sg.popup_yes_no(
-                        f"Is this {event} a weekly activity?",
-                        title="Confirm event detail",
-                        keep_on_top=True,
-                    )
-                    if recurring == "Yes":
-                        app_config["new_event"]["recurring"] = "True"
-                    elif recurring in ("No", None):
-                        pass
-
-                save_config(app_config)
-                academic_session_details_window = academic_session_details_win()
-                event_menu_window.close()
-                event_menu_window = None
-
-        # academic session details window logic
-        if window == academic_session_details_window:
-            if event == "next":
-                app_config["DEFAULT"]["semester"] = values["current_semester"]
-                app_config["DEFAULT"]["session"] = values["current_session"]
-                save_config(app_config)
-
-                event_details_window = event_details_win()
-            elif event == "back":
-                event_menu_window = event_menu_win()
-            elif event == "cancel":
-                home_window = home_win()
-            else:
-                continue
-            academic_session_details_window.close()
-            academic_session_details_window = None
-
-        # event details window logic
-        if window == event_details_window:
-            if event == "course_faculty":
-                if values["course_faculty"] in ("--select--", None):
-                    window["course_department"].update(
-                        values=utils.get_all_departments(), value="--select--"
-                    )
-                else:
-                    window["course_department"].update(
-                        values=utils.filter_departments(
-                            values["course_faculty"]
-                        ),
-                        value="--select--",
-                    )
-            if event == "course_department":
-                if values["course_department"] in ("--select--", None):
-                    window["selected_course"].update(
-                        values=utils.get_all_courses(), value="--select--"
-                    )
-                else:
-                    window["selected_course"].update(
-                        values=utils.filter_courses(
-                            dept=values["course_department"]
-                        ),
-                        value="--select--",
-                    )
-            if event == "pick_date":
-                event_date = sg.popup_get_date()
-                if event is None:
-                    continue
-                else:
-                    window["start_date"].update(
-                        value=f"{event_date[1]}-{event_date[0]}-{event_date[2]}"
-                    )
-            if event in ("Start Event", "Schedule Event"):
-                # input validation required on window elements
-                app_config["new_event"]["course"] = values["selected_course"]
-                app_config["new_event"]["start_time"] = ":".join(
-                    [values["start_hour"], values["start_minute"]]
-                )
-                app_config["new_event"]["start_date"] = values["start_date"]
-                app_config["new_event"]["duration"] = values["duration"]
-                save_config(app_config)
-
-                if event == "Start Event":
-                    staff_number_input_window = staff_number_input_win()
-                if event == "Schedule Event":
-                    home_window.un_hide()
-                event_details_window.close()
-                event_details_window = None
-
-        # staff number input window logic
-        if window == staff_number_input_window:
-            if event == "back":
-                home_window = home_win()
-                staff_number_input_window.close()
-                staff_number_input_window = None
-                sg.popup_notify(
-                    "Event has been saved as a scheduled event",
-                    title="Event saved",
-                )
-            if event in "0123456789":
-                keys_entered = values["staff_number_input"]
-                keys_entered += event
-            elif event == "clear":
-                keys_entered = ""
-            elif event == "submit":
-                keys_entered = values["staff_number_input"]
-                app_config["new_event"]["initiator_staff_num"] = (
-                    "SS." + keys_entered
-                )
-                save_config(app_config)
-                verify_attendance_initiator_window = (
-                    verify_attendance_initiator_win()
-                )
-                staff_number_input_window.close()
-                staff_number_input_window = None
-                continue
-            window["staff_number_input"].update(keys_entered)
-
-        # attendance initiator verification window logic
-        if window == verify_attendance_initiator_window:
-            if event in (sg.WIN_CLOSED, "back"):
-                home_window = home_win()
-                verify_attendance_initiator_window.close()
-                verify_attendance_initiator_window = None
-                sg.popup_notify(
-                    "Event has been saved as a scheduled event",
-                    title="Event saved",
-                )
+        if not window_loop_exit_code:
+            break
         if event == sg.WIN_CLOSED:
             break
-    home_window.close()
+    window.close()
 
 
 if __name__ == "__main__":
