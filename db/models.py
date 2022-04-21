@@ -69,6 +69,11 @@ class Faculty(models.Model):
             models.UniqueConstraint(Upper("name"), name="unique_faculty_name")
         ]
 
+    @staticmethod
+    def get_all_faculties():
+        return list(
+            Faculty.objects.all().order_by("name").values_list("name", flat=True)
+        )
 
 class Department(models.Model):
     id = models.BigAutoField(primary_key=True)
@@ -85,6 +90,20 @@ class Department(models.Model):
                 Upper("alias"), name="unique_department_short_name"
             ),
         ]
+
+    @staticmethod
+    def get_all_departments():
+        return list(
+            Department.objects.all().order_by("name").values_list("name", flat=True)
+        )
+
+    @staticmethod
+    def filter_departments(faculty_name):
+        return list(
+            Department.objects.filter(faculty__name=faculty_name).values_list(
+                "name", flat=True
+            )
+        )
 
 
 class AppUser(AbstractUser):
@@ -202,6 +221,17 @@ class Course(models.Model):
             ),
         ]
 
+    @staticmethod
+    def get_all_courses(semester=None):
+        if semester:
+            all_courses = Course.objects.filter(
+                semester=Semester.values[Semester.labels.index(semester)]
+            ).exclude(is_active=False)
+        else:
+            all_courses = Course.objects.exclude(is_active=False)
+
+        return [f"{item.code} - {item.title}" for item in all_courses]
+
 
 class AcademicSession(models.Model):
     id = models.BigAutoField(primary_key=True)
@@ -222,6 +252,14 @@ class AcademicSession(models.Model):
 
             qs.update(is_current_session=False)
         super().save(*args, **kwargs)
+    
+    @staticmethod
+    def get_all_academic_sessions():
+        return list(
+            AcademicSession.objects.all()
+            .order_by("-is_current_session")
+            .values_list("session", flat=True)
+        )
 
     @staticmethod
     def is_valid_session(session):
