@@ -586,7 +586,7 @@ class StaffNumberInputWindow(BaseGUIWindow):
 
 
 class CameraWindow(BaseGUIWindow):
-    
+
     @classmethod 
     def window(cls):
         layout = [
@@ -599,7 +599,7 @@ class CameraWindow(BaseGUIWindow):
     def loop(window, event, values):
         global window_dispatch
         cam = Camera()
-        
+
         if event == "capture":
             window_dispatch["camera_win"].close()
             return True
