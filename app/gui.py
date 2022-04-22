@@ -490,6 +490,8 @@ class VerifyAttendanceInitiatorWindow(BaseGUIWindow):
                 title="Event saved",
                 keep_on_top=True,
             )
+        if event == 'facial_verification':
+            window_dispatch.update({"camera_win": CameraWindow.window()})
         return True
 
 
