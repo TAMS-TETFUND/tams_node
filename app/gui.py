@@ -634,6 +634,8 @@ def main():
             window_loop_exit_code = StaffNumberInputWindow.loop(
                 window, event, values
             )
+        if window == window_dispatch.get("camera_win"):
+            window_loop_exit_code = CameraWindow.loop(window, event, values)
 
         if not window_loop_exit_code:
             break
