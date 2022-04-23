@@ -15,6 +15,6 @@ class Camera(PiCamera):
 
     def feed(self, format="bgr", use_video_port=True):
         output = np.empty((240, 320, 3), dtype=np.uint8)
-        self.capture(output, "rgb", use_video_port=True)
+        self.capture(output, "bgr", use_video_port=True)
 
         return cv2.imencode(".png", output)[1].tobytes()
