@@ -593,19 +593,19 @@ class CameraWindow(BaseGUIWindow):
     def window(cls):
         layout = [
             [sg.Image(filename="", key="image_display")],
-            [sg.Button(image_data=cls.get_icon("camera"), button_color=cls.ICON_BUTTON_COLOR, key="capture")]
+            [sg.Button(image_data=cls.get_icon("camera", 0.5), button_color=cls.ICON_BUTTON_COLOR, key="capture")]
         ]
         window = sg.Window("Camera", layout, **cls.window_init_dict())
 
     @staticmethod 
     def loop(window, event, values):
         global window_dispatch
-        cam = Camera()
-
         if event == "capture":
             window_dispatch["camera_win"].close()
             return True
-        window["image_display"].update(data=cam.capture)
+        
+        with Camera() as cam:
+            window["image_display"].update(data=cam.feed())
         return True
 
 def main():
