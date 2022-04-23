@@ -342,7 +342,7 @@ class EventDetailWindow(BaseGUIWindow):
                     default_text=datetime.strftime(datetime.now(), "%d-%m-%Y"),
                     key="start_date",
                     size=(20, 1),
-                    expand_y=True
+                    expand_y=True,
                 ),
                 sg.Button(
                     image_data=cls.get_icon("calendar", 0.25),
@@ -490,7 +490,7 @@ class VerifyAttendanceInitiatorWindow(BaseGUIWindow):
                 title="Event saved",
                 keep_on_top=True,
             )
-        if event == 'facial_verification':
+        if event == "facial_verification":
             window_dispatch.update({"camera_win": CameraWindow.window()})
         return True
 
@@ -588,25 +588,31 @@ class StaffNumberInputWindow(BaseGUIWindow):
 
 
 class CameraWindow(BaseGUIWindow):
-
-    @classmethod 
+    @classmethod
     def window(cls):
         layout = [
             [sg.Image(filename="", key="image_display")],
-            [sg.Button(image_data=cls.get_icon("camera", 0.5), button_color=cls.ICON_BUTTON_COLOR, key="capture")]
+            [
+                sg.Button(
+                    image_data=cls.get_icon("camera", 0.5),
+                    button_color=cls.ICON_BUTTON_COLOR,
+                    key="capture",
+                )
+            ],
         ]
         window = sg.Window("Camera", layout, **cls.window_init_dict())
 
-    @staticmethod 
+    @staticmethod
     def loop(window, event, values):
         global window_dispatch
         if event == "capture":
             window_dispatch["camera_win"].close()
             return True
-        
+
         with Camera() as cam:
             window["image_display"].update(data=cam.feed())
         return True
+
 
 def main():
     global window_dispatch
