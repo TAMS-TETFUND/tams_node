@@ -591,13 +591,15 @@ class CameraWindow(BaseGUIWindow):
     @classmethod
     def window(cls):
         layout = [
-            [sg.Image(filename="", key="image_display")],
+            [sg.Push(), sg.Image(filename="", key="image_display"), sg.Push()],
             [
+                sg.Push(),
                 sg.Button(
                     image_data=cls.get_icon("camera", 0.5),
                     button_color=cls.ICON_BUTTON_COLOR,
                     key="capture",
-                )
+                ),
+                sg.Push()
             ],
         ]
         window = sg.Window("Camera", layout, **cls.window_init_dict())
