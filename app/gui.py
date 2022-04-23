@@ -605,11 +605,14 @@ class CameraWindow(BaseGUIWindow):
     @staticmethod
     def loop(window, event, values):
         global window_dispatch
-        if event == "capture":
-            window_dispatch["camera_win"].close()
-            return True
+        cam = Camera()
+        cam_on = True
 
-        with Camera() as cam:
+        while cam_on:
+            event, values = window.read(timeout=20)
+            if event == "capture":
+                window_dispatch["camera_win"].close()
+                return True
             window["image_display"].update(data=cam.feed())
         return True
 
