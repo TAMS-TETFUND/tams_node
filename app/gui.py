@@ -601,6 +601,7 @@ class CameraWindow(BaseGUIWindow):
             ],
         ]
         window = sg.Window("Camera", layout, **cls.window_init_dict())
+        return window
 
     @staticmethod
     def loop(window, event, values):
