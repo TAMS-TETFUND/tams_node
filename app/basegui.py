@@ -4,7 +4,7 @@ import os
 from pathlib import Path
 import base64
 
-from PIL import Image, ImageDraw, ImageTk, ImageFont
+from PIL import Image
 import PySimpleGUI as sg
 
 
