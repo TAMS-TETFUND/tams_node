@@ -1,10 +1,10 @@
 from datetime import datetime
-
 import PySimpleGUI as sg
 
 from app.appconfigparser import AppConfigParser
 from app.basegui import BaseGUIWindow
-from app.camera import Camera
+# from app.camera import Camera
+from app.windowdispatch import WindowDispatch
 from manage import init_django
 
 init_django()
@@ -24,8 +24,8 @@ from db.models import (
 # initializing the configparser object
 app_config = AppConfigParser()
 
-# variable for managing gui window objects
-window_dispatch = {}
+# initializing WindowDispatch object
+window_dispatch = WindowDispatch()
 
 
 class HomeWindow(BaseGUIWindow):
@@ -94,11 +94,8 @@ class HomeWindow(BaseGUIWindow):
 
     @staticmethod
     def loop(window, event, values):
-        global window_dispatch
         if event == "new_event":
-            window_dispatch.update({"event_menu_win": EventMenuWindow.window()})
-            window_dispatch["home_win"].close()
-            window_dispatch["home_win"] = None
+            window_dispatch.open_window(EventMenuWindow)
 
         if event == "quit":
             return HomeWindow.confirm_exit()
@@ -186,11 +183,8 @@ class EventMenuWindow(BaseGUIWindow):
 
     @staticmethod
     def loop(window, event, values):
-        global window_dispatch, app_config
         if event in (sg.WIN_CLOSED, "back"):
-            window_dispatch["home_win"] = HomeWindow.window()
-            window_dispatch["event_menu_win"].close()
-            window_dispatch["event_menu_win"] = None
+            window_dispatch.open_window(HomeWindow)
         if event in ("lecture", "exam", "lab", "test"):
             app_config["new_event"] = {}
             app_config["new_event"]["type"] = event
@@ -208,13 +202,7 @@ class EventMenuWindow(BaseGUIWindow):
                     pass
 
             app_config.save()
-            window_dispatch.update(
-                {
-                    "academic_session_details_win": AcademicSessionDetailsWindow.window()
-                }
-            )
-            window_dispatch["event_menu_win"].close()
-            window_dispatch["event_menu_win"] = None
+            window_dispatch.open_window(AcademicSessionDetailsWindow)
         return True
 
 
@@ -264,22 +252,15 @@ class AcademicSessionDetailsWindow(BaseGUIWindow):
 
     @staticmethod
     def loop(window, event, values):
-        global window_dispatch, app_config
         if event == "next":
             app_config["DEFAULT"]["semester"] = values["current_semester"]
             app_config["DEFAULT"]["session"] = values["current_session"]
             app_config.save()
-            window_dispatch.update(
-                {"event_detail_win": EventDetailWindow.window()}
-            )
+            window_dispatch.open_window(EventDetailWindow)
         elif event == "back":
-            window_dispatch.update({"event_menu_win": EventMenuWindow.window()})
+            window_dispatch.open_window(EventMenuWindow)
         elif event == "cancel":
-            window_dispatch.update({"home_win": HomeWindow.window()})
-        else:
-            return True
-        window_dispatch["academic_session_details_win"].close()
-        window_dispatch["academic_session_details_win"] = None
+            window_dispatch.open_window(HomeWindow)
         return True
 
 
@@ -418,13 +399,9 @@ class EventDetailWindow(BaseGUIWindow):
             app_config.save()
 
             if event == "Start Event":
-                window_dispatch.update(
-                    {"staff_number_input_win": StaffNumberInputWindow.window()}
-                )
+                window_dispatch.open_window(StaffNumberInputWindow)
             if event == "Schedule Event":
-                window_dispatch.update({"home_win": HomeWindow.window()})
-            window_dispatch["event_detail_win"].close()
-            window_dispatch["event_detail_win"] = None
+                window_dispatch.open_window(HomeWindow)
         return True
 
 
@@ -482,16 +459,14 @@ class VerifyAttendanceInitiatorWindow(BaseGUIWindow):
     def loop(window, event, values):
         global window_dispatch, app_config
         if event in (sg.WIN_CLOSED, "back"):
-            window_dispatch.update({"home_win": HomeWindow.window()})
-            window_dispatch["verify_attendance_initiator_win"].close()
-            window_dispatch["verify_attendance_initiator_win"] = None
+            window_dispatch.open_window(HomeWindow)
             sg.popup(
                 "Event has been saved as a scheduled event",
                 title="Event saved",
                 keep_on_top=True,
             )
         if event == "facial_verification":
-            window_dispatch.update({"camera_win": CameraWindow.window()})
+            window_dispatch.open_window(HomeWindow)
         return True
 
 
@@ -553,9 +528,7 @@ class StaffNumberInputWindow(BaseGUIWindow):
     def loop(window, event, values):
         global window_dispatch, app_config
         if event == "back":
-            window_dispatch.update({"home_win": HomeWindow.window()})
-            window_dispatch["staff_number_input_win"].close()
-            window_dispatch["staff_number_input_win"] = None
+            window_dispatch.open_window(HomeWindow)
             sg.popup(
                 "Event has been saved as a scheduled event",
                 title="Event saved",
@@ -575,80 +548,53 @@ class StaffNumberInputWindow(BaseGUIWindow):
                 "SS." + keys_entered
             )
             app_config.save()
-            window_dispatch.update(
-                {
-                    "verify_attendance_initiator_win": VerifyAttendanceInitiatorWindow.window()
-                }
-            )
-            window_dispatch["staff_number_input_win"].close()
-            window_dispatch["staff_number_input_win"] = None
+            window_dispatch.open_window(VerifyAttendanceInitiatorWindow)
             return True
         window["staff_number_input"].update(keys_entered)
         return True
 
 
-class CameraWindow(BaseGUIWindow):
-    @classmethod
-    def window(cls):
-        layout = [
-            [sg.Push(), sg.Image(filename="", key="image_display"), sg.Push()],
-            [
-                sg.Push(),
-                sg.Button(
-                    image_data=cls.get_icon("camera", 0.5),
-                    button_color=cls.ICON_BUTTON_COLOR,
-                    key="capture",
-                ),
-                sg.Push()
-            ],
-        ]
-        window = sg.Window("Camera", layout, **cls.window_init_dict())
-        return window
+# class CameraWindow(BaseGUIWindow):
+#     @classmethod
+#     def window(cls):
+#         layout = [
+#             [sg.Push(), sg.Image(filename="", key="image_display"), sg.Push()],
+#             [
+#                 sg.Push(),
+#                 sg.Button(
+#                     image_data=cls.get_icon("camera", 0.5),
+#                     button_color=cls.ICON_BUTTON_COLOR,
+#                     key="capture",
+#                 ),
+#                 sg.Push()
+#             ],
+#         ]
+#         window = sg.Window("Camera", layout, **cls.window_init_dict())
+#         return window
 
-    @staticmethod
-    def loop(window, event, values):
-        global window_dispatch
-        cam_on = True
-        with Camera() as cam:
-            while cam_on:
-                event, values = window.read(timeout=20)
-                if event == "capture":
-                    window_dispatch["camera_win"].close()
-                    return True
-                window["image_display"].update(data=cam.feed())
-        return True
+#     @staticmethod
+#     def loop(window, event, values):
+#         cam_on = True
+#         with Camera() as cam:
+#             while cam_on:
+#                 event, values = window.read(timeout=20)
+#                 if event == "capture":
+#                     return False
+#                 window["image_display"].update(data=cam.feed())
+#         return True
 
 
 def main():
-    global window_dispatch
-    window_dispatch.update({"home_win": HomeWindow.window()})
+    window_dispatch.open_window(HomeWindow)
+
     while True:
         window, event, values = sg.read_all_windows()
-        window_loop_exit_code = True
-        if window == window_dispatch.get("home_win"):
-            window_loop_exit_code = HomeWindow.loop(window, event, values)
-        if window == window_dispatch.get("event_menu_win"):
-            window_loop_exit_code = EventMenuWindow.loop(window, event, values)
-        if window == window_dispatch.get("event_detail_win"):
-            window_loop_exit_code = EventDetailWindow.loop(
-                window, event, values
-            )
-        if window == window_dispatch.get("academic_session_details_win"):
-            window_loop_exit_code = AcademicSessionDetailsWindow.loop(
-                window, event, values
-            )
-        if window == window_dispatch.get("verify_attendance_initiator_win"):
-            window_loop_exit_code = VerifyAttendanceInitiatorWindow.loop(
-                window, event, values
-            )
-        if window == window_dispatch.get("staff_number_input_win"):
-            window_loop_exit_code = StaffNumberInputWindow.loop(
-                window, event, values
-            )
-        if window == window_dispatch.get("camera_win"):
-            window_loop_exit_code = CameraWindow.loop(window, event, values)
+        current_window = window_dispatch.find_window(window)
 
-        if not window_loop_exit_code:
+        if current_window:
+            loop_exit_code = eval(current_window).loop(window, event, values)
+
+        if not loop_exit_code:
             break
         if event == sg.WIN_CLOSED:
             break
