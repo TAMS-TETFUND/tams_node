@@ -232,6 +232,16 @@ class Course(models.Model):
 
         return [f"{item.code} - {item.title}" for item in all_courses]
 
+    @classmethod
+    def filter_courses(cls, dept = None):
+        if dept:
+            course_list = list(Course.objects.filter(department__name=dept).exclude(
+                is_active=False
+            ))
+            return [f"{item.code} - {item.title}" for item in course_list]
+        else:
+            cls.get_all_courses()
+
 
 class AcademicSession(models.Model):
     id = models.BigAutoField(primary_key=True)
