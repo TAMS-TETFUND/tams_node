@@ -554,35 +554,38 @@ class StaffNumberInputWindow(BaseGUIWindow):
         return True
 
 
-# class CameraWindow(BaseGUIWindow):
-#     @classmethod
-#     def window(cls):
-#         layout = [
-#             [sg.Push(), sg.Image(filename="", key="image_display"), sg.Push()],
-#             [
-#                 sg.Push(),
-#                 sg.Button(
-#                     image_data=cls.get_icon("camera", 0.5),
-#                     button_color=cls.ICON_BUTTON_COLOR,
-#                     key="capture",
-#                 ),
-#                 sg.Push()
-#             ],
-#         ]
-#         window = sg.Window("Camera", layout, **cls.window_init_dict())
-#         return window
+class CameraWindow(BaseGUIWindow):
+    @classmethod
+    def window(cls):
+        layout = [
+            [sg.Push(), sg.Image(filename="", key="image_display"), sg.Push()],
+            [
+                sg.Push(),
+                sg.Button(
+                    image_data=cls.get_icon("camera", 0.5),
+                    button_color=cls.ICON_BUTTON_COLOR,
+                    key="capture",
+                ),
+                sg.Push()
+            ],
+        ]
+        window = sg.Window("Camera", layout, **cls.window_init_dict())
+        return window
 
-#     @staticmethod
-#     def loop(window, event, values):
-#         cam_on = True
-#         with Camera() as cam:
-#             while cam_on:
-#                 event, values = window.read(timeout=20)
-#                 if event == "capture":
-#                     return False
-#                 window["image_display"].update(data=cam.feed())
-#         return True
+    @staticmethod
+    def loop(window, event, values):
+        cam_on = True
+        with Camera() as cam:
+            while cam_on:
+                event, values = window.read(timeout=20)
+                if event == "capture":
+                    return False
+                window["image_display"].update(data=cam.feed())
+        return True
 
+
+class EnrolWindow(BaseGUIWindow):
+    """The GUI """
 
 def main():
     window_dispatch.open_window(HomeWindow)
