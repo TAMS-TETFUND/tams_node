@@ -32,13 +32,13 @@ STUDENT_REG_NO_FORMAT = r"{}".format(config_dict["STUDENT_REG_NO_FORMAT"])
 SESSION_FORMAT = r"{}".format(config_dict["SESSION_FORMAT"])
 
 
-def face_enc_to_str(encodings):
+def _face_enc_to_str(encodings):
     """Convert face encodings from numpy array to string"""
     encodings_str = ",".join(str(item) for item in encodings)
     return encodings_str
 
 
-def str_to_face_enc(enc_str):
+def _str_to_face_enc(enc_str):
     """Convert encodings formatted as a string to numpy array"""
     encodings = np.array([float(item) for item in enc_str.split(",")])
     return encodings
