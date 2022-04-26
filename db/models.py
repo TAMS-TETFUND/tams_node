@@ -32,6 +32,17 @@ STUDENT_REG_NO_FORMAT = r"{}".format(config_dict["STUDENT_REG_NO_FORMAT"])
 SESSION_FORMAT = r"{}".format(config_dict["SESSION_FORMAT"])
 
 
+def face_enc_to_str(encodings):
+    """Convert face encodings from numpy array to string"""
+    encodings_str = ",".join(str(item) for item in encodings)
+    return encodings_str
+
+
+def str_to_face_enc(enc_str):
+    """Convert encodings formatted as a string to numpy array"""
+    encodings = np.array([float(item) for item in enc_str.split(",")])
+    return encodings
+
 class Semester(models.IntegerChoices):
     FIRST = 1, "First Semester"
     SECOND = 2, "Second Semester"
@@ -80,6 +91,7 @@ class Department(models.Model):
     name = models.CharField(max_length=500)
     alias = models.CharField(max_length=20, null=True, blank=True)
     faculty = models.ForeignKey(to=Faculty, on_delete=models.CASCADE)
+    # program_duration = models.IntegerField() :what program are you considering; there are many program types: new model may be necessary
 
     class Meta:
         constraints = [
@@ -170,18 +182,6 @@ class Student(models.Model):
     def __str__(self):
         return f"{self.first_name} {self.last_name} ({self.reg_number}),\
             {self.admission_status}"
-
-    @staticmethod
-    def face_enc_to_str(encodings):
-        """Convert face encodings from numpy array to string"""
-        encodings_str = ",".join(str(item) for item in encodings)
-        return encodings_str
-
-    @staticmethod
-    def str_to_face_enc(enc_str):
-        """Convert encodings formatted as a string to numpy array"""
-        encodings = np.array([float(item) for item in enc_str.split(",")])
-        return encodings
 
     def clean(self):
         if not Student.is_valid_student_reg_number(self.reg_number):
