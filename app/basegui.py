@@ -6,6 +6,11 @@ import base64
 
 from PIL import Image
 import PySimpleGUI as sg
+from manage import init_django
+
+init_django()
+
+from db.models import Department, Faculty, Sex, Student, Staff
 
 
 # set application-wide theme
@@ -13,6 +18,7 @@ sg.theme("LightGreen6")
 
 
 class BaseGUIWindow:
+    COMBO_DEFAULT = '--select--'
     SCREEN_SIZE = (480, 320)
     ICON_SIZE = {"h": 125, "w": 70}
     ICON_BUTTON_COLOR = (
@@ -20,18 +26,13 @@ class BaseGUIWindow:
         sg.theme_background_color(),
     )
 
-    @staticmethod
-    def confirm_exit():
-        clicked = sg.popup_ok_cancel(
-            "System will shutdown. Do you want to continue?",
-            title="Shutdown",
-            keep_on_top=True,
-        )
-        if clicked == "OK":
-            return False
-        if clicked in ("Cancel", None):
-            pass
-        return True
+    @classmethod
+    def window(cls):
+        raise NotImplementedError
+
+    @classmethod
+    def loop(cls, window, event, values):
+        raise NotImplementedError
 
     @staticmethod
     def _image_file_to_bytes(image64, size):
@@ -64,5 +65,66 @@ class BaseGUIWindow:
             "keep_on_top": True,
             "grab_anywhere": True,
             "finalize": True,
+            "use_custom_titlebar":False
         }
         return init_dict
+
+    @staticmethod
+    def validate_required_field(field_value, field_name):
+        if field_value in (None, '', '--select--'):
+            sg.popup("Invalid value provided in {}".format(field_name), title="Invalid value", keep_on_top=True)
+            return False
+        return True
+
+    @staticmethod
+    def get_int(field_value):
+        try:
+            field_value_int = int(field_value)
+        except ValueError:
+            return None
+        else:
+            return field_value_int
+    
+    @staticmethod
+    def validate_student_reg_number(reg_no):
+        if not Student.is_valid_student_reg_number(reg_no):
+            sg.popup("Invalid value for student registration number", title="Invalid Registration Number", keep_on_top=True)
+            return False
+        return True
+
+    @staticmethod
+    def validate_staff_number(staff_no):
+        if not Staff.is_valid_staff_number(staff_no):
+            sg.popup("Invalid value for staff number", title="Invalid Staff Number", keep_on_top=True)
+            return False
+        return True
+    
+    @staticmethod
+    def validate_faculty(faculty):
+        if faculty.lower() not in [fac.lower() for fac in Faculty.get_all_faculties()]:
+            sg.popup("Invalid value in faculty", title="Invalid Faculty", keep_on_top=True)
+            return False
+        return True
+
+    @staticmethod
+    def validate_department(department):
+        if department.lower() not in [dept.lower() for dept in Department.get_departments()]:
+            sg.popup("Invalid value in departmet", title="Invalid Departmet", keep_on_top=True)
+            return False
+        return True
+    
+    @staticmethod
+    def validate_sex(sex):
+        if sex not in Sex.labels:
+            sg.popup("Invalid value in sex", title="Invalid sex", keep_on_top=True)
+            return False
+        return True
+
+    @staticmethod
+    def validate_int_field(field_value):
+        try:
+            field_val_int = int(field_value)
+        except ValueError:
+            return False
+        else:
+            return True
