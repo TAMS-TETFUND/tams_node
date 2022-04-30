@@ -1,9 +1,12 @@
+from cgitb import enable
 from datetime import datetime
 import PySimpleGUI as sg
 
 from app.appconfigparser import AppConfigParser
 from app.basegui import BaseGUIWindow
 # from app.camera import Camera
+from app.barcode import Barcode
+from app.facerec import FaceRecognition
 from app.windowdispatch import WindowDispatch
 from manage import init_django
 
@@ -13,6 +16,7 @@ from db.models import (
     AttendanceSession,
     AcademicSession,
     Student,
+    Sex,
     Staff,
     Course,
     Faculty,
@@ -71,6 +75,11 @@ class HomeWindow(BaseGUIWindow):
             [
                 sg.Push(),
                 sg.Button(
+                    image_data=cls.get_icon("settings", 0.5),
+                    button_color=cls.ICON_BUTTON_COLOR,
+                    key="settings",
+                ),
+                sg.Button(
                     image_data=cls.get_icon("power", 0.5),
                     button_color=cls.ICON_BUTTON_COLOR,
                     key="quit",
@@ -92,13 +101,27 @@ class HomeWindow(BaseGUIWindow):
         window = sg.Window("Home Window", layout, **cls.window_init_dict())
         return window
 
-    @staticmethod
-    def loop(window, event, values):
+    @classmethod
+    def loop(cls, window, event, values):
         if event == "new_event":
             window_dispatch.open_window(EventMenuWindow)
-
+        if event == "settings":
+            window_dispatch.open_window(EnrolmentWindow)
         if event == "quit":
             return HomeWindow.confirm_exit()
+        return True
+
+    @staticmethod
+    def confirm_exit():
+        clicked = sg.popup_ok_cancel(
+            "System will shutdown. Do you want to continue?",
+            title="Shutdown",
+            keep_on_top=True,
+        )
+        if clicked == "OK":
+            return False
+        if clicked in ("Cancel", None):
+            pass
         return True
 
 
@@ -181,14 +204,14 @@ class EventMenuWindow(BaseGUIWindow):
         window = sg.Window("Event Menu", layout, **cls.window_init_dict())
         return window
 
-    @staticmethod
-    def loop(window, event, values):
+    @classmethod
+    def loop(cls, window, event, values):
         if event in (sg.WIN_CLOSED, "back"):
             window_dispatch.open_window(HomeWindow)
         if event in ("lecture", "exam", "lab", "test"):
             app_config["new_event"] = {}
             app_config["new_event"]["type"] = event
-            if event in ("lecure", "lab"):
+            if event in ("lecture", "lab"):
                 recurring = sg.popup_yes_no(
                     f"Is this {event} a weekly activity?",
                     title="Event detail",
@@ -250,9 +273,16 @@ class AcademicSessionDetailsWindow(BaseGUIWindow):
         )
         return window
 
-    @staticmethod
-    def loop(window, event, values):
+    @classmethod
+    def loop(cls, window, event, values):
         if event == "next":
+            required_fields = ["current_semester", "current_session"]
+            for field in required_fields:
+                if not cls.validate_required_field(values[field], field):
+                    return True
+            if not cls.validate(values):
+                return True
+
             app_config["DEFAULT"]["semester"] = values["current_semester"]
             app_config["DEFAULT"]["session"] = values["current_session"]
             app_config.save()
@@ -263,46 +293,75 @@ class AcademicSessionDetailsWindow(BaseGUIWindow):
             window_dispatch.open_window(HomeWindow)
         return True
 
+    @classmethod
+    def validate(cls, values):
+        """fields: current_session, current_semester"""
+        if values["current_semester"] not in Semester.labels:
+            sg.popup("Invalid value in current semester", "Invalid semester", keep_on_top=True)
+            return False        
+        if not AcademicSession.is_valid_session(values["current_session"]):
+            sg.popup("Invlid value in current session", "Invalid session", keep_on_top=True)
+            return False
+        return True
+
 
 class EventDetailWindow(BaseGUIWindow):
     @classmethod
     def window(cls):
-        layout = [
-            [sg.Push(), sg.Text("Event Details"), sg.Push()],
-            [sg.Text("_" * 80)],
-            [sg.VPush()],
+        section1 = [
             [
-                sg.Text("What Faculty administers the course:  "),
-                sg.InputCombo(
+                sg.Text("Faculty:  "),
+                sg.Combo(
                     Faculty.get_all_faculties(),
-                    default_value="--select--",
+                    default_value=cls.COMBO_DEFAULT,
                     enable_events=True,
                     key="course_faculty",
                     expand_y=True,
                 ),
             ],
             [
-                sg.Text("What Department administers the course:  "),
-                sg.InputCombo(
-                    Department.get_all_departments(),
-                    default_value="--select--",
+                sg.Text("Department:  "),
+                sg.Combo(
+                    Department.get_departments(),
+                    default_value=cls.COMBO_DEFAULT,
                     enable_events=True,
                     key="course_department",
                     expand_y=True,
                 ),
             ],
+        ]
+        layout = [
+            [sg.Push(), sg.Text("Event Details"), sg.Push()],
+            [sg.Text("_" * 80)],
+            [sg.VPush()],
             [
                 sg.Text("Select Course:  "),
-                sg.InputCombo(
-                    Course.get_all_courses(
+                sg.Combo(
+                    Course.get_courses(
                         semester=app_config.get("DEFAULT", "semester")
                     ),
-                    default_value="--select--",
+                    default_value=cls.COMBO_DEFAULT,
                     enable_events=True,
                     key="selected_course",
                     expand_y=True,
                 ),
             ],
+            [
+                sg.Image(
+                    data=cls.get_icon("up_arrow", 0.25),
+                    k="filter_courses_img",
+                    enable_events=True,
+                ),
+                sg.Text(
+                    "Filter Courses", enable_events=True, k="filter_courses"
+                ),
+            ],
+            [
+                sg.pin(
+                    sg.Column(section1, k="sec1", visible=False, expand_y=True)
+                )
+            ],
+            [sg.Text("_" * 80)],
             [
                 sg.Text("Start Time: "),
                 sg.Spin(
@@ -341,12 +400,13 @@ class EventDetailWindow(BaseGUIWindow):
                     expand_y=True,
                     key="duration",
                 ),
-                sg.Text("Hours"),
+                sg.Text("Hour(s)"),
             ],
             [
                 sg.Push(),
-                sg.Button("Start Event"),
-                sg.Button("Schedule Event"),
+                sg.Button("Start Event", k="start_event"),
+                sg.Button("Schedule Event", k="schedule_event"),
+                sg.Button("Cancel", k="cancel"),
                 sg.Push(),
             ],
             [sg.VPush()],
@@ -355,31 +415,38 @@ class EventDetailWindow(BaseGUIWindow):
         window = sg.Window("Event Details", layout, **cls.window_init_dict())
         return window
 
-    @staticmethod
-    def loop(window, event, values):
+    @classmethod
+    def loop(cls, window, event, values):
+        if event.startswith("filter_courses"):
+            window["filter_courses_img"].update(
+                data=EventDetailWindow.get_icon("down_arrow", 0.25)
+            )
+            window["sec1"].update(visible=True)
         if event == "course_faculty":
-            if values["course_faculty"] in ("--select--", None):
+            if values["course_faculty"] in (cls.COMBO_DEFAULT, None):
                 window["course_department"].update(
-                    values=Department.get_all_departments(), value="--select--"
+                    values=Department.get_departments(), value=cls.COMBO_DEFAULT
                 )
             else:
                 window["course_department"].update(
-                    values=Department.filter_departments(
+                    values=Department.get_departments(
                         values["course_faculty"]
                     ),
-                    value="--select--",
+                    value=cls.COMBO_DEFAULT,
                 )
+                window["selected_course"].update(values=Course.get_courses(semester=app_config.get("DEFAULT", "semester"), faculty=values["course_faculty"]), value=cls.COMBO_DEFAULT)
         if event == "course_department":
-            if values["course_department"] in ("--select--", None):
+            if values["course_department"] in (cls.COMBO_DEFAULT, None):
                 window["selected_course"].update(
-                    values=Course.get_all_courses(), value="--select--"
+                    values=Course.get_courses(semester=app_config.get("DEFAULT", "semester")), value=cls.COMBO_DEFAULT
                 )
             else:
                 window["selected_course"].update(
-                    values=Course.filter_courses(
-                        dept=values["course_department"]
+                    values=Course.get_courses(
+                        semester=app_config.get("DEFAULT", "semester"),
+                        department=values["course_department"]
                     ),
-                    value="--select--",
+                    value=cls.COMBO_DEFAULT,
                 )
         if event == "pick_date":
             event_date = sg.popup_get_date()
@@ -389,7 +456,19 @@ class EventDetailWindow(BaseGUIWindow):
                 window["start_date"].update(
                     value=f"{event_date[1]}-{event_date[0]}-{event_date[2]}"
                 )
-        if event in ("Start Event", "Schedule Event"):
+            window.force_focus()
+        if event in ("start_event", "schedule_event"):
+            required_fields = [
+                "selected_course",
+                "start_hour",
+                "start_date",
+                "duration",
+            ]
+            for field in required_fields:
+                if not cls.validate_required_field(values[field], field):
+                    return True
+            if not cls.validate(values):
+                return True
             app_config["new_event"]["course"] = values["selected_course"]
             app_config["new_event"]["start_time"] = (
                 values["start_hour"] + ":" + values["start_minute"]
@@ -398,11 +477,45 @@ class EventDetailWindow(BaseGUIWindow):
             app_config["new_event"]["duration"] = values["duration"]
             app_config.save()
 
-            if event == "Start Event":
+            if event == "start_event":
                 window_dispatch.open_window(StaffNumberInputWindow)
-            if event == "Schedule Event":
+            if event == "schedule_event":
+                sg.popup("Event saved to scheduled events", title="Event saved", keep_on_top=True)
                 window_dispatch.open_window(HomeWindow)
+        if event == "cancel":
+            app_config["new_event"] = {}
+            app_config.save()
+            window_dispatch.open_window(HomeWindow)
         return True
+
+    @classmethod
+    def validate(cls, values):
+        if Course.str_to_course(values["selected_course"]) is None:
+            sg.popup("Invalid course selected", title="Error", keep_on_top=True)
+            return False
+        
+        if None in (cls.get_int(values["start_hour"]), cls.get_int(values["start_minute"])):
+            sg.popup("Invalid value in start time", keep_on_top=True)
+            return False
+        
+        if cls.get_int(values["duration"]) is None or int(values["duration"]) <= 0:
+            sg.popup("Invalid value in duration", keep_on_top=True)
+            return False
+
+        try:
+            start_date = datetime.strptime(values["start_date"], "%d-%m-%Y")
+        except ValueError:
+            sg.popup("Invalid start date", keep_on_top=True)
+            return False
+        
+        current_dt = datetime.now()
+
+        if current_dt < start_date or current_dt.hour > int(values["start_hour"]):
+            sg.popup("Date and time must not be earlier than current date and time", keep_on_top=True)
+            return False
+        
+        return True
+
 
 
 class VerifyAttendanceInitiatorWindow(BaseGUIWindow):
@@ -455,8 +568,8 @@ class VerifyAttendanceInitiatorWindow(BaseGUIWindow):
         )
         return window
 
-    @staticmethod
-    def loop(window, event, values):
+    @classmethod
+    def loop(cls, window, event, values):
         global window_dispatch, app_config
         if event in (sg.WIN_CLOSED, "back"):
             window_dispatch.open_window(HomeWindow)
@@ -524,8 +637,8 @@ class StaffNumberInputWindow(BaseGUIWindow):
         )
         return window
 
-    @staticmethod
-    def loop(window, event, values):
+    @classmethod
+    def loop(cls, window, event, values):
         global window_dispatch, app_config
         if event == "back":
             window_dispatch.open_window(HomeWindow)
@@ -543,6 +656,11 @@ class StaffNumberInputWindow(BaseGUIWindow):
         elif event == "clear":
             keys_entered = ""
         elif event == "submit":
+            if not cls.validate_required_field(values["staff_number_input"], "staff_input_value"):
+                return True
+            if not cls.validate(values):
+                return True
+
             keys_entered = values["staff_number_input"]
             app_config["new_event"]["initiator_staff_num"] = (
                 "SS." + keys_entered
@@ -553,6 +671,13 @@ class StaffNumberInputWindow(BaseGUIWindow):
         window["staff_number_input"].update(keys_entered)
         return True
 
+    @classmethod
+    def validate(cls, values):
+        """fields: staff_number_input"""
+        if not Staff.is_valid_staff_number("SS."+values["staff_number_input"]):
+            sg.popup("Invalid staff number", title="Invalid staff number", keep_on_top=True)
+            return False
+        return True
 
 class CameraWindow(BaseGUIWindow):
     @classmethod
@@ -566,26 +691,292 @@ class CameraWindow(BaseGUIWindow):
                     button_color=cls.ICON_BUTTON_COLOR,
                     key="capture",
                 ),
-                sg.Push()
+                sg.Push(),
             ],
         ]
         window = sg.Window("Camera", layout, **cls.window_init_dict())
         return window
 
-    @staticmethod
-    def loop(window, event, values):
+
+class FaceCameraWindow(CameraWindow):
+    @classmethod
+    def loop(cls, window, event, values):
         cam_on = True
         with Camera() as cam:
             while cam_on:
                 event, values = window.read(timeout=20)
                 if event == "capture":
                     return False
-                window["image_display"].update(data=cam.feed())
+                img = cam.feed()
+                face_locations = FaceRecognition.face_locations(img)
+                if len(face_locations) > 0:
+                    for face_location in face_locations:
+                        FaceRecognition.draw_bounding_box(face_location, img)
+                window["image_display"].update(data=img)
         return True
 
 
-class EnrolWindow(BaseGUIWindow):
-    """The GUI """
+class BarcodeCameraWindow(CameraWindow):
+    @classmethod
+    def loop(cls, window, event, values):
+        cam_on = True
+        with Camera() as cam:
+            while cam_on:
+                event, values = window.read(timeout=20)
+                if event == "capture":
+                    return False
+                img = cam.feed()
+                barcodes = Barcode.decode_image(img)
+                if len(barcodes) > 0:
+                    for barcode in barcodes:
+                        Barcode.draw_bounding_box(barcode, img)
+                window["image_display"].update(data=img)
+        return True
+
+
+class EnrolmentWindow(BaseGUIWindow):
+    @classmethod
+    def window(cls):
+        layout = [
+            [sg.VPush()],
+            [
+                sg.Push(),
+                sg.Button("Staff Enrolment", key="staff_enrolment"),
+                sg.Button("Student Enrolment", key="student_enrolment"),
+                sg.Push(),
+            ],
+            [sg.VPush()],
+        ]
+        window = sg.Window("Enrolment Window", layout, **cls.window_init_dict())
+        return window
+
+    @classmethod
+    def loop(cls, window, event, values):
+        if event == "staff_enrolment":
+            window_dispatch.open_window(StaffEnrolmentWindow)
+        if event == "student_enrolment":
+            window_dispatch.open_window(StudentEnrolmentWindow)
+        return True
+
+
+class StaffEnrolmentWindow(BaseGUIWindow):
+    """The GUI for enrolment of staff"""
+
+    @classmethod
+    def window(cls):
+        column1 = [
+            [sg.Push(), sg.Text("Staff Enrolment"), sg.Push()],
+            [
+                sg.Text("Staff Number:  "),
+                sg.Input(
+                    size=(15, 1), justification="left", key="staff_number_input"
+                ),
+            ],
+            [
+                sg.Text("First Name: "),
+                sg.Input(
+                    expand_x=True, justification="left", key="staff_first_name"
+                ),
+            ],
+            [
+                sg.Text("Last Name: "),
+                sg.Input(
+                    expand_x=True, justification="left", key="staff_last_name"
+                ),
+            ],
+            [
+                sg.Text("Other Names: "),
+                sg.Input(
+                    expand_x=True, justification="left", key="staff_other_names"
+                ),
+            ],
+            [
+                sg.Text("Sex:  "),
+                sg.Combo(
+                    values=Sex.labels,
+                    default_value=cls.COMBO_DEFAULT,
+                    key="staff_sex",
+                ),
+            ],
+            [
+                sg.Text("Faculty: "),
+                sg.Combo(values=Faculty.get_all_faculties(),default_value=cls.COMBO_DEFAULT, enable_events=True, expand_x=True, key="staff_faculty"
+                ),
+            ],
+            [
+                sg.Text("Department: "),
+                sg.Combo(values=Department.get_departments(), default_value=cls.COMBO_DEFAULT, enable_events=True, expand_x=True, key="staff_department"
+                ),
+            ],
+        ]
+        layout = [
+            [sg.VPush()],
+            [
+                sg.Push(),
+                sg.Column(column1, vertical_scroll_only=True),
+                sg.Push(),
+            ],
+            [
+                sg.Button("Submit", key="submit"),
+                sg.Button("Cancel", key="cancel"),
+            ],
+            [sg.VPush()],
+        ]
+        window = sg.Window("Staff Enrolment", layout, **cls.window_init_dict())
+        return window
+
+    @classmethod
+    def loop(cls, window, event, values):
+        if event == "staff_faculty":
+            if values["staff_faculty"] in (cls.COMBO_DEFAULT, None):
+                window["staff_faculty"].update(values=Faculty.get_all_faculties(), value=cls.COMBO_DEFAULT)
+            else:
+                window["staff_department"].update(values=Department.get_departments(faculty=values["staff_faculty"]), value=cls.COMBO_DEFAULT)
+        if event == "submit":
+            fields = ["staff_number_input", "staff_first_name", "staff_last_name", "staff_sex", "staff_faculty", "staff_department"]
+            for field in fields:
+                if not cls.validate_required_field(values[field], field):
+                    return True
+            window_dispatch.open_window(HomeWindow)
+        if event == "cancel":
+            window_dispatch.open_window(HomeWindow)
+        return True
+
+    @classmethod
+    def validate(cls, values):
+        if False in (cls.validate_staff_number(values["staff_number_input"]), cls.validate_sex(values["staff_sex"]), cls.validate_faculty(values["staff_faculty"]), cls.validate_department(values["staff_department"])):
+            return False
+        return True
+
+class StudentEnrolmentWindow(BaseGUIWindow):
+    @classmethod
+    def window(cls):
+        column1 = [
+            [sg.Push(), sg.Text("Student Enrolment"), sg.Push()],
+            [
+                sg.Text("Registration Number:  "),
+                sg.Input(
+                    size=(15, 1),
+                    justification="left",
+                    key="student_reg_number_input",
+                ),
+            ],
+            [
+                sg.Text("First Name: "),
+                sg.Input(
+                    expand_x=True,
+                    justification="left",
+                    key="student_first_name",
+                ),
+            ],
+            [
+                sg.Text("Last Name: "),
+                sg.Input(
+                    expand_x=True, justification="left", key="student_last_name"
+                ),
+            ],
+            [
+                sg.Text("Other Names: "),
+                sg.Input(
+                    expand_x=True,
+                    justification="left",
+                    key="student_other_names",
+                ),
+            ],
+            [
+                sg.Text("Sex:  "),
+                sg.Combo(
+                    values=Sex.labels,
+                    default_value=cls.COMBO_DEFAULT,
+                    key="student_sex",
+                ),
+            ],
+            [
+                sg.Text("Level of study:  "),
+                sg.Input(
+                    size=(5, 1),
+                    justification="left",
+                    key="student_level_of_study",
+                ),
+            ],
+            [
+                sg.Text("Faculty: "),
+                sg.Combo(values=Faculty.get_all_faculties(), default_value=cls.COMBO_DEFAULT,expand_x=True, enable_events=True, key="student_faculty"),
+            ],
+            [
+                sg.Text("Department: "),
+                sg.Combo(
+                    values=Department.get_departments(), default_value=cls.COMBO_DEFAULT, expand_x=True,enable_events=True, key="student_department"
+                ),
+            ],
+        ]
+        layout = [
+            [sg.VPush()],
+            [
+                sg.Push(),
+                sg.Column(column1, vertical_scroll_only=True),
+                sg.Push(),
+            ],
+            [
+                sg.Button("Submit", key="submit"),
+                sg.Button("Cancel", key="cancel"),
+            ],
+            [sg.VPush()],
+        ]
+        window = sg.Window(
+            "Student Enrolment", layout, **cls.window_init_dict()
+        )
+        return window
+
+    @classmethod
+    def loop(cls, window, event, values):
+        window.force_focus()
+        if event == "student_faculty":
+            if values["student_faculty"] in (cls.COMBO_DEFAULT, None):
+                window["student_faculty"].update(values=Faculty.get_all_faculties(), value=cls.COMBO_DEFAULT)
+            else:
+                window["student_department"].update(values=Department.get_departments(faculty=values["student_faculty"]), value=cls.COMBO_DEFAULT)
+        if event == "submit":
+            req_fields = ["student_reg_number_input", "student_first_name", "student_last_name", "student_sex", "student_level_of_study",
+            "student_faculty", "student_department"]
+            for field in req_fields:
+                val_check = cls.validate_required_field(values[field], field)
+                if val_check is False:
+                    break
+                else:
+                    continue
+            if val_check is False:
+                window.force_focus()
+                return True
+            else:
+                pass
+            
+            # val_check = cls.validate(values)
+            # if val_check is False:
+            #     window.force_focus()
+            #     return True
+            # else:
+            #     window_dispatch.open_window(HomeWindow)
+        if event == "cancel":
+            window_dispatch.open_window(HomeWindow)
+        return True
+
+    @classmethod
+    def validate(cls, values):
+        if False in (cls.validate_student_reg_number(values["student_reg_number_input"]), cls.validate_sex(values["student_sex"]), cls.validate_faculty(values["student_faculty"]), cls.validate_department(values["student_department"]), cls.validate_int_field(values["student_level_of_study"])):
+            return False
+        return True
+
+class AttendanceMenuWindow(BaseGUIWindow):
+    @classmethod
+    def window(cls):
+        layout = [
+            [sg.VPush()],
+            [sg.Push(), sg.Button("Start Attendance Taking"), sg.Push()],
+            [sg.Push(), sg.Button("End Attendance Taking"), sg.Push()],
+            [sg.VPush()],
+        ]
+
 
 def main():
     window_dispatch.open_window(HomeWindow)
