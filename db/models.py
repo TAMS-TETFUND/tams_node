@@ -103,19 +103,13 @@ class Department(models.Model):
             ),
         ]
 
+ 
     @staticmethod
-    def get_all_departments():
-        return list(
-            Department.objects.all().order_by("name").values_list("name", flat=True)
-        )
-
-    @staticmethod
-    def filter_departments(faculty_name):
-        return list(
-            Department.objects.filter(faculty__name=faculty_name).values_list(
-                "name", flat=True
-            )
-        )
+    def get_departments(faculty=None):
+        departments = Department.objects.all()
+        if faculty and Faculty.objects.filter(name__iexact=faculty).exists():
+            departments = departments.filter(faculty__name__iexact=faculty)
+        return list(departments.order_by("name").values_list("name", flat=True))
 
 
 class AppUser(AbstractUser):
@@ -221,28 +215,31 @@ class Course(models.Model):
             ),
         ]
 
-    @staticmethod
-    def get_all_courses(semester=None):
-        if semester:
-            all_courses = Course.objects.filter(
-                semester=Semester.values[Semester.labels.index(semester)]
-            ).exclude(is_active=False)
-        else:
-            all_courses = Course.objects.exclude(is_active=False)
-
-        return [f"{item.code} - {item.title}" for item in all_courses]
+    @classmethod
+    def get_courses(cls, *, semester=None, faculty=None, department=None, level_of_study=None):
+        course_list = cls.objects.all().exclude(is_active=False)
+        if semester and semester in Semester.labels:
+            course_list = course_list.filter(semester=Semester.values[Semester.labels.index(semester)])
+        
+        if department and Department.objects.filter(name__iexact=department).exists():
+            course_list = course_list.filter(department__name__iexact=department)
+        elif faculty and Faculty.objects.filter(name__iexact=faculty).exists():
+            course_list = course_list.filter(department__faculty__name__iexact=faculty)
+        
+        if level_of_study:
+            course_list = level_of_study.filter(level_of_study=level_of_study)
+        
+        return [f"{item.code} : {item.title}" for item in course_list]
 
     @classmethod
-    def filter_courses(cls, dept = None):
-        if dept:
-            course_list = list(Course.objects.filter(department__name=dept).exclude(
-                is_active=False
-            ))
-            return [f"{item.code} - {item.title}" for item in course_list]
+    def str_to_course(cls, course_str):
+        split_course_str = course_str.split(" : ")
+        try:
+            course_obj = cls.objects.exclude(is_active=False).get(code__iexact=split_course_str[0], title__iexact=" : ".join(split_course_str[1:]))
+        except Exception:
+            return None
         else:
-            cls.get_all_courses()
-
-
+            return course_obj.id
 class AcademicSession(models.Model):
     id = models.BigAutoField(primary_key=True)
     session = models.CharField(max_length=10, unique=True)
