@@ -10,7 +10,7 @@ from manage import init_django
 
 init_django()
 
-from db.models import Department, Faculty, Sex, Student, Staff
+from db.models import AcademicSession, Department, Faculty, Semester, Sex, Student, Staff
 
 
 # set application-wide theme
@@ -70,39 +70,59 @@ class BaseGUIWindow:
         return init_dict
 
     @staticmethod
-    def message_display():
+    def message_display_field():
         return sg.pin(
             sg.Text("", enable_events=True, k="message_display", visible=False)
         )
 
     @staticmethod
-    def validate_required_field(field_value, field_name):
+    def display_message(message, window):
+        window["message_display"].update(value=message, visible=True)
+    
+    @staticmethod
+    def validate_required_field(req_field):
+        field_value, field_name_for_display = req_field
         if field_value in (None, "", "--select--"):
-            return "Invalid value provided in {}".format(
-                " ".join(field_name.split("_"))
-            )
-        return None
+            return "Invalid value provided in {}".format(field_name_for_display)
+        else:
+            return None
+
+    @classmethod
+    def validate_required_fields(cls, req_fields, window):
+        for field in req_fields:
+            validation_value = cls.validate_required_field(field)
+            if validation_value is not None:
+                cls.display_message(validation_value, window)
+                return True
+            else:
+                return None
 
     @staticmethod
-    def get_int(field_value):
-        try:
-            field_value_int = int(field_value)
-        except ValueError:
-            return None
+    def validate_semester(semester):
+        if semester not in Semester.labels:
+            return "Invalid value for semester"
         else:
-            return field_value_int
+            return None
 
+    @staticmethod
+    def validate_academic_session(session):
+        if not AcademicSession.is_valid_session(session):
+            return "Invalid value for academic session"
+        else:
+            return None
     @staticmethod
     def validate_student_reg_number(reg_no):
         if not Student.is_valid_student_reg_number(reg_no):
-            return "Invalid value for student registration number"
-        return None
+            return f"Invalid format for student registration number ({reg_no})"
+        else:
+            return None
 
     @staticmethod
     def validate_staff_number(staff_no):
         if not Staff.is_valid_staff_number(staff_no):
             return "Invalid value for staff number"
-        return None
+        else:
+            return None
 
     @staticmethod
     def validate_faculty(faculty):
@@ -110,7 +130,8 @@ class BaseGUIWindow:
             fac.lower() for fac in Faculty.get_all_faculties()
         ]:
             return "Invalid value in faculty"
-        return None
+        else:
+            return None
 
     @staticmethod
     def validate_department(department):
@@ -118,13 +139,15 @@ class BaseGUIWindow:
             dept.lower() for dept in Department.get_departments()
         ]:
             return "Invalid value in department"
-        return None
+        else:
+            return None
 
     @staticmethod
     def validate_sex(sex):
         if sex not in Sex.labels:
             return "Invalid value in sex"
-        return None
+        else:
+            return None
 
     @staticmethod
     def validate_int_field(field_value, field_name):
@@ -132,5 +155,12 @@ class BaseGUIWindow:
             field_val_int = int(field_value)
         except Exception:
             return f"Enter a numeric value for {field_name}"
+        else:
+            return None
+
+    @staticmethod
+    def validate_text_field(field_value, field_name):
+        if len(field_value) == 0:
+            return f"{field_name.capitalize()} cannot be blank"
         else:
             return None

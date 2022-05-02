@@ -1,10 +1,10 @@
-from cgitb import enable
 from datetime import datetime
+
 import PySimpleGUI as sg
+from django.core.exceptions import ObjectDoesNotExist
 
 from app.appconfigparser import AppConfigParser
 from app.basegui import BaseGUIWindow
-
 # from app.camera import Camera
 from app.barcode import Barcode
 from app.facerec import FaceRecognition
@@ -107,7 +107,7 @@ class HomeWindow(BaseGUIWindow):
         if event == "new_event":
             window_dispatch.open_window(EventMenuWindow)
         if event == "settings":
-            window_dispatch.open_window(EnrolmentWindow)
+            window_dispatch.open_window(EnrolmentMenuWindow)
         if event == "quit":
             return HomeWindow.confirm_exit()
         return True
@@ -238,6 +238,7 @@ class AcademicSessionDetailsWindow(BaseGUIWindow):
             [sg.Text("_" * 80)],
             [sg.VPush()],
             [
+                [cls.message_display_field()],
                 sg.Text("Select Current Session:  "),
                 sg.Combo(
                     AcademicSession.get_all_academic_sessions(),
@@ -277,11 +278,7 @@ class AcademicSessionDetailsWindow(BaseGUIWindow):
     @classmethod
     def loop(cls, window, event, values):
         if event == "next":
-            required_fields = ["current_semester", "current_session"]
-            for field in required_fields:
-                if not cls.validate_required_field(values[field], field):
-                    return True
-            if not cls.validate(values):
+            if cls.validate(values, window) is not None:
                 return True
 
             app_config["DEFAULT"]["semester"] = values["current_semester"]
@@ -295,24 +292,21 @@ class AcademicSessionDetailsWindow(BaseGUIWindow):
         return True
 
     @classmethod
-    def validate(cls, values):
-        """fields: current_session, current_semester"""
-        if values["current_semester"] not in Semester.labels:
-            sg.popup(
-                "Invalid value in current semester",
-                "Invalid semester",
-                keep_on_top=True,
-            )
-            return False
-        if not AcademicSession.is_valid_session(values["current_session"]):
-            sg.popup(
-                "Invlid value in current session",
-                "Invalid session",
-                keep_on_top=True,
-            )
-            return False
-        return True
+    def validate(cls, values, window):
+        required_fields = [(values["current_semester"], "current semester"), (values["current_session"], "current session")]
+        if cls.validate_required_fields(required_fields, window) is not None:
+            return True
+        
+        validation_val = cls.validate_semester(values["current_semester"])
+        if validation_val is not None:
+            cls.display_message(validation_val, window)
+            return True
 
+        validation_val = cls.validate_academic_session(values["current_session"])
+        if validation_val is not None:
+            cls.display_message(validation_val, window)
+            return True
+        return None
 
 class EventDetailWindow(BaseGUIWindow):
     @classmethod
@@ -344,6 +338,7 @@ class EventDetailWindow(BaseGUIWindow):
             [sg.Text("_" * 80)],
             [sg.VPush()],
             [
+                [cls.message_display_field()],
                 sg.Text("Select Course:  "),
                 sg.Combo(
                     Course.get_courses(
@@ -474,17 +469,9 @@ class EventDetailWindow(BaseGUIWindow):
                 )
             window.force_focus()
         if event in ("start_event", "schedule_event"):
-            required_fields = [
-                "selected_course",
-                "start_hour",
-                "start_date",
-                "duration",
-            ]
-            for field in required_fields:
-                if not cls.validate_required_field(values[field], field):
-                    return True
-            if not cls.validate(values):
+            if cls.validate(values, window) is not None:
                 return True
+
             app_config["new_event"]["course"] = values["selected_course"]
             app_config["new_event"]["start_time"] = (
                 values["start_hour"] + ":" + values["start_minute"]
@@ -509,43 +496,52 @@ class EventDetailWindow(BaseGUIWindow):
         return True
 
     @classmethod
-    def validate(cls, values):
-        if Course.str_to_course(values["selected_course"]) is None:
-            sg.popup("Invalid course selected", title="Error", keep_on_top=True)
-            return False
+    def validate(cls, values, window):
 
-        if None in (
-            cls.get_int(values["start_hour"]),
-            cls.get_int(values["start_minute"]),
+        required_fields = [
+                (values["selected_course"], "selected course"),
+                (values["start_hour"], "start time"),
+                (values["start_date"], "start time"),
+                (values["duration"], "duration")
+            ]
+        validation_val = cls.validate_required_fields(required_fields, window)
+        if validation_val is not None:
+            return True
+
+        if Course.str_to_course(values["selected_course"]) is None:
+            cls.display_message("Invalid course selected", window)
+            return True
+
+        for val_check in (
+            cls.validate_int_field(values["start_hour"], "start time"),
+            cls.validate_int_field(values["start_minute"], "start time"),
         ):
-            sg.popup("Invalid value in start time", keep_on_top=True)
-            return False
+            if val_check is not None:
+                cls.display_message(val_check, window)
+                return True
 
         if (
-            cls.get_int(values["duration"]) is None
+            cls.validate_int_field(values["duration"], "duration") is not None
             or int(values["duration"]) <= 0
         ):
-            sg.popup("Invalid value in duration", keep_on_top=True)
-            return False
+            cls.display_message("Invalid value in duration", window)
+            return True
 
         try:
             start_date = datetime.strptime(values["start_date"], "%d-%m-%Y")
         except ValueError:
-            sg.popup("Invalid start date", keep_on_top=True)
-            return False
+            cls.display_message("Invalid start date", window)
+            return True
 
         current_dt = datetime.now()
 
         if current_dt < start_date or current_dt.hour > int(
             values["start_hour"]
         ):
-            sg.popup(
-                "Date and time must not be earlier than current date and time",
-                keep_on_top=True,
-            )
-            return False
+            cls.display_message("Date and time must not be earlier than current date and time", window)
+            return True
 
-        return True
+        return None
 
 
 class VerifyAttendanceInitiatorWindow(BaseGUIWindow):
@@ -649,6 +645,7 @@ class StaffNumberInputWindow(BaseGUIWindow):
             ],
             [sg.Text("_" * 80)],
             [sg.VPush()],
+            [cls.message_display_field()],
             [
                 sg.Push(),
                 sg.Text("Staff Number:    SS."),
@@ -686,11 +683,7 @@ class StaffNumberInputWindow(BaseGUIWindow):
         elif event == "clear":
             keys_entered = ""
         elif event == "submit":
-            if not cls.validate_required_field(
-                values["staff_number_input"], "staff_input_value"
-            ):
-                return True
-            if not cls.validate(values):
+            if cls.validate(values, window) is not None:
                 return True
 
             keys_entered = values["staff_number_input"]
@@ -704,18 +697,12 @@ class StaffNumberInputWindow(BaseGUIWindow):
         return True
 
     @classmethod
-    def validate(cls, values):
-        """fields: staff_number_input"""
-        if not Staff.is_valid_staff_number(
-            "SS." + values["staff_number_input"]
-        ):
-            sg.popup(
-                "Invalid staff number",
-                title="Invalid staff number",
-                keep_on_top=True,
-            )
-            return False
-        return True
+    def validate(cls, values, window):
+        for val_check in (cls.validate_required_field((values["staff_number_input"], "staff number")), cls.validate_staff_number("SS."+values["staff_number_input"])):
+            if val_check is not None:
+                cls.display_message(val_check, window)
+                return True
+        return None
 
 
 class CameraWindow(BaseGUIWindow):
@@ -770,10 +757,16 @@ class BarcodeCameraWindow(CameraWindow):
                     for barcode in barcodes:
                         Barcode.draw_bounding_box(barcode, img)
                 window["image_display"].update(data=img)
+                cls.process_barcode(Barcode.decode_barcode(barcode))
         return True
 
+    @classmethod
+    def process_barcode(cls, identification_num, window):
+        raise NotImplementedError
 
-class EnrolmentWindow(BaseGUIWindow):
+
+
+class EnrolmentMenuWindow(BaseGUIWindow):
     @classmethod
     def window(cls):
         layout = [
@@ -785,12 +778,15 @@ class EnrolmentWindow(BaseGUIWindow):
                 sg.Push(),
             ],
             [sg.VPush()],
+            [sg.Button("<< Back", k="back")]
         ]
         window = sg.Window("Enrolment Window", layout, **cls.window_init_dict())
         return window
 
     @classmethod
     def loop(cls, window, event, values):
+        if event == "back":
+            window_dispatch.open_window(HomeWindow)
         if event == "staff_enrolment":
             window_dispatch.open_window(StaffEnrolmentWindow)
         if event == "student_enrolment":
@@ -805,7 +801,7 @@ class StaffEnrolmentWindow(BaseGUIWindow):
     def window(cls):
         column1 = [
             [sg.Push(), sg.Text("Staff Enrolment"), sg.Push()],
-            [cls.message_display()],
+            [cls.message_display_field()],
             [
                 sg.Text("Staff Number:  "),
                 sg.Input(
@@ -890,38 +886,35 @@ class StaffEnrolmentWindow(BaseGUIWindow):
                     value=cls.COMBO_DEFAULT,
                 )
         if event == "submit":
-            val_check = None
-            local_val_check = None
-            req_fields = [
-                "staff_number_input",
-                "staff_first_name",
-                "staff_last_name",
-                "staff_sex",
-                "staff_faculty",
-                "staff_department",
-            ]
-            for field in req_fields:
-                val_check = cls.validate_required_field(values[field], field)
-                if val_check is not None:
-                    window["message_display"].update(
-                        value=val_check, visible=True
-                    )
-                    return True
-            local_val_check = cls.validate(values)
-            if local_val_check is not None:
-                window["message_display"].update(
-                    value=local_val_check, visible=True
-                )
+            values["staff_first_name"]
+            if cls.validate(values, window) is not None:
                 return True
             else:
                 window_dispatch.open_window(HomeWindow)
-            window_dispatch.open_window(HomeWindow)
         if event == "cancel":
             window_dispatch.open_window(HomeWindow)
         return True
 
     @classmethod
-    def validate(cls, values):
+    def validate(cls, values, window):
+        req_fields = [
+                (values["staff_number_input"], "staff number"),
+                (values["staff_first_name"], "first name"),
+                (values["staff_last_name"], "last name"),
+                (values["staff_sex"], "sex"),
+                (values["staff_faculty"], "faculty"),
+                (values["staff_department"], "department")
+            ]
+        validation_val = cls.validate_required_fields(req_fields, window)
+        if validation_val is not None:
+            return True
+        
+        for field in req_fields[1:3]:
+            validation_val = cls.validate_text_field(*field)
+            if validation_val is not None:
+                cls.display_message(validation_val, window)
+                return True
+        
         for criteria in (
             cls.validate_staff_number(values["staff_number_input"]),
             cls.validate_sex(values["staff_sex"]),
@@ -929,7 +922,8 @@ class StaffEnrolmentWindow(BaseGUIWindow):
             cls.validate_department(values["staff_department"]),
         ):
             if criteria is not None:
-                return criteria
+                cls.display_message(criteria, window)
+                return True
         return None
 
 
@@ -938,7 +932,7 @@ class StudentEnrolmentWindow(BaseGUIWindow):
     def window(cls):
         column1 = [
             [sg.Push(), sg.Text("Student Enrolment"), sg.Push()],
-            [cls.message_display()],
+            [cls.message_display_field()],
             [
                 sg.Text("Registration Number:  "),
                 sg.Input(
@@ -1040,38 +1034,33 @@ class StudentEnrolmentWindow(BaseGUIWindow):
                     value=cls.COMBO_DEFAULT,
                 )
         if event == "submit":
-            val_check = None
-            local_val_check = None
-            req_fields = [
-                "student_reg_number_input",
-                "student_first_name",
-                "student_last_name",
-                "student_sex",
-                "student_level_of_study",
-                "student_faculty",
-                "student_department",
-            ]
-            for field in req_fields:
-                val_check = cls.validate_required_field(values[field], field)
-                if val_check is not None:
-                    window["message_display"].update(
-                        value=val_check, visible=True
-                    )
-                    return True
-            local_val_check = cls.validate(values)
-            if local_val_check is not None:
-                window["message_display"].update(
-                    value=local_val_check, visible=True
-                )
+            if cls.validate(values, window) is not None:
                 return True
-            else:
-                window_dispatch.open_window(HomeWindow)
+            window_dispatch.open_window(HomeWindow)
         if event == "cancel":
             window_dispatch.open_window(HomeWindow)
         return True
 
     @classmethod
-    def validate(cls, values):
+    def validate(cls, values, window):
+        req_fields = [
+                (values["student_reg_number_input"], "registration number"),
+                (values["student_first_name"], "first name"),
+                (values["student_last_name"], "last name"),
+                (values["student_sex"], "sex"),
+                (values["student_level_of_study"], "level of study"),
+                (values["student_faculty"], "faculty"),
+                (values["student_department"], "department")
+            ]
+        if cls.validate_required_fields(req_fields, window) is not None:
+            return True
+
+        for field in req_fields[1:3]:
+            validation_val = cls.validate_text_field(*field)
+            if validation_val is not None:
+                cls.display_message(validation_val, window)
+                return True
+    
         for criteria in (
             cls.validate_student_reg_number(values["student_reg_number_input"]),
             cls.validate_sex(values["student_sex"]),
@@ -1082,7 +1071,8 @@ class StudentEnrolmentWindow(BaseGUIWindow):
             ),
         ):
             if criteria is not None:
-                return criteria
+                cls.display_message(criteria, window)
+                return True
         return None
 
 
