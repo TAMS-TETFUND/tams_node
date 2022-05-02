@@ -4,6 +4,7 @@ import PySimpleGUI as sg
 
 from app.appconfigparser import AppConfigParser
 from app.basegui import BaseGUIWindow
+
 # from app.camera import Camera
 from app.barcode import Barcode
 from app.facerec import FaceRecognition
@@ -297,10 +298,18 @@ class AcademicSessionDetailsWindow(BaseGUIWindow):
     def validate(cls, values):
         """fields: current_session, current_semester"""
         if values["current_semester"] not in Semester.labels:
-            sg.popup("Invalid value in current semester", "Invalid semester", keep_on_top=True)
-            return False        
+            sg.popup(
+                "Invalid value in current semester",
+                "Invalid semester",
+                keep_on_top=True,
+            )
+            return False
         if not AcademicSession.is_valid_session(values["current_session"]):
-            sg.popup("Invlid value in current session", "Invalid session", keep_on_top=True)
+            sg.popup(
+                "Invlid value in current session",
+                "Invalid session",
+                keep_on_top=True,
+            )
             return False
         return True
 
@@ -429,22 +438,29 @@ class EventDetailWindow(BaseGUIWindow):
                 )
             else:
                 window["course_department"].update(
-                    values=Department.get_departments(
-                        values["course_faculty"]
+                    values=Department.get_departments(values["course_faculty"]),
+                    value=cls.COMBO_DEFAULT,
+                )
+                window["selected_course"].update(
+                    values=Course.get_courses(
+                        semester=app_config.get("DEFAULT", "semester"),
+                        faculty=values["course_faculty"],
                     ),
                     value=cls.COMBO_DEFAULT,
                 )
-                window["selected_course"].update(values=Course.get_courses(semester=app_config.get("DEFAULT", "semester"), faculty=values["course_faculty"]), value=cls.COMBO_DEFAULT)
         if event == "course_department":
             if values["course_department"] in (cls.COMBO_DEFAULT, None):
                 window["selected_course"].update(
-                    values=Course.get_courses(semester=app_config.get("DEFAULT", "semester")), value=cls.COMBO_DEFAULT
+                    values=Course.get_courses(
+                        semester=app_config.get("DEFAULT", "semester")
+                    ),
+                    value=cls.COMBO_DEFAULT,
                 )
             else:
                 window["selected_course"].update(
                     values=Course.get_courses(
                         semester=app_config.get("DEFAULT", "semester"),
-                        department=values["course_department"]
+                        department=values["course_department"],
                     ),
                     value=cls.COMBO_DEFAULT,
                 )
@@ -480,7 +496,11 @@ class EventDetailWindow(BaseGUIWindow):
             if event == "start_event":
                 window_dispatch.open_window(StaffNumberInputWindow)
             if event == "schedule_event":
-                sg.popup("Event saved to scheduled events", title="Event saved", keep_on_top=True)
+                sg.popup(
+                    "Event saved to scheduled events",
+                    title="Event saved",
+                    keep_on_top=True,
+                )
                 window_dispatch.open_window(HomeWindow)
         if event == "cancel":
             app_config["new_event"] = {}
@@ -493,12 +513,18 @@ class EventDetailWindow(BaseGUIWindow):
         if Course.str_to_course(values["selected_course"]) is None:
             sg.popup("Invalid course selected", title="Error", keep_on_top=True)
             return False
-        
-        if None in (cls.get_int(values["start_hour"]), cls.get_int(values["start_minute"])):
+
+        if None in (
+            cls.get_int(values["start_hour"]),
+            cls.get_int(values["start_minute"]),
+        ):
             sg.popup("Invalid value in start time", keep_on_top=True)
             return False
-        
-        if cls.get_int(values["duration"]) is None or int(values["duration"]) <= 0:
+
+        if (
+            cls.get_int(values["duration"]) is None
+            or int(values["duration"]) <= 0
+        ):
             sg.popup("Invalid value in duration", keep_on_top=True)
             return False
 
@@ -507,15 +533,19 @@ class EventDetailWindow(BaseGUIWindow):
         except ValueError:
             sg.popup("Invalid start date", keep_on_top=True)
             return False
-        
+
         current_dt = datetime.now()
 
-        if current_dt < start_date or current_dt.hour > int(values["start_hour"]):
-            sg.popup("Date and time must not be earlier than current date and time", keep_on_top=True)
+        if current_dt < start_date or current_dt.hour > int(
+            values["start_hour"]
+        ):
+            sg.popup(
+                "Date and time must not be earlier than current date and time",
+                keep_on_top=True,
+            )
             return False
-        
-        return True
 
+        return True
 
 
 class VerifyAttendanceInitiatorWindow(BaseGUIWindow):
@@ -656,7 +686,9 @@ class StaffNumberInputWindow(BaseGUIWindow):
         elif event == "clear":
             keys_entered = ""
         elif event == "submit":
-            if not cls.validate_required_field(values["staff_number_input"], "staff_input_value"):
+            if not cls.validate_required_field(
+                values["staff_number_input"], "staff_input_value"
+            ):
                 return True
             if not cls.validate(values):
                 return True
@@ -674,10 +706,17 @@ class StaffNumberInputWindow(BaseGUIWindow):
     @classmethod
     def validate(cls, values):
         """fields: staff_number_input"""
-        if not Staff.is_valid_staff_number("SS."+values["staff_number_input"]):
-            sg.popup("Invalid staff number", title="Invalid staff number", keep_on_top=True)
+        if not Staff.is_valid_staff_number(
+            "SS." + values["staff_number_input"]
+        ):
+            sg.popup(
+                "Invalid staff number",
+                title="Invalid staff number",
+                keep_on_top=True,
+            )
             return False
         return True
+
 
 class CameraWindow(BaseGUIWindow):
     @classmethod
@@ -766,6 +805,7 @@ class StaffEnrolmentWindow(BaseGUIWindow):
     def window(cls):
         column1 = [
             [sg.Push(), sg.Text("Staff Enrolment"), sg.Push()],
+            [cls.message_display()],
             [
                 sg.Text("Staff Number:  "),
                 sg.Input(
@@ -800,12 +840,22 @@ class StaffEnrolmentWindow(BaseGUIWindow):
             ],
             [
                 sg.Text("Faculty: "),
-                sg.Combo(values=Faculty.get_all_faculties(),default_value=cls.COMBO_DEFAULT, enable_events=True, expand_x=True, key="staff_faculty"
+                sg.Combo(
+                    values=Faculty.get_all_faculties(),
+                    default_value=cls.COMBO_DEFAULT,
+                    enable_events=True,
+                    expand_x=True,
+                    key="staff_faculty",
                 ),
             ],
             [
                 sg.Text("Department: "),
-                sg.Combo(values=Department.get_departments(), default_value=cls.COMBO_DEFAULT, enable_events=True, expand_x=True, key="staff_department"
+                sg.Combo(
+                    values=Department.get_departments(),
+                    default_value=cls.COMBO_DEFAULT,
+                    enable_events=True,
+                    expand_x=True,
+                    key="staff_department",
                 ),
             ],
         ]
@@ -829,14 +879,42 @@ class StaffEnrolmentWindow(BaseGUIWindow):
     def loop(cls, window, event, values):
         if event == "staff_faculty":
             if values["staff_faculty"] in (cls.COMBO_DEFAULT, None):
-                window["staff_faculty"].update(values=Faculty.get_all_faculties(), value=cls.COMBO_DEFAULT)
+                window["staff_faculty"].update(
+                    values=Faculty.get_all_faculties(), value=cls.COMBO_DEFAULT
+                )
             else:
-                window["staff_department"].update(values=Department.get_departments(faculty=values["staff_faculty"]), value=cls.COMBO_DEFAULT)
+                window["staff_department"].update(
+                    values=Department.get_departments(
+                        faculty=values["staff_faculty"]
+                    ),
+                    value=cls.COMBO_DEFAULT,
+                )
         if event == "submit":
-            fields = ["staff_number_input", "staff_first_name", "staff_last_name", "staff_sex", "staff_faculty", "staff_department"]
-            for field in fields:
-                if not cls.validate_required_field(values[field], field):
+            val_check = None
+            local_val_check = None
+            req_fields = [
+                "staff_number_input",
+                "staff_first_name",
+                "staff_last_name",
+                "staff_sex",
+                "staff_faculty",
+                "staff_department",
+            ]
+            for field in req_fields:
+                val_check = cls.validate_required_field(values[field], field)
+                if val_check is not None:
+                    window["message_display"].update(
+                        value=val_check, visible=True
+                    )
                     return True
+            local_val_check = cls.validate(values)
+            if local_val_check is not None:
+                window["message_display"].update(
+                    value=local_val_check, visible=True
+                )
+                return True
+            else:
+                window_dispatch.open_window(HomeWindow)
             window_dispatch.open_window(HomeWindow)
         if event == "cancel":
             window_dispatch.open_window(HomeWindow)
@@ -844,15 +922,23 @@ class StaffEnrolmentWindow(BaseGUIWindow):
 
     @classmethod
     def validate(cls, values):
-        if False in (cls.validate_staff_number(values["staff_number_input"]), cls.validate_sex(values["staff_sex"]), cls.validate_faculty(values["staff_faculty"]), cls.validate_department(values["staff_department"])):
-            return False
-        return True
+        for criteria in (
+            cls.validate_staff_number(values["staff_number_input"]),
+            cls.validate_sex(values["staff_sex"]),
+            cls.validate_faculty(values["staff_faculty"]),
+            cls.validate_department(values["staff_department"]),
+        ):
+            if criteria is not None:
+                return criteria
+        return None
+
 
 class StudentEnrolmentWindow(BaseGUIWindow):
     @classmethod
     def window(cls):
         column1 = [
             [sg.Push(), sg.Text("Student Enrolment"), sg.Push()],
+            [cls.message_display()],
             [
                 sg.Text("Registration Number:  "),
                 sg.Input(
@@ -901,12 +987,22 @@ class StudentEnrolmentWindow(BaseGUIWindow):
             ],
             [
                 sg.Text("Faculty: "),
-                sg.Combo(values=Faculty.get_all_faculties(), default_value=cls.COMBO_DEFAULT,expand_x=True, enable_events=True, key="student_faculty"),
+                sg.Combo(
+                    values=Faculty.get_all_faculties(),
+                    default_value=cls.COMBO_DEFAULT,
+                    expand_x=True,
+                    enable_events=True,
+                    key="student_faculty",
+                ),
             ],
             [
                 sg.Text("Department: "),
                 sg.Combo(
-                    values=Department.get_departments(), default_value=cls.COMBO_DEFAULT, expand_x=True,enable_events=True, key="student_department"
+                    values=Department.get_departments(),
+                    default_value=cls.COMBO_DEFAULT,
+                    expand_x=True,
+                    enable_events=True,
+                    key="student_department",
                 ),
             ],
         ]
@@ -933,39 +1029,62 @@ class StudentEnrolmentWindow(BaseGUIWindow):
         window.force_focus()
         if event == "student_faculty":
             if values["student_faculty"] in (cls.COMBO_DEFAULT, None):
-                window["student_faculty"].update(values=Faculty.get_all_faculties(), value=cls.COMBO_DEFAULT)
+                window["student_faculty"].update(
+                    values=Faculty.get_all_faculties(), value=cls.COMBO_DEFAULT
+                )
             else:
-                window["student_department"].update(values=Department.get_departments(faculty=values["student_faculty"]), value=cls.COMBO_DEFAULT)
+                window["student_department"].update(
+                    values=Department.get_departments(
+                        faculty=values["student_faculty"]
+                    ),
+                    value=cls.COMBO_DEFAULT,
+                )
         if event == "submit":
-            req_fields = ["student_reg_number_input", "student_first_name", "student_last_name", "student_sex", "student_level_of_study",
-            "student_faculty", "student_department"]
+            val_check = None
+            local_val_check = None
+            req_fields = [
+                "student_reg_number_input",
+                "student_first_name",
+                "student_last_name",
+                "student_sex",
+                "student_level_of_study",
+                "student_faculty",
+                "student_department",
+            ]
             for field in req_fields:
                 val_check = cls.validate_required_field(values[field], field)
-                if val_check is False:
-                    break
-                else:
-                    continue
-            if val_check is False:
-                window.force_focus()
+                if val_check is not None:
+                    window["message_display"].update(
+                        value=val_check, visible=True
+                    )
+                    return True
+            local_val_check = cls.validate(values)
+            if local_val_check is not None:
+                window["message_display"].update(
+                    value=local_val_check, visible=True
+                )
                 return True
             else:
-                pass
-            
-            # val_check = cls.validate(values)
-            # if val_check is False:
-            #     window.force_focus()
-            #     return True
-            # else:
-            #     window_dispatch.open_window(HomeWindow)
+                window_dispatch.open_window(HomeWindow)
         if event == "cancel":
             window_dispatch.open_window(HomeWindow)
         return True
 
     @classmethod
     def validate(cls, values):
-        if False in (cls.validate_student_reg_number(values["student_reg_number_input"]), cls.validate_sex(values["student_sex"]), cls.validate_faculty(values["student_faculty"]), cls.validate_department(values["student_department"]), cls.validate_int_field(values["student_level_of_study"])):
-            return False
-        return True
+        for criteria in (
+            cls.validate_student_reg_number(values["student_reg_number_input"]),
+            cls.validate_sex(values["student_sex"]),
+            cls.validate_faculty(values["student_faculty"]),
+            cls.validate_department(values["student_department"]),
+            cls.validate_int_field(
+                values["student_level_of_study"], "level of study"
+            ),
+        ):
+            if criteria is not None:
+                return criteria
+        return None
+
 
 class AttendanceMenuWindow(BaseGUIWindow):
     @classmethod

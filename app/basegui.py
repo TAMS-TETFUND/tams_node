@@ -18,7 +18,7 @@ sg.theme("LightGreen6")
 
 
 class BaseGUIWindow:
-    COMBO_DEFAULT = '--select--'
+    COMBO_DEFAULT = "--select--"
     SCREEN_SIZE = (480, 320)
     ICON_SIZE = {"h": 125, "w": 70}
     ICON_BUTTON_COLOR = (
@@ -65,16 +65,23 @@ class BaseGUIWindow:
             "keep_on_top": True,
             "grab_anywhere": True,
             "finalize": True,
-            "use_custom_titlebar":False
+            "use_custom_titlebar": False,
         }
         return init_dict
 
     @staticmethod
+    def message_display():
+        return sg.pin(
+            sg.Text("", enable_events=True, k="message_display", visible=False)
+        )
+
+    @staticmethod
     def validate_required_field(field_value, field_name):
-        if field_value in (None, '', '--select--'):
-            sg.popup("Invalid value provided in {}".format(field_name), title="Invalid value", keep_on_top=True)
-            return False
-        return True
+        if field_value in (None, "", "--select--"):
+            return "Invalid value provided in {}".format(
+                " ".join(field_name.split("_"))
+            )
+        return None
 
     @staticmethod
     def get_int(field_value):
@@ -84,47 +91,46 @@ class BaseGUIWindow:
             return None
         else:
             return field_value_int
-    
+
     @staticmethod
     def validate_student_reg_number(reg_no):
         if not Student.is_valid_student_reg_number(reg_no):
-            sg.popup("Invalid value for student registration number", title="Invalid Registration Number", keep_on_top=True)
-            return False
-        return True
+            return "Invalid value for student registration number"
+        return None
 
     @staticmethod
     def validate_staff_number(staff_no):
         if not Staff.is_valid_staff_number(staff_no):
-            sg.popup("Invalid value for staff number", title="Invalid Staff Number", keep_on_top=True)
-            return False
-        return True
-    
+            return "Invalid value for staff number"
+        return None
+
     @staticmethod
     def validate_faculty(faculty):
-        if faculty.lower() not in [fac.lower() for fac in Faculty.get_all_faculties()]:
-            sg.popup("Invalid value in faculty", title="Invalid Faculty", keep_on_top=True)
-            return False
-        return True
+        if faculty.lower() not in [
+            fac.lower() for fac in Faculty.get_all_faculties()
+        ]:
+            return "Invalid value in faculty"
+        return None
 
     @staticmethod
     def validate_department(department):
-        if department.lower() not in [dept.lower() for dept in Department.get_departments()]:
-            sg.popup("Invalid value in departmet", title="Invalid Departmet", keep_on_top=True)
-            return False
-        return True
-    
+        if department.lower() not in [
+            dept.lower() for dept in Department.get_departments()
+        ]:
+            return "Invalid value in department"
+        return None
+
     @staticmethod
     def validate_sex(sex):
         if sex not in Sex.labels:
-            sg.popup("Invalid value in sex", title="Invalid sex", keep_on_top=True)
-            return False
-        return True
+            return "Invalid value in sex"
+        return None
 
     @staticmethod
-    def validate_int_field(field_value):
+    def validate_int_field(field_value, field_name):
         try:
             field_val_int = int(field_value)
-        except ValueError:
-            return False
+        except Exception:
+            return f"Enter a numeric value for {field_name}"
         else:
-            return True
+            return None
