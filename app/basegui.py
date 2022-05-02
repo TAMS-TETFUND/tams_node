@@ -10,7 +10,15 @@ from manage import init_django
 
 init_django()
 
-from db.models import AcademicSession, Department, Faculty, Semester, Sex, Student, Staff
+from db.models import (
+    AcademicSession,
+    Department,
+    Faculty,
+    Semester,
+    Sex,
+    Student,
+    Staff,
+)
 
 
 # set application-wide theme
@@ -78,11 +86,11 @@ class BaseGUIWindow:
     @staticmethod
     def display_message(message, window):
         window["message_display"].update(value=message, visible=True)
-    
+
     @staticmethod
     def hide_message_display_field(window):
         window["message_display"].update(value="", visible=False)
-    
+
     @staticmethod
     def validate_required_field(req_field):
         field_value, field_name_for_display = req_field
@@ -114,6 +122,7 @@ class BaseGUIWindow:
             return "Invalid value for academic session"
         else:
             return None
+
     @staticmethod
     def validate_student_reg_number(reg_no):
         if not Student.is_valid_student_reg_number(reg_no):

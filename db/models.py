@@ -124,6 +124,7 @@ class AppUser(AbstractUser):
     face_encodings = models.CharField(max_length=3000, null=True, blank=True)
     # is_active = models.BooleanField(default=True)
 
+
 class Staff(AppUser):
     staff_number = models.CharField(max_length=25, unique=True)
     department = models.ForeignKey(to=Department, on_delete=models.CASCADE)

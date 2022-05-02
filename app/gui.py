@@ -6,6 +6,7 @@ from django.core.exceptions import ObjectDoesNotExist
 
 from app.appconfigparser import AppConfigParser
 from app.basegui import BaseGUIWindow
+
 # from app.camera import Camera
 from app.barcode import Barcode
 from app.facerec import FaceRecognition
@@ -24,7 +25,7 @@ from db.models import (
     Faculty,
     Semester,
     Department,
-    str_to_face_enc
+    str_to_face_enc,
 )
 
 
@@ -295,20 +296,26 @@ class AcademicSessionDetailsWindow(BaseGUIWindow):
 
     @classmethod
     def validate(cls, values, window):
-        required_fields = [(values["current_semester"], "current semester"), (values["current_session"], "current session")]
+        required_fields = [
+            (values["current_semester"], "current semester"),
+            (values["current_session"], "current session"),
+        ]
         if cls.validate_required_fields(required_fields, window) is not None:
             return True
-        
+
         validation_val = cls.validate_semester(values["current_semester"])
         if validation_val is not None:
             cls.display_message(validation_val, window)
             return True
 
-        validation_val = cls.validate_academic_session(values["current_session"])
+        validation_val = cls.validate_academic_session(
+            values["current_session"]
+        )
         if validation_val is not None:
             cls.display_message(validation_val, window)
             return True
         return None
+
 
 class EventDetailWindow(BaseGUIWindow):
     @classmethod
@@ -501,11 +508,11 @@ class EventDetailWindow(BaseGUIWindow):
     def validate(cls, values, window):
 
         required_fields = [
-                (values["selected_course"], "selected course"),
-                (values["start_hour"], "start time"),
-                (values["start_date"], "start time"),
-                (values["duration"], "duration")
-            ]
+            (values["selected_course"], "selected course"),
+            (values["start_hour"], "start time"),
+            (values["start_date"], "start time"),
+            (values["duration"], "duration"),
+        ]
         validation_val = cls.validate_required_fields(required_fields, window)
         if validation_val is not None:
             return True
@@ -540,7 +547,10 @@ class EventDetailWindow(BaseGUIWindow):
         if current_dt < start_date or current_dt.hour > int(
             values["start_hour"]
         ):
-            cls.display_message("Date and time must not be earlier than current date and time", window)
+            cls.display_message(
+                "Date and time must not be earlier than current date and time",
+                window,
+            )
             return True
 
         return None
@@ -700,7 +710,12 @@ class StaffNumberInputWindow(BaseGUIWindow):
 
     @classmethod
     def validate(cls, values, window):
-        for val_check in (cls.validate_required_field((values["staff_number_input"], "staff number")), cls.validate_staff_number("SS."+values["staff_number_input"])):
+        for val_check in (
+            cls.validate_required_field(
+                (values["staff_number_input"], "staff number")
+            ),
+            cls.validate_staff_number("SS." + values["staff_number_input"]),
+        ):
             if val_check is not None:
                 cls.display_message(val_check, window)
                 return True
@@ -742,19 +757,21 @@ class FaceCameraWindow(CameraWindow):
                     for face_location in face_locations:
                         FaceRecognition.draw_bounding_box(face_location, img)
                 window["image_display"].update(data=img)
-                
+
                 if len(face_locations) > 1:
                     cls.display_message("Multiple faces detected!", window)
                     return True
                 else:
                     cls.hide_message_display_field(window)
-                
+
                 if len(face_locations) == 1:
-                    cls.process_image(FaceRecognition.face_encodings(img), window)
+                    cls.process_image(
+                        FaceRecognition.face_encodings(img), window
+                    )
         return True
 
     @classmethod
-    def process_image(cls, captured_face_encodings):
+    def process_image(cls, captured_face_encodings, window):
         raise NotImplementedError
 
 
@@ -762,16 +779,25 @@ class StudentFaceCameraWindow(FaceCameraWindow):
     @classmethod
     def process_image(cls, captured_face_encodings, window):
         if captured_face_encodings is None:
-            cls.display_message("Eror. Image must have exactly one face", window)
+            cls.display_message(
+                "Eror. Image must have exactly one face", window
+            )
             return False
 
-        if FaceRecognition.face_match([str_to_face_enc(app_config["tmp_student"]["face_encodings"])], captured_face_encodings):
-            cls.display_message(f"{app_config['tmp_student']['reg_number']} checked in", window)
+        if FaceRecognition.face_match(
+            [str_to_face_enc(app_config["tmp_student"]["face_encodings"])],
+            captured_face_encodings,
+        ):
+            cls.display_message(
+                f"{app_config['tmp_student']['reg_number']} checked in", window
+            )
             time.sleep(10)
             window_dispatch.open_window(StudentBarcodeCameraWindow)
-
         else:
-            cls.display_message(f"Error. Face did not match ({app_config['tmp_student']['reg_number']})", window)
+            cls.display_message(
+                f"Error. Face did not match ({app_config['tmp_student']['reg_number']})",
+                window,
+            )
             return False
 
 
@@ -779,16 +805,26 @@ class StaffFaceCameraWindow(FaceCameraWindow):
     @classmethod
     def process_image(cls, captured_face_encodings, window):
         if captured_face_encodings is None:
-            cls.display_message("Error. Image must have exactly one face", window)
+            cls.display_message(
+                "Error. Image must have exactly one face", window
+            )
             return False
-        
-        if FaceRecognition.face_match([str_to_face_enc(app_config["tmp_staff"]["face_encodings"])], captured_face_encodings):
-            cls.display_message(f"{app_config['tmp_staff']['staff_number']} checked in", window)
+
+        if FaceRecognition.face_match(
+            [str_to_face_enc(app_config["tmp_staff"]["face_encodings"])],
+            captured_face_encodings,
+        ):
+            cls.display_message(
+                f"{app_config['tmp_staff']['staff_number']} checked in", window
+            )
             time.sleep(10)
             window_dispatch.open_window(StaffBarcodeCameraWindow)
 
         else:
-            cls.display_message(f"Error. Face did not match ({app_config['tmp_staff']['staff_number']})", window)
+            cls.display_message(
+                f"Error. Face did not match ({app_config['tmp_staff']['staff_number']})",
+                window,
+            )
             return False
 
 
@@ -817,7 +853,8 @@ class BarcodeCameraWindow(CameraWindow):
 
 class StudentBarcodeCameraWindow(BarcodeCameraWindow):
     """window responsible for processing student registration number
-        during attendance marking"""
+    during attendance marking"""
+
     @classmethod
     def process_barcode(cls, identification_num, window):
         val_check = cls.validate_student_reg_number(identification_num)
@@ -828,13 +865,25 @@ class StudentBarcodeCameraWindow(BarcodeCameraWindow):
         try:
             student = Student.objects.get(reg_no=identification_num)
         except ObjectDoesNotExist:
-            cls.display_message("No student found with given registration number", window)
+            cls.display_message(
+                "No student found with given registration number", window
+            )
             return False
-        
+
         app_config["tmp_student"] = {}
-        app_config["tmp_student"] = student.values("reg_number", "first_name", "last_name", "level_of_study", "department__name", "department__faculty__name", "face_encodings", "fingerprint_template")
+        app_config["tmp_student"] = student.values(
+            "reg_number",
+            "first_name",
+            "last_name",
+            "level_of_study",
+            "department__name",
+            "department__faculty__name",
+            "face_encodings",
+            "fingerprint_template",
+        )
         app_config.save()
         window_dispatch.open_window(HomeWindow)
+
 
 class StaffBarcodeCameraWindow(BarcodeCameraWindow):
     @classmethod
@@ -843,21 +892,29 @@ class StaffBarcodeCameraWindow(BarcodeCameraWindow):
         if val_check is not None:
             cls.display_message(val_check, window)
             return False
-        
+
         try:
             staff = Staff.objects.get(staff_number=identification_num)
         except ObjectDoesNotExist:
             cls.display_message("No staff found with given staff ID", window)
             return False
-        
+
         app_config["tmp_staff"] = {}
-        app_config["tmp_staff"] = staff.values("staff_number", "first_name", "last_name", "department__name", "department__faculty__name", "face_encodings", "fingerprint_template")
+        app_config["tmp_staff"] = staff.values(
+            "staff_number",
+            "first_name",
+            "last_name",
+            "department__name",
+            "department__faculty__name",
+            "face_encodings",
+            "fingerprint_template",
+        )
         app_config.save()
         window_dispatch.open_window(HomeWindow)
 
 
 # enrolment windows should not be available on all node devices;
-# should only be available on node devices that will be used for 
+# should only be available on node devices that will be used for
 # enrolment
 class EnrolmentMenuWindow(BaseGUIWindow):
     @classmethod
@@ -871,7 +928,7 @@ class EnrolmentMenuWindow(BaseGUIWindow):
                 sg.Push(),
             ],
             [sg.VPush()],
-            [sg.Button("<< Back", k="back")]
+            [sg.Button("<< Back", k="back")],
         ]
         window = sg.Window("Enrolment Window", layout, **cls.window_init_dict())
         return window
@@ -991,23 +1048,23 @@ class StaffEnrolmentWindow(BaseGUIWindow):
     @classmethod
     def validate(cls, values, window):
         req_fields = [
-                (values["staff_number_input"], "staff number"),
-                (values["staff_first_name"], "first name"),
-                (values["staff_last_name"], "last name"),
-                (values["staff_sex"], "sex"),
-                (values["staff_faculty"], "faculty"),
-                (values["staff_department"], "department")
-            ]
+            (values["staff_number_input"], "staff number"),
+            (values["staff_first_name"], "first name"),
+            (values["staff_last_name"], "last name"),
+            (values["staff_sex"], "sex"),
+            (values["staff_faculty"], "faculty"),
+            (values["staff_department"], "department"),
+        ]
         validation_val = cls.validate_required_fields(req_fields, window)
         if validation_val is not None:
             return True
-        
+
         for field in req_fields[1:3]:
             validation_val = cls.validate_text_field(*field)
             if validation_val is not None:
                 cls.display_message(validation_val, window)
                 return True
-        
+
         for criteria in (
             cls.validate_staff_number(values["staff_number_input"]),
             cls.validate_sex(values["staff_sex"]),
@@ -1137,14 +1194,14 @@ class StudentEnrolmentWindow(BaseGUIWindow):
     @classmethod
     def validate(cls, values, window):
         req_fields = [
-                (values["student_reg_number_input"], "registration number"),
-                (values["student_first_name"], "first name"),
-                (values["student_last_name"], "last name"),
-                (values["student_sex"], "sex"),
-                (values["student_level_of_study"], "level of study"),
-                (values["student_faculty"], "faculty"),
-                (values["student_department"], "department")
-            ]
+            (values["student_reg_number_input"], "registration number"),
+            (values["student_first_name"], "first name"),
+            (values["student_last_name"], "last name"),
+            (values["student_sex"], "sex"),
+            (values["student_level_of_study"], "level of study"),
+            (values["student_faculty"], "faculty"),
+            (values["student_department"], "department"),
+        ]
         if cls.validate_required_fields(req_fields, window) is not None:
             return True
 
@@ -1153,7 +1210,7 @@ class StudentEnrolmentWindow(BaseGUIWindow):
             if validation_val is not None:
                 cls.display_message(validation_val, window)
                 return True
-    
+
         for criteria in (
             cls.validate_student_reg_number(values["student_reg_number_input"]),
             cls.validate_sex(values["student_sex"]),
