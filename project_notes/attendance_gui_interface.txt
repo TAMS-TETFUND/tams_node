@@ -70,4 +70,37 @@ Every window could be based on a base class where general functionalities like i
 There could be a GUI class where the main loop of the program resides or the main loop could
     be just a function.
 
-the window dispatcher can be made into a class. How?
+==================================input validation====================================
+How should input validation be handled in the application?
+    -registration number and staff numbers already have some validation logic in the staff and student class
+    -literature suggests that validation of data should be performed once and only once.
+    -literature also suggest that validation should be done when data is no longer subject to mutation prior to
+        where it'll be used.
+
+==============================ccamera=================================================
+the camera class will serve the face recognition functionality of the system as well as the barcode scanning
+feature of the system.
+In the face recongition feature, it will produce np arrays of the images captured after some basic validation logic has been applied
+    to it.
+For the barcode feature, it will only capture an image when a valid QR code (preferred barcode standard for the system)
+is detected. It will then return the decoded QR code.
+
+============================================questions================================
+should the loop method be a class method in the gui window classes/subclasses
+
+=========================================todos=======================================
+-input validation
+-implementation of enrolment feature for testing
+-implementation of the attendance marking feature (student verification)
+    ==fingerprint and facial recognition
+-implementation of the staff verfication feature (attendance session initiation)
+-implementation of the qr code scanning feature (staff/student id decoding during verificaton processes)
+-implementaton of th qr code generation feature (server feature/ feature for systems primarily responsible
+    for registration of staff/students on the system)
+===================================input validation====================================
+-a method was added to the base class for handling generic validation for required fields
+
+
+
+**in the verification process, the qr scanner will always appear by default. A button will be provided for entry with 
+    a touch keypad in the qr scanner window
