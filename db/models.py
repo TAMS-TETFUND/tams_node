@@ -53,6 +53,9 @@ class Sex(models.IntegerChoices):
     MALE = 1, "Male"
     FEMALE = 2, "Female"
 
+    @classmethod
+    def str_to_value(cls, sex_string):
+        return eval(f"{cls.__name__}.{sex_string.upper()}.value")
 
 class StaffTitle(models.Model):
     id = models.BigAutoField(primary_key=True)
@@ -114,6 +117,9 @@ class Department(models.Model):
             departments = departments.filter(faculty__name__iexact=faculty)
         return list(departments.order_by("name").values_list("name", flat=True))
 
+    @staticmethod
+    def get_id(department_name):
+        return Department.objects.get(name__iexact=department_name)
 
 class AppUser(AbstractUser):
     id = models.BigAutoField(primary_key=True)
