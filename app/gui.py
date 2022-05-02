@@ -767,7 +767,7 @@ class StudentFaceCameraWindow(FaceCameraWindow):
 
         if FaceRecognition.face_match([str_to_face_enc(app_config["tmp_student"]["face_encodings"])], captured_face_encodings):
             cls.display_message(f"{app_config['tmp_student']['reg_number']} checked in", window)
-            time.sleep(1000)
+            time.sleep(10)
             window_dispatch.open_window(StudentBarcodeCameraWindow)
 
         else:
@@ -784,7 +784,7 @@ class StaffFaceCameraWindow(FaceCameraWindow):
         
         if FaceRecognition.face_match([str_to_face_enc(app_config["tmp_staff"]["face_encodings"])], captured_face_encodings):
             cls.display_message(f"{app_config['tmp_staff']['staff_number']} checked in", window)
-            time.sleep(1000)
+            time.sleep(10)
             window_dispatch.open_window(StaffBarcodeCameraWindow)
 
         else:
