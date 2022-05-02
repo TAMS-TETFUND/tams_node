@@ -1,4 +1,5 @@
 from datetime import datetime
+import time
 
 import PySimpleGUI as sg
 from django.core.exceptions import ObjectDoesNotExist
@@ -23,6 +24,7 @@ from db.models import (
     Faculty,
     Semester,
     Department,
+    str_to_face_enc
 )
 
 
@@ -709,6 +711,7 @@ class CameraWindow(BaseGUIWindow):
     @classmethod
     def window(cls):
         layout = [
+            [cls.message_display_field()],
             [sg.Push(), sg.Image(filename="", key="image_display"), sg.Push()],
             [
                 sg.Push(),
@@ -739,7 +742,54 @@ class FaceCameraWindow(CameraWindow):
                     for face_location in face_locations:
                         FaceRecognition.draw_bounding_box(face_location, img)
                 window["image_display"].update(data=img)
+                
+                if len(face_locations) > 1:
+                    cls.display_message("Multiple faces detected!", window)
+                    return True
+                else:
+                    cls.hide_message_display_field(window)
+                
+                if len(face_locations) == 1:
+                    cls.process_image(FaceRecognition.face_encodings(img), window)
         return True
+
+    @classmethod
+    def process_image(cls, captured_face_encodings):
+        raise NotImplementedError
+
+
+class StudentFaceCameraWindow(FaceCameraWindow):
+    @classmethod
+    def process_image(cls, captured_face_encodings, window):
+        if captured_face_encodings is None:
+            cls.display_message("Eror. Image must have exactly one face", window)
+            return False
+
+        if FaceRecognition.face_match([str_to_face_enc(app_config["tmp_student"]["face_encodings"])], captured_face_encodings):
+            cls.display_message(f"{app_config['tmp_student']['reg_number']} checked in", window)
+            time.sleep(1000)
+            window_dispatch.open_window(StudentBarcodeCameraWindow)
+
+        else:
+            cls.display_message(f"Error. Face did not match ({app_config['tmp_student']['reg_number']})", window)
+            return False
+
+
+class StaffFaceCameraWindow(FaceCameraWindow):
+    @classmethod
+    def process_image(cls, captured_face_encodings, window):
+        if captured_face_encodings is None:
+            cls.display_message("Error. Image must have exactly one face", window)
+            return False
+        
+        if FaceRecognition.face_match([str_to_face_enc(app_config["tmp_staff"]["face_encodings"])], captured_face_encodings):
+            cls.display_message(f"{app_config['tmp_staff']['staff_number']} checked in", window)
+            time.sleep(1000)
+            window_dispatch.open_window(StaffBarcodeCameraWindow)
+
+        else:
+            cls.display_message(f"Error. Face did not match ({app_config['tmp_staff']['staff_number']})", window)
+            return False
 
 
 class BarcodeCameraWindow(CameraWindow):
@@ -765,7 +815,50 @@ class BarcodeCameraWindow(CameraWindow):
         raise NotImplementedError
 
 
+class StudentBarcodeCameraWindow(BarcodeCameraWindow):
+    """window responsible for processing student registration number
+        during attendance marking"""
+    @classmethod
+    def process_barcode(cls, identification_num, window):
+        val_check = cls.validate_student_reg_number(identification_num)
+        if val_check is not None:
+            cls.display_message(val_check, window)
+            return False
 
+        try:
+            student = Student.objects.get(reg_no=identification_num)
+        except ObjectDoesNotExist:
+            cls.display_message("No student found with given registration number", window)
+            return False
+        
+        app_config["tmp_student"] = {}
+        app_config["tmp_student"] = student.values("reg_number", "first_name", "last_name", "level_of_study", "department__name", "department__faculty__name", "face_encodings", "fingerprint_template")
+        app_config.save()
+        window_dispatch.open_window(HomeWindow)
+
+class StaffBarcodeCameraWindow(BarcodeCameraWindow):
+    @classmethod
+    def process_barcode(cls, identification_num, window):
+        val_check = cls.validate_staff_number(identification_num)
+        if val_check is not None:
+            cls.display_message(val_check, window)
+            return False
+        
+        try:
+            staff = Staff.objects.get(staff_number=identification_num)
+        except ObjectDoesNotExist:
+            cls.display_message("No staff found with given staff ID", window)
+            return False
+        
+        app_config["tmp_staff"] = {}
+        app_config["tmp_staff"] = staff.values("staff_number", "first_name", "last_name", "department__name", "department__faculty__name", "face_encodings", "fingerprint_template")
+        app_config.save()
+        window_dispatch.open_window(HomeWindow)
+
+
+# enrolment windows should not be available on all node devices;
+# should only be available on node devices that will be used for 
+# enrolment
 class EnrolmentMenuWindow(BaseGUIWindow):
     @classmethod
     def window(cls):

@@ -32,13 +32,13 @@ STUDENT_REG_NO_FORMAT = r"{}".format(config_dict["STUDENT_REG_NO_FORMAT"])
 SESSION_FORMAT = r"{}".format(config_dict["SESSION_FORMAT"])
 
 
-def _face_enc_to_str(encodings):
+def face_enc_to_str(encodings):
     """Convert face encodings from numpy array to string"""
     encodings_str = ",".join(str(item) for item in encodings)
     return encodings_str
 
 
-def _str_to_face_enc(enc_str):
+def str_to_face_enc(enc_str):
     """Convert encodings formatted as a string to numpy array"""
     encodings = np.array([float(item) for item in enc_str.split(",")])
     return encodings
@@ -122,7 +122,7 @@ class AppUser(AbstractUser):
         max_length=3000, null=True, blank=True
     )
     face_encodings = models.CharField(max_length=3000, null=True, blank=True)
-
+    # is_active = models.BooleanField(default=True)
 
 class Staff(AppUser):
     staff_number = models.CharField(max_length=25, unique=True)
@@ -175,6 +175,7 @@ class Student(models.Model):
     )
     face_encodings = models.CharField(max_length=3000, null=True, blank=True)
     sex = models.IntegerField(choices=Sex.choices)
+    # is_active = models.BooleanField(default=True)
 
     def __str__(self):
         return f"{self.first_name} {self.last_name} ({self.reg_number}),\

@@ -80,6 +80,10 @@ class BaseGUIWindow:
         window["message_display"].update(value=message, visible=True)
     
     @staticmethod
+    def hide_message_display_field(window):
+        window["message_display"].update(value="", visible=False)
+    
+    @staticmethod
     def validate_required_field(req_field):
         field_value, field_name_for_display = req_field
         if field_value in (None, "", "--select--"):
