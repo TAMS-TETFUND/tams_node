@@ -736,11 +736,20 @@ class CameraWindow(BaseGUIWindow):
                     button_color=cls.ICON_BUTTON_COLOR,
                     key="capture",
                 ),
+                sg.Button(image_data=cls.get_icon("cancel", 0.5), button_color=cls.ICON_BUTTON_COLOR, key="cancel"),
+                cls.get_keyboard_button(),
                 sg.Push(),
             ],
         ]
         window = sg.Window("Camera", layout, **cls.window_init_dict())
         return window
+
+    @classmethod
+    def get_keyboard_button(cls):
+        if isinstance(cls, BarcodeCameraWindow):
+            return sg.pin(sg.Button(image_data=cls.get_icon("keyboard", 0.5), button_color=cls.ICON_BUTTON_COLOR, key="keyboard", visible=True))
+        else:
+            return sg.pin(sg.Button(image_data=cls.get_icon("keyboard", 0.5), button_color=cls.ICON_BUTTON_COLOR, key="keyboard", visible=False))
 
 
 class FaceCameraWindow(CameraWindow):
@@ -752,6 +761,8 @@ class FaceCameraWindow(CameraWindow):
                 event, values = window.read(timeout=20)
                 if event == "capture":
                     return False
+                if event == "cancel":
+                    cls.cancel_camera()
                 img = cam.feed()
                 face_locations = FaceRecognition.face_locations(img)
                 if len(face_locations) > 0:
@@ -775,6 +786,9 @@ class FaceCameraWindow(CameraWindow):
     def process_image(cls, captured_face_encodings, window):
         raise NotImplementedError
 
+    @staticmethod
+    def cancel_camera():
+        raise NotImplementedError
 
 class StudentFaceCameraWindow(FaceCameraWindow):
     @classmethod
@@ -801,6 +815,10 @@ class StudentFaceCameraWindow(FaceCameraWindow):
             )
             return False
 
+    @staticmethod
+    def cancel_camera():
+        """should navigate user back to the attendance session landing page"""
+        window_dispatch.open_window(HomeWindow)
 
 class StaffFaceCameraWindow(FaceCameraWindow):
     @classmethod
@@ -828,16 +846,28 @@ class StaffFaceCameraWindow(FaceCameraWindow):
             )
             return False
 
+    @staticmethod
+    def cancel_camera():
+        """should navigate user back to the attendance initiator verification window"""
+        window_dispatch.open_window(VerifyAttendanceInitiatorWindow)
 
 class BarcodeCameraWindow(CameraWindow):
     @classmethod
     def loop(cls, window, event, values):
+        # window["keyboard"].update(visible=True)
         cam_on = True
         with Camera() as cam:
             while cam_on:
                 event, values = window.read(timeout=20)
                 if event == "capture":
                     return False
+
+                if event == "keyboard":
+                    cls.launch_keypad()
+
+                if event == "cancel":
+                    cls.cancel_camera()
+
                 img = cam.feed()
                 barcodes = Barcode.decode_image(img)
                 if len(barcodes) > 0:
@@ -850,6 +880,14 @@ class BarcodeCameraWindow(CameraWindow):
     @classmethod
     def process_barcode(cls, identification_num, window):
         raise NotImplementedError
+
+    @classmethod
+    def launch_keypad(cls):
+        raise NotImplementedError
+
+    @staticmethod
+    def cancel_camera():
+        window_dispatch.open_window(HomeWindow)
 
 
 class StudentBarcodeCameraWindow(BarcodeCameraWindow):
@@ -1224,7 +1262,7 @@ class StudentEnrolmentWindow(BaseGUIWindow):
                 "department": Department.get_id(values["student_department"]),
             }
             app_config.save()
-            window_dispatch.open_window(HomeWindow)
+            window_dispatch.open_window(StudentFaceEnrolmentWindow)
         if event == "cancel":
             window_dispatch.open_window(HomeWindow)
         return True
