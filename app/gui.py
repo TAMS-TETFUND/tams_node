@@ -25,6 +25,7 @@ from db.models import (
     Faculty,
     Semester,
     Department,
+    face_enc_to_str,
     str_to_face_enc,
 )
 
@@ -1036,11 +1037,19 @@ class StaffEnrolmentWindow(BaseGUIWindow):
                     value=cls.COMBO_DEFAULT,
                 )
         if event == "submit":
-            values["staff_first_name"]
             if cls.validate(values, window) is not None:
                 return True
-            else:
-                window_dispatch.open_window(HomeWindow)
+
+            app_config["new_staff"] = {}
+            app_config["new_staff"] = {
+                "staff_number": values["staff_number"],
+                "first_name": values["staff_first_name"],
+                "last_name": values["staff_last_name"],
+                "sex": Sex.str_to_value(values["sex"]),
+                "department": Department.get_id(values["staff_department"])
+            }
+            app_config.save()
+            window_dispatch.open_window(HomeWindow)
         if event == "cancel":
             window_dispatch.open_window(HomeWindow)
         return True
@@ -1075,6 +1084,23 @@ class StaffEnrolmentWindow(BaseGUIWindow):
                 cls.display_message(criteria, window)
                 return True
         return None
+
+
+class StaffFaceEnrolmentWindow(FaceCameraWindow):
+    @classmethod
+    def process_image(cls, captured_face_encodings, window):
+        if captured_face_encodings is None:
+            cls.display_message(
+                "Error. Image must have exactly one face", window
+            )
+            return False
+
+        app_config["new_staff"]["face_encodings"] = face_enc_to_str(
+            captured_face_encodings
+        )
+        app_config.save()
+        Staff.objects.create_user(**dict(app_config["new_staff"]))
+        window_dispatch.open_window(HomeWindow)
 
 
 class StudentEnrolmentWindow(BaseGUIWindow):
@@ -1186,6 +1212,18 @@ class StudentEnrolmentWindow(BaseGUIWindow):
         if event == "submit":
             if cls.validate(values, window) is not None:
                 return True
+
+            app_config["new_student"] = {}
+            app_config["new_student"] = {
+                "reg_number": values["student_reg_number_input"],
+                "first_name": values["student_first_name"],
+                "last_name": values["student_last_name"],
+                "other_names": values["student_other_names"],
+                "level_of_study": values["student_level_of_study"],
+                "sex": Sex.str_to_value(values["student_sex"]),
+                "department": Department.get_id(values["student_department"]),
+            }
+            app_config.save()
             window_dispatch.open_window(HomeWindow)
         if event == "cancel":
             window_dispatch.open_window(HomeWindow)
@@ -1223,7 +1261,33 @@ class StudentEnrolmentWindow(BaseGUIWindow):
             if criteria is not None:
                 cls.display_message(criteria, window)
                 return True
+
+        if Student.objects.filter(
+            reg_number=values["student_reg_number_input"]
+        ).exists():
+            cls.display_message(
+                f"Student with registration number {values['student_reg_number_input']} already exists",
+                window,
+            )
+            return True
         return None
+
+
+class StudentFaceEnrolmentWindow(FaceCameraWindow):
+    @classmethod
+    def process_image(cls, captured_face_encodings, window):
+        if captured_face_encodings is None:
+            cls.display_message(
+                "Error. Image must have exactly one face", window
+            )
+            return False
+
+        app_config["new_student"]["face_encodings"] = face_enc_to_str(
+            captured_face_encodings
+        )
+        app_config.save()
+        Student.objects.create(**dict(app_config["new_student"]))
+        window_dispatch.open_window(HomeWindow)
 
 
 class AttendanceMenuWindow(BaseGUIWindow):
