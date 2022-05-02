@@ -87,7 +87,7 @@ class DepartmentTestCase(TestCase):
         )
 
     def test_unique_dept_short_name(self):
-        """Test creating a department object with identical alias as 
+        """Test creating a department object with identical alias as
         an existing object
         """
         self.assertRaises(

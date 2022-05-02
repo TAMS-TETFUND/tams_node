@@ -1,0 +1,39 @@
+import os
+from pathlib import Path
+from typing import List
+
+import cv2
+import face_recognition
+
+
+class FaceRecognition:
+    @staticmethod
+    def face_count(image):
+        return len(face_recognition.face_encodings(image))
+
+    @staticmethod
+    def face_match(
+        *, known_face_encodings, face_encoding_to_check, tolerance=0.6
+    ):
+        if face_recognition.compare_faces(
+            known_face_encodings, face_encoding_to_check, tolerance
+        ):
+            return True
+        else:
+            return False
+
+    @classmethod
+    def face_encodings(cls, image):
+        if cls.face_count == 1:
+            return face_recognition.face_encodings(image)[0]
+        else:
+            return None
+
+    @staticmethod
+    def face_locations(image) -> List:
+        return face_recognition.face_locations(image)
+
+    @staticmethod
+    def draw_bounding_box(face_location, image):
+        (top, right, bottom, left) = face_location
+        cv2.rectangle(image, (left, top), (right, bottom), (0, 0, 255), 2)

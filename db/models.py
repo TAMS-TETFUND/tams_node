@@ -43,6 +43,7 @@ def _str_to_face_enc(enc_str):
     encodings = np.array([float(item) for item in enc_str.split(",")])
     return encodings
 
+
 class Semester(models.IntegerChoices):
     FIRST = 1, "First Semester"
     SECOND = 2, "Second Semester"
@@ -83,8 +84,11 @@ class Faculty(models.Model):
     @staticmethod
     def get_all_faculties():
         return list(
-            Faculty.objects.all().order_by("name").values_list("name", flat=True)
+            Faculty.objects.all()
+            .order_by("name")
+            .values_list("name", flat=True)
         )
+
 
 class Department(models.Model):
     id = models.BigAutoField(primary_key=True)
@@ -103,7 +107,6 @@ class Department(models.Model):
             ),
         ]
 
- 
     @staticmethod
     def get_departments(faculty=None):
         departments = Department.objects.all()
@@ -216,30 +219,51 @@ class Course(models.Model):
         ]
 
     @classmethod
-    def get_courses(cls, *, semester=None, faculty=None, department=None, level_of_study=None):
+    def get_courses(
+        cls,
+        *,
+        semester=None,
+        faculty=None,
+        department=None,
+        level_of_study=None,
+    ):
         course_list = cls.objects.all().exclude(is_active=False)
         if semester and semester in Semester.labels:
-            course_list = course_list.filter(semester=Semester.values[Semester.labels.index(semester)])
-        
-        if department and Department.objects.filter(name__iexact=department).exists():
-            course_list = course_list.filter(department__name__iexact=department)
+            course_list = course_list.filter(
+                semester=Semester.values[Semester.labels.index(semester)]
+            )
+
+        if (
+            department
+            and Department.objects.filter(name__iexact=department).exists()
+        ):
+            course_list = course_list.filter(
+                department__name__iexact=department
+            )
         elif faculty and Faculty.objects.filter(name__iexact=faculty).exists():
-            course_list = course_list.filter(department__faculty__name__iexact=faculty)
-        
+            course_list = course_list.filter(
+                department__faculty__name__iexact=faculty
+            )
+
         if level_of_study:
             course_list = level_of_study.filter(level_of_study=level_of_study)
-        
+
         return [f"{item.code} : {item.title}" for item in course_list]
 
     @classmethod
     def str_to_course(cls, course_str):
         split_course_str = course_str.split(" : ")
         try:
-            course_obj = cls.objects.exclude(is_active=False).get(code__iexact=split_course_str[0], title__iexact=" : ".join(split_course_str[1:]))
+            course_obj = cls.objects.exclude(is_active=False).get(
+                code__iexact=split_course_str[0],
+                title__iexact=" : ".join(split_course_str[1:]),
+            )
         except Exception:
             return None
         else:
             return course_obj.id
+
+
 class AcademicSession(models.Model):
     id = models.BigAutoField(primary_key=True)
     session = models.CharField(max_length=10, unique=True)
@@ -259,7 +283,7 @@ class AcademicSession(models.Model):
 
             qs.update(is_current_session=False)
         super().save(*args, **kwargs)
-    
+
     @staticmethod
     def get_all_academic_sessions():
         return list(
