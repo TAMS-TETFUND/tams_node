@@ -19,3 +19,13 @@ class AppConfigParser(configparser.ConfigParser):
     def save(self):
         with open(self.CONFIG_FILE, "w") as configfile:
             self.write(configfile)
+
+    def section_dict(self, section, no_default_section=True):
+        """Convert a section of the ConfigParser object to a
+        dict."""
+        section_dictionary = dict(self[section])
+        if no_default_section:
+            for key in self["DEFAULT"].keys():
+                del section_dictionary[key]
+        
+        return section_dictionary
