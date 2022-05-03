@@ -14,7 +14,7 @@ class WindowDispatch(UserDict):
         self,
         window_class: Type[BaseGUIWindow],
         on_seperate_window: bool = False,
-    ) -> sg.Window:
+    ) -> None:
         self.update({window_class.__name__: window_class.window()})
 
         if not on_seperate_window:
