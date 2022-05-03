@@ -781,7 +781,7 @@ class FaceCameraWindow(CameraWindow):
                     for face_location in face_locations:
                         FaceRecognition.draw_bounding_box(face_location, img)
                 
-                window["image_display"].update(data=cam.feed_tobytes(img))
+                window["image_display"].update(data=cam.feed_to_bytes(img))
         return True
 
     @classmethod
@@ -856,27 +856,28 @@ class StaffFaceCameraWindow(FaceCameraWindow):
 class BarcodeCameraWindow(CameraWindow):
     @classmethod
     def loop(cls, window, event, values):
-        # window["keyboard"].update(visible=True)
         cam_on = True
         with Camera() as cam:
             while cam_on:
+                img = cam.feed()
+                barcodes = Barcode.decode_image(img)
                 event, values = window.read(timeout=20)
                 if event == "capture":
-                    return False
-
+                    if len(barcodes) == 0:
+                        cls.display_message("No ID detected")
+                    else:
+                        cls.process_barcode(Barcode.decode_barcode(barcodes[0]), window)
+                        return True
                 if event == "keyboard":
                     cls.launch_keypad()
 
                 if event == "cancel":
                     cls.cancel_camera()
 
-                img = cam.feed()
-                barcodes = Barcode.decode_image(img)
                 if len(barcodes) > 0:
-                    for barcode in barcodes:
-                        Barcode.draw_bounding_box(barcode, img)
-                window["image_display"].update(data=img)
-                cls.process_barcode(Barcode.decode_barcode(barcode))
+                    cls.process_barcode(Barcode.decode_barcode(barcodes[0]), window)
+                    return True
+                window["image_display"].update(data=cam.feed_to_bytes(img))
         return True
 
     @classmethod
