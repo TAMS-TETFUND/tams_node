@@ -736,7 +736,11 @@ class CameraWindow(BaseGUIWindow):
                     button_color=cls.ICON_BUTTON_COLOR,
                     key="capture",
                 ),
-                sg.Button(image_data=cls.get_icon("cancel", 0.5), button_color=cls.ICON_BUTTON_COLOR, key="cancel"),
+                sg.Button(
+                    image_data=cls.get_icon("cancel", 0.5),
+                    button_color=cls.ICON_BUTTON_COLOR,
+                    key="cancel",
+                ),
                 cls.get_keyboard_button(),
                 sg.Push(),
             ],
@@ -747,9 +751,23 @@ class CameraWindow(BaseGUIWindow):
     @classmethod
     def get_keyboard_button(cls):
         if isinstance(cls, BarcodeCameraWindow):
-            return sg.pin(sg.Button(image_data=cls.get_icon("keyboard", 0.5), button_color=cls.ICON_BUTTON_COLOR, key="keyboard", visible=True))
+            return sg.pin(
+                sg.Button(
+                    image_data=cls.get_icon("keyboard", 0.5),
+                    button_color=cls.ICON_BUTTON_COLOR,
+                    key="keyboard",
+                    visible=True,
+                )
+            )
         else:
-            return sg.pin(sg.Button(image_data=cls.get_icon("keyboard", 0.5), button_color=cls.ICON_BUTTON_COLOR, key="keyboard", visible=False))
+            return sg.pin(
+                sg.Button(
+                    image_data=cls.get_icon("keyboard", 0.5),
+                    button_color=cls.ICON_BUTTON_COLOR,
+                    key="keyboard",
+                    visible=False,
+                )
+            )
 
 
 class FaceCameraWindow(CameraWindow):
@@ -765,22 +783,24 @@ class FaceCameraWindow(CameraWindow):
                     if face_count > 1:
                         cls.display_message("Multiple faces detected", window)
                     elif face_count == 0:
-                        cls.display_message("Camera did not find a face", window)
+                        cls.display_message(
+                            "Camera did not find a face", window
+                        )
                     else:
                         cls.hide_message_display_field(window)
-                    
+
                     if face_count == 1:
                         captured_encodings = FaceRecognition.face_encodings(img)
                         cls.process_image(captured_encodings, window)
 
                 if event == "cancel":
                     cls.cancel_camera()
-                
+
                 if face_count > 0:
                     face_locations = FaceRecognition.face_locations(img)
                     for face_location in face_locations:
                         FaceRecognition.draw_bounding_box(face_location, img)
-                
+
                 window["image_display"].update(data=cam.feed_to_bytes(img))
         return True
 
@@ -791,6 +811,7 @@ class FaceCameraWindow(CameraWindow):
     @staticmethod
     def cancel_camera():
         raise NotImplementedError
+
 
 class StudentFaceCameraWindow(FaceCameraWindow):
     @classmethod
@@ -821,6 +842,7 @@ class StudentFaceCameraWindow(FaceCameraWindow):
     def cancel_camera():
         """should navigate user back to the attendance session landing page"""
         window_dispatch.open_window(HomeWindow)
+
 
 class StaffFaceCameraWindow(FaceCameraWindow):
     @classmethod
@@ -853,6 +875,7 @@ class StaffFaceCameraWindow(FaceCameraWindow):
         """should navigate user back to the attendance initiator verification window"""
         window_dispatch.open_window(VerifyAttendanceInitiatorWindow)
 
+
 class BarcodeCameraWindow(CameraWindow):
     @classmethod
     def loop(cls, window, event, values):
@@ -866,7 +889,9 @@ class BarcodeCameraWindow(CameraWindow):
                     if len(barcodes) == 0:
                         cls.display_message("No ID detected")
                     else:
-                        cls.process_barcode(Barcode.decode_barcode(barcodes[0]), window)
+                        cls.process_barcode(
+                            Barcode.decode_barcode(barcodes[0]), window
+                        )
                         return True
                 if event == "keyboard":
                     cls.launch_keypad()
@@ -875,7 +900,9 @@ class BarcodeCameraWindow(CameraWindow):
                     cls.cancel_camera()
 
                 if len(barcodes) > 0:
-                    cls.process_barcode(Barcode.decode_barcode(barcodes[0]), window)
+                    cls.process_barcode(
+                        Barcode.decode_barcode(barcodes[0]), window
+                    )
                     return True
                 window["image_display"].update(data=cam.feed_to_bytes(img))
         return True
@@ -1087,7 +1114,7 @@ class StaffEnrolmentWindow(BaseGUIWindow):
                 "first_name": values["staff_first_name"],
                 "last_name": values["staff_last_name"],
                 "sex": Sex.str_to_value(values["sex"]),
-                "department": Department.get_id(values["staff_department"])
+                "department": Department.get_id(values["staff_department"]),
             }
             app_config.save()
             window_dispatch.open_window(HomeWindow)
@@ -1199,7 +1226,7 @@ class StudentEnrolmentWindow(BaseGUIWindow):
             [
                 sg.Text("Possible year of graduation:  "),
                 sg.Input(
-                    size=(10,1),
+                    size=(10, 1),
                     justification="left",
                     key="student_possible_grad_yr",
                 ),
@@ -1287,8 +1314,9 @@ class StudentEnrolmentWindow(BaseGUIWindow):
             (values["student_last_name"], "last name"),
             (values["student_sex"], "sex"),
             (values["student_level_of_study"], "level of study"),
-            (values["student_possible_grad_yr"], "possible year of graduation")
-            (values["student_faculty"], "faculty"),
+            (values["student_possible_grad_yr"], "possible year of graduation")(
+                values["student_faculty"], "faculty"
+            ),
             (values["student_department"], "department"),
         ]
         if cls.validate_required_fields(req_fields, window) is not None:
@@ -1308,7 +1336,10 @@ class StudentEnrolmentWindow(BaseGUIWindow):
             cls.validate_int_field(
                 values["student_level_of_study"], "level of study"
             ),
-            cls.validate_int_field(values["student_possible_grad_yr"], "possible year of graduation")
+            cls.validate_int_field(
+                values["student_possible_grad_yr"],
+                "possible year of graduation",
+            ),
         ):
             if criteria is not None:
                 cls.display_message(criteria, window)
@@ -1341,7 +1372,9 @@ class StudentFaceEnrolmentWindow(FaceCameraWindow):
         new_student_dict = dict(app_config["new_student"])
         for value in app_config["DEFAULT"].keys():
             new_student_dict.pop(value)
-        department = Department.objects.get(id=new_student_dict.pop("department"))
+        department = Department.objects.get(
+            id=new_student_dict.pop("department")
+        )
 
         Student.objects.create(department=department, **new_student_dict)
         return window_dispatch.open_window(HomeWindow)
