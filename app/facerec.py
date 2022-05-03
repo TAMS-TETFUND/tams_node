@@ -24,7 +24,7 @@ class FaceRecognition:
 
     @classmethod
     def face_encodings(cls, image):
-        if cls.face_count == 1:
+        if cls.face_count(image) == 1:
             return face_recognition.face_encodings(image)[0]
         else:
             return None
