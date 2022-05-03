@@ -19,7 +19,7 @@ class Camera(PiCamera):
         return output
 
     @staticmethod
-    def feed_tobytes(img):
+    def feed_to_bytes(img):
         return cv2.imencode(".png", img)[1].tobytes()
 
     def save_feed(
