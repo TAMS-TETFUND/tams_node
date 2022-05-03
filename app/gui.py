@@ -759,27 +759,29 @@ class FaceCameraWindow(CameraWindow):
         with Camera() as cam:
             while cam_on:
                 event, values = window.read(timeout=20)
+                img = cam.feed()
+                face_count = FaceRecognition.face_count(img)
                 if event == "capture":
-                    return False
+                    if face_count > 1:
+                        cls.display_message("Multiple faces detected", window)
+                    elif face_count == 0:
+                        cls.display_message("Camera did not find a face", window)
+                    else:
+                        cls.hide_message_display_field(window)
+                    
+                    if face_count == 1:
+                        captured_encodings = FaceRecognition.face_encodings(img)
+                        cls.process_image(captured_encodings, window)
+
                 if event == "cancel":
                     cls.cancel_camera()
-                img = cam.feed()
-                face_locations = FaceRecognition.face_locations(img)
-                if len(face_locations) > 0:
+                
+                if face_count > 0:
+                    face_locations = FaceRecognition.face_locations(img)
                     for face_location in face_locations:
                         FaceRecognition.draw_bounding_box(face_location, img)
-                window["image_display"].update(data=img)
-
-                if len(face_locations) > 1:
-                    cls.display_message("Multiple faces detected!", window)
-                    return True
-                else:
-                    cls.hide_message_display_field(window)
-
-                if len(face_locations) == 1:
-                    cls.process_image(
-                        FaceRecognition.face_encodings(img), window
-                    )
+                
+                window["image_display"].update(data=cam.feed_tobytes(img))
         return True
 
     @classmethod
@@ -1194,6 +1196,14 @@ class StudentEnrolmentWindow(BaseGUIWindow):
                 ),
             ],
             [
+                sg.Text("Possible year of graduation:  "),
+                sg.Input(
+                    size=(10,1),
+                    justification="left",
+                    key="student_possible_grad_yr",
+                ),
+            ],
+            [
                 sg.Text("Faculty: "),
                 sg.Combo(
                     values=Faculty.get_all_faculties(),
@@ -1258,6 +1268,7 @@ class StudentEnrolmentWindow(BaseGUIWindow):
                 "last_name": values["student_last_name"],
                 "other_names": values["student_other_names"],
                 "level_of_study": values["student_level_of_study"],
+                "possible_grad_yr": values["student_possible_grad_yr"],
                 "sex": Sex.str_to_value(values["student_sex"]),
                 "department": Department.get_id(values["student_department"]),
             }
@@ -1275,6 +1286,7 @@ class StudentEnrolmentWindow(BaseGUIWindow):
             (values["student_last_name"], "last name"),
             (values["student_sex"], "sex"),
             (values["student_level_of_study"], "level of study"),
+            (values["student_possible_grad_yr"], "possible year of graduation")
             (values["student_faculty"], "faculty"),
             (values["student_department"], "department"),
         ]
@@ -1295,6 +1307,7 @@ class StudentEnrolmentWindow(BaseGUIWindow):
             cls.validate_int_field(
                 values["student_level_of_study"], "level of study"
             ),
+            cls.validate_int_field(values["student_possible_grad_yr"], "possible year of graduation")
         ):
             if criteria is not None:
                 cls.display_message(criteria, window)
@@ -1324,8 +1337,17 @@ class StudentFaceEnrolmentWindow(FaceCameraWindow):
             captured_face_encodings
         )
         app_config.save()
-        Student.objects.create(**dict(app_config["new_student"]))
-        window_dispatch.open_window(HomeWindow)
+        new_student_dict = dict(app_config["new_student"])
+        for value in app_config["DEFAULT"].keys():
+            new_student_dict.pop(value)
+        department = Department.objects.get(id=new_student_dict.pop("department"))
+
+        Student.objects.create(department=department, **new_student_dict)
+        return window_dispatch.open_window(HomeWindow)
+
+    @staticmethod
+    def cancel_camera():
+        return window_dispatch.open_window(HomeWindow)
 
 
 class AttendanceMenuWindow(BaseGUIWindow):
