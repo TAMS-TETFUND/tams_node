@@ -18,6 +18,7 @@ from manage import init_django
 init_django()
 
 from db.models import (
+    AttendanceRecord,
     AttendanceSession,
     AcademicSession,
     EventType,
@@ -696,12 +697,12 @@ class VerifyAttendanceInitiatorWindow(BaseGUIWindow):
 class AttendanceSessionLandingWindow(BaseGUIWindow):
     @classmethod
     def window(cls):
-        event_dict = dict(app_config["new_event"]) #this event dict should not be coming from new_event section
+        event_dict = dict(app_config["current_attendance_session"]) #this event dict should not be coming from new_event section
         layout = [
             [sg.Text("Attendance Session Details")],
             [sg.Text("_" * 80)],
             [sg.Text(f"Course: {event_dict['course']}")],
-            [sg.Text(f"Session Details: {event_dict['session']} {event_dict['semester']}")]
+            [sg.Text(f"Session Details: {event_dict['session']} {event_dict['semester']}")],
             [sg.Text(f"Start Time: {event_dict['start_date']} {event_dict['start_time']}")],
             [sg.Text(f"Duration: {event_dict['duration']} Hour(s)")],
             [sg.Text(f"Number of students marked: "), sg.Text("", k="students_marked")],
@@ -720,12 +721,10 @@ class AttendanceSessionLandingWindow(BaseGUIWindow):
             window_dispatch.open_window(HomeWindow)
         
         if event == "start_attendance":
-            # set the "attendance_session" of app_config to model object that
-            # matches session described in "new_event" session of the configparser
-            # 
             window_dispatch.open_window(StudentBarcodeCameraWindow)
 
         if event == "end_attendance":
+            app_config.remove_section("current_attendance_session")
             window_dispatch.open_window(HomeWindow)
 
 
@@ -938,11 +937,13 @@ class StudentFaceCameraWindow(FaceCameraWindow):
             [str_to_face_enc(app_config["tmp_student"]["face_encodings"])],
             captured_face_encodings,
         ):
-            cls.display_message(
-                f"{app_config['tmp_student']['reg_number']} checked in", window
-            )
-            time.sleep(10)
+            AttendanceRecord.objects.create(attendance_session_id=app_config.getint("current_attendance_sesson", "session_id"),
+                student_id=app_config.getint("tmp_student", "id"))
+            sg.popup_auto_close(f"{app_config['tmp_student']['reg_number']} checked in",
+                image=cls.get_icon("ok"),
+                title="Success", auto_close_duration=3)
             window_dispatch.open_window(StudentBarcodeCameraWindow)
+            return True
         else:
             cls.display_message(
                 f"Error. Face did not match ({app_config['tmp_student']['reg_number']})",
@@ -953,7 +954,7 @@ class StudentFaceCameraWindow(FaceCameraWindow):
     @staticmethod
     def cancel_camera():
         """should navigate user back to the attendance session landing page"""
-        window_dispatch.open_window(HomeWindow)
+        window_dispatch.open_window(AttendanceSessionLandingWindow)
 
 
 class StaffFaceCameraWindow(FaceCameraWindow):
@@ -970,11 +971,17 @@ class StaffFaceCameraWindow(FaceCameraWindow):
             captured_face_encodings,
         ):
             cls.display_message(
-                f"{app_config['tmp_staff']['staff_number']} checked in", window
+                f"{app_config['tmp_staff']['staff_number']} authorized attendance-marking", window
             )
-            time.sleep(10)
-            window_dispatch.open_window(StaffBarcodeCameraWindow)
 
+            att_session = AttendanceSession.objects.get(id=app_config.getint("current_attendance_session", "session_id"))
+            att_session.initiator_id = app_config.getint("tmp_staff", "id")
+            att_session.save()
+            app_config["current_attendance_session"]["initiator_id"] = app_config["tmp_staff"]["id"]
+            app_config.save()
+        
+            window_dispatch.open_window(AttendanceSessionLandingWindow)
+            return True
         else:
             cls.display_message(
                 f"Error. Face did not match ({app_config['tmp_staff']['staff_number']})",
@@ -985,7 +992,7 @@ class StaffFaceCameraWindow(FaceCameraWindow):
     @staticmethod
     def cancel_camera():
         """should navigate user back to the attendance initiator verification window"""
-        window_dispatch.open_window(VerifyAttendanceInitiatorWindow)
+        window_dispatch.open_window(NewEventSummaryWindow)
 
 
 class BarcodeCameraWindow(CameraWindow):
@@ -1053,8 +1060,6 @@ class StudentBarcodeCameraWindow(BarcodeCameraWindow):
                 "No student found with given registration number", window
             )
             return False
-
-        app_config["tmp_student"] = {}
         app_config["tmp_student"] = student.values(
             "reg_number",
             "first_name",
@@ -1066,8 +1071,12 @@ class StudentBarcodeCameraWindow(BarcodeCameraWindow):
             "fingerprint_template",
         )
         app_config.save()
-        window_dispatch.open_window(HomeWindow)
+        window_dispatch.open_window(StudentFaceCameraWindow)
+        return True
 
+    @staticmethod
+    def cancel_camera():
+        window_dispatch.open_window(AttendanceSessionLandingWindow)
 
 class StaffBarcodeCameraWindow(BarcodeCameraWindow):
     @classmethod
@@ -1085,6 +1094,7 @@ class StaffBarcodeCameraWindow(BarcodeCameraWindow):
 
         app_config["tmp_staff"] = {}
         app_config["tmp_staff"] = staff.values(
+            "id",
             "staff_number",
             "first_name",
             "last_name",
@@ -1094,7 +1104,8 @@ class StaffBarcodeCameraWindow(BarcodeCameraWindow):
             "fingerprint_template",
         )
         app_config.save()
-        window_dispatch.open_window(HomeWindow)
+        window_dispatch.open_window(StaffFaceCameraWindow)
+        return True
 
 
 # enrolment windows should not be available on all node devices;
@@ -1515,7 +1526,7 @@ def main():
     loop_exit_code = True
     while True:
         window = window_dispatch.current_window
-        event, values = window.read(timeout=100)
+        event, values = window.read(timeout=500)
         current_window = window_dispatch.find_window(window)
         if current_window:
             loop_exit_code = eval(current_window).loop(window, event, values)
