@@ -104,3 +104,11 @@ should the loop method be a class method in the gui window classes/subclasses
 
 **in the verification process, the qr scanner will always appear by default. A button will be provided for entry with 
     a touch keypad in the qr scanner window
+
+to-dos
+    -refactore staffenrolment process
+    -notify user of enrolment success - staff/student enrolment success window?
+    -refactor attendance session initiation/marking process
+    -finish the connection to the models and make sure they are seemless
+    -find any point that needs to be checked in case of exceptions
+    -reconsider all the icons used in the application
