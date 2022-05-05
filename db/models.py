@@ -44,18 +44,44 @@ def str_to_face_enc(enc_str):
     return encodings
 
 
-class Semester(models.IntegerChoices):
-    FIRST = 1, "First Semester"
-    SECOND = 2, "Second Semester"
+class AppIntegerChoices(models.IntegerChoices):
+    @classmethod
+    def str_to_value(cls, string):
+        return eval(f"{cls.__name__}.{string.upper()}.value")
 
 
-class Sex(models.IntegerChoices):
+class AdmissionStatus(AppIntegerChoices):
+        REGULAR = 1, "Regular"
+        GRADUATE = 2, "Graduated"
+        EXTERNAL = 3, "External"
+        OVERSTAY = 4, "Overstay"
+        WITHDRAWN = 5, "Withdrawn"
+        SUSPENDED = 6, "Suspended"
+
+
+class Semester(AppIntegerChoices):
+    FIRST = 1, "First"
+    SECOND = 2, "Second"
+
+
+class Sex(AppIntegerChoices):
     MALE = 1, "Male"
     FEMALE = 2, "Female"
 
-    @classmethod
-    def str_to_value(cls, sex_string):
-        return eval(f"{cls.__name__}.{sex_string.upper()}.value")
+class EventType(AppIntegerChoices):
+    LECTURE = 1, "Lecture"
+    LAB = 2, "Lab"
+    QUIZ = 3, "Quiz"
+    EXAMINATION = 4, "Examination"
+
+
+class AttendanceSessionStatus(AppIntegerChoices):
+    ACTIVE = 1, "Active"
+    ENDED = 2, "Ended"
+
+class RecordTypes(AppIntegerChoices):
+        SIGN_IN = 1, "Sign In"
+        SIGN_OUT = 2, "Sign Out"
 
 
 class StaffTitle(models.Model):
@@ -160,14 +186,6 @@ class AppAdmin(AppUser):
 
 
 class Student(models.Model):
-    class AdmissionStatus(models.IntegerChoices):
-        REGULAR = 1, "Regular"
-        GRADUATE = 2, "Graduated"
-        EXTERNAL = 3, "External"
-        OVERSTAY = 4, "Overstay"
-        WITHDRAWN = 5, "Withdrawn"
-        SUSPENDED = 6, "Suspended"
-
     id = models.BigAutoField(primary_key=True)
     reg_number = models.CharField(max_length=12, unique=True)
     first_name = models.CharField(max_length=255)
@@ -312,22 +330,17 @@ class AcademicSession(models.Model):
 
 
 class AttendanceSession(models.Model):
-    class EventType(models.IntegerChoices):
-        LECTURE = 1, "Lecture"
-        LAB = 2, "Lab"
-        QUIZ = 3, "Test"
-        EXAMINATION = 4, "Exam"
-
     id = models.BigAutoField(primary_key=True)
     initiator = models.ForeignKey(
         to=AppUser, on_delete=models.CASCADE, null=True, blank=True
     )
     course = models.ForeignKey(to=Course, on_delete=models.CASCADE)
     session = models.ForeignKey(to=AcademicSession, on_delete=models.CASCADE)
-    event_type = models.IntegerField(EventType.choices)
+    event_type = models.IntegerField(choices=EventType.choices)
     start_time = models.DateTimeField(default=timezone.now())
     duration = models.DurationField()
     created_on = models.DateTimeField(auto_now_add=True)
+    # status = models.IntegerField(choices=AttendanceSessionStatus.choices)
     recurring = models.BooleanField(default=False)
 
     class Meta:
@@ -344,18 +357,15 @@ class AttendanceSession(models.Model):
 
 
 class AttendanceRecord(models.Model):
-    class RecordTypes(models.IntegerChoices):
-        SIGN_IN = 1, "Sign In"
-        SIGN_OUT = 2, "Sign Out"
-
     id = models.BigAutoField(primary_key=True)
     attendance_session = models.ForeignKey(
         to=AttendanceSession, on_delete=models.CASCADE
     )
     student = models.ForeignKey(to=Student, on_delete=models.CASCADE)
-    record_type = models.IntegerField(RecordTypes.choices)
+    record_type = models.IntegerField(choices=RecordTypes.choices)
     logged_by = models.DateTimeField(auto_now_add=True)
     is_valid = models.BooleanField(default=True)
+
 
     class Meta:
         constraints = [
@@ -369,7 +379,7 @@ class AttendanceRecord(models.Model):
 class CourseRegistration(models.Model):
     id = models.BigAutoField(primary_key=True)
     session = models.ForeignKey(to=AcademicSession, on_delete=models.CASCADE)
-    semester = models.IntegerField(Semester.choices)
+    semester = models.IntegerField(choices=Semester.choices)
     course = models.ForeignKey(to=Course, on_delete=models.CASCADE)
     student = models.ForeignKey(to=Student, on_delete=models.CASCADE)
 
