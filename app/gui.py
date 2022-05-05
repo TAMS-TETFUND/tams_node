@@ -9,7 +9,7 @@ from django.db.utils import IntegrityError
 from app.appconfigparser import AppConfigParser
 from app.basegui import BaseGUIWindow
 
-# from app.camera import Camera
+from app.camera import Camera
 from app.barcode import Barcode
 from app.facerec import FaceRecognition
 from app.windowdispatch import WindowDispatch
