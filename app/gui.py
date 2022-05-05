@@ -1,8 +1,10 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 import time
+from unicodedata import name
 
 import PySimpleGUI as sg
 from django.core.exceptions import ObjectDoesNotExist
+from django.db.utils import IntegrityError
 
 from app.appconfigparser import AppConfigParser
 from app.basegui import BaseGUIWindow
@@ -18,6 +20,7 @@ init_django()
 from db.models import (
     AttendanceSession,
     AcademicSession,
+    EventType,
     Student,
     Sex,
     Staff,
@@ -28,7 +31,6 @@ from db.models import (
     face_enc_to_str,
     str_to_face_enc,
 )
-
 
 # initializing the configparser object
 app_config = AppConfigParser()
@@ -165,11 +167,11 @@ class EventMenuWindow(BaseGUIWindow):
                 sg.Button(
                     image_data=cls.get_icon("test_script"),
                     button_color=cls.ICON_BUTTON_COLOR,
-                    key="test",
+                    key="quiz",
                 ),
                 sg.Push(),
             ],
-            [sg.Push(), sg.Text("Test"), sg.Push()],
+            [sg.Push(), sg.Text("Quiz"), sg.Push()],
         ]
 
         column4 = [
@@ -178,11 +180,11 @@ class EventMenuWindow(BaseGUIWindow):
                 sg.Button(
                     image_data=cls.get_icon("graduation_cap"),
                     button_color=cls.ICON_BUTTON_COLOR,
-                    key="exam",
+                    key="examination",
                 ),
                 sg.Push(),
             ],
-            [sg.Push(), sg.Text("Exam"), sg.Push()],
+            [sg.Push(), sg.Text("Examination"), sg.Push()],
         ]
 
         layout = [
@@ -213,7 +215,7 @@ class EventMenuWindow(BaseGUIWindow):
     def loop(cls, window, event, values):
         if event in (sg.WIN_CLOSED, "back"):
             window_dispatch.open_window(HomeWindow)
-        if event in ("lecture", "exam", "lab", "test"):
+        if event in ("lecture", "examination", "lab", "quiz"):
             app_config["new_event"] = {}
             app_config["new_event"]["type"] = event
             if event in ("lecture", "lab"):
@@ -224,10 +226,8 @@ class EventMenuWindow(BaseGUIWindow):
                 )
                 if recurring == "Yes":
                     app_config["new_event"]["recurring"] = "True"
-                elif recurring == "No":
-                    app_config["new_event"]["recurring"] = "False"
                 else:
-                    pass
+                    app_config["new_event"]["recurring"] = "False"
 
             app_config.save()
             window_dispatch.open_window(AcademicSessionDetailsWindow)
@@ -246,9 +246,7 @@ class AcademicSessionDetailsWindow(BaseGUIWindow):
                 sg.Text("Select Current Session:  "),
                 sg.Combo(
                     AcademicSession.get_all_academic_sessions(),
-                    default_value=AcademicSession.get_all_academic_sessions()[
-                        0
-                    ],
+                    default_value=AcademicSession.get_all_academic_sessions()[0],
                     enable_events=True,
                     key="current_session",
                     expand_y=True,
@@ -418,8 +416,7 @@ class EventDetailWindow(BaseGUIWindow):
             ],
             [
                 sg.Push(),
-                sg.Button("Start Event", k="start_event"),
-                sg.Button("Schedule Event", k="schedule_event"),
+                sg.Button("Next", k="next"),
                 sg.Button("Cancel", k="cancel"),
                 sg.Push(),
             ],
@@ -471,14 +468,14 @@ class EventDetailWindow(BaseGUIWindow):
                 )
         if event == "pick_date":
             event_date = sg.popup_get_date()
-            if event is None:
+            if event_date is None:
                 return True
             else:
                 window["start_date"].update(
                     value=f"{event_date[1]}-{event_date[0]}-{event_date[2]}"
                 )
             window.force_focus()
-        if event in ("start_event", "schedule_event"):
+        if event == "next":
             if cls.validate(values, window) is not None:
                 return True
 
@@ -489,16 +486,7 @@ class EventDetailWindow(BaseGUIWindow):
             app_config["new_event"]["start_date"] = values["start_date"]
             app_config["new_event"]["duration"] = values["duration"]
             app_config.save()
-
-            if event == "start_event":
-                window_dispatch.open_window(StaffNumberInputWindow)
-            if event == "schedule_event":
-                sg.popup(
-                    "Event saved to scheduled events",
-                    title="Event saved",
-                    keep_on_top=True,
-                )
-                window_dispatch.open_window(HomeWindow)
+            window_dispatch.open_window(NewEventSummaryWindow)
         if event == "cancel":
             app_config["new_event"] = {}
             app_config.save()
@@ -537,17 +525,16 @@ class EventDetailWindow(BaseGUIWindow):
             cls.display_message("Invalid value in duration", window)
             return True
 
+        start_datetime =f'{values["start_date"]} {values["start_hour"]}:{values["start_minute"]}'
         try:
-            start_date = datetime.strptime(values["start_date"], "%d-%m-%Y")
+            start_date = datetime.strptime(start_datetime, "%d-%m-%Y %H:%M")
         except ValueError:
             cls.display_message("Invalid start date", window)
             return True
 
-        current_dt = datetime.now()
+        current_dt = datetime.now() - timedelta(hours=1)
 
-        if current_dt < start_date or current_dt.hour > int(
-            values["start_hour"]
-        ):
+        if current_dt > start_date:
             cls.display_message(
                 "Date and time must not be earlier than current date and time",
                 window,
@@ -555,6 +542,91 @@ class EventDetailWindow(BaseGUIWindow):
             return True
 
         return None
+
+
+class NewEventSummaryWindow(BaseGUIWindow):
+    @classmethod
+    def window(cls):
+        new_event_dict = app_config["new_event"]
+        layout = [
+            [sg.Push(), sg.Text('{} Event'.format(new_event_dict['type'])), sg.Push()],
+            [sg.Text("_" * 80)],
+            [sg.VPush()],
+            [cls.message_display_field()],
+            [sg.Text(f"Course: {new_event_dict['course']}")],
+            [sg.Text(f"Session Details: {new_event_dict['session']} {new_event_dict['semester']}")],
+            [sg.Text(f"Start Time: {new_event_dict['start_date']} {new_event_dict['start_time']}")],
+            [sg.Text(f"Duration: {new_event_dict['duration']} Hours")],
+            [sg.VPush()],
+            [sg.Text("_" * 80)],
+            [
+                sg.Button("Start Event", k="start_event"), 
+                sg.Button("Schedule Event", k="schedule_event"),
+                sg.Button("Edit Details", k="edit"),
+                sg.Button("Cancel", k="cancel"),
+            ]
+        ]
+        window = sg.Window("New Event Summary", layout, **cls.window_init_dict())
+        return window
+
+    @classmethod
+    def loop(cls, window, event, values):
+        if event in ("start_event" "schedule_event"):
+            new_event = dict(app_config["new_event"])
+            attendance_session_model_kwargs = {
+                "course_id":Course.str_to_course(new_event["course"]),
+                "session":AcademicSession.objects.get(session__iexact=new_event["session"]),
+                "event_type":EventType.str_to_value(new_event["type"]),
+                "start_time":datetime.strptime(
+                    f"{new_event['start_date']} {new_event['start_time']}", 
+                    "%d-%m-%Y %H:%M"
+                ),
+                "duration":timedelta(hours=int(new_event["duration"])),
+                "recurring":eval(new_event["recurring"])
+            }
+            # att_session = AttendanceSession.objects.create(course_id=Course.str_to_course(new_event["course"]),
+            #     session=AcademicSession.objects.get(session__iexact=new_event["session"]),
+            #     event_type=EventType.str_to_value(new_event["type"]),
+            #     start_time=datetime.strptime(
+            #         f"{new_event['start_date']} {new_event['start_time']}", 
+            #         "%d-%m-%Y %H:%M"
+            #     ),
+            #     duration=timedelta(hours=int(new_event["duration"])),
+            #     recurring=eval(new_event["recurring"])
+            # )
+            try:
+                att_session = AttendanceSession.objects.create(**attendance_session_model_kwargs)
+            except IntegrityError:
+                cls.display_message("Event has already been created", window)
+                att_session = AttendanceSession.objects.get(**attendance_session_model_kwargs)
+
+            # if att_session.initiator:
+            #     app_config["current_attendance_session"] = app_config.section_dict("new_event")
+            #     app_config["current_attendance_session"]["session_id"] = str(att_session.id)
+            #     app_config["current_attendance_session"]["initiator_id"] = str(att_session.initiator.id)
+                # app_config.save()
+            #     window_dispatch.open_window(ActiveEventSummaryWindow)
+            #     return True
+
+            if event == "start_event":
+                app_config["current_attendance_session"] = app_config.section_dict("new_event")
+                app_config["current_attendance_session"]["session_id"] = str(att_session.id)
+                app_config.save()
+                window_dispatch.open_window(StaffBarcodeCameraWindow)
+
+            if event == "schedule_event":
+                sg.popup(
+                    "Event saved to scheduled events",
+                    title="Event saved",
+                    keep_on_top=True,
+                )
+                window_dispatch.open_window(HomeWindow)
+
+        if event == "cancel":
+            app_config["new_event"] = {}
+            app_config.save()
+            window_dispatch.open_window(HomeWindow)
+        return True
 
 
 class VerifyAttendanceInitiatorWindow(BaseGUIWindow):
@@ -609,7 +681,6 @@ class VerifyAttendanceInitiatorWindow(BaseGUIWindow):
 
     @classmethod
     def loop(cls, window, event, values):
-        global window_dispatch, app_config
         if event in (sg.WIN_CLOSED, "back"):
             window_dispatch.open_window(HomeWindow)
             sg.popup(
@@ -620,6 +691,42 @@ class VerifyAttendanceInitiatorWindow(BaseGUIWindow):
         if event == "facial_verification":
             window_dispatch.open_window(HomeWindow)
         return True
+
+
+class AttendanceSessionLandingWindow(BaseGUIWindow):
+    @classmethod
+    def window(cls):
+        event_dict = dict(app_config["new_event"]) #this event dict should not be coming from new_event section
+        layout = [
+            [sg.Text("Attendance Session Details")],
+            [sg.Text("_" * 80)],
+            [sg.Text(f"Course: {event_dict['course']}")],
+            [sg.Text(f"Session Details: {event_dict['session']} {event_dict['semester']}")]
+            [sg.Text(f"Start Time: {event_dict['start_date']} {event_dict['start_time']}")],
+            [sg.Text(f"Duration: {event_dict['duration']} Hour(s)")],
+            [sg.Text(f"Number of students marked: "), sg.Text("", k="students_marked")],
+            [sg.Text("_" * 80)],
+            [sg.Button("Take Attendance", k="start_attendance"), 
+            sg.Button("End Attendance", k="end_attendance"),
+            sg.Button("Go back home", k="home")]
+        ]
+        
+        window = sg.Window("Attendance Session Page", layout, **cls.window_init_dict())
+        return window
+
+    @classmethod
+    def loop(cls, window, event, values):
+        if event == "home":
+            window_dispatch.open_window(HomeWindow)
+        
+        if event == "start_attendance":
+            # set the "attendance_session" of app_config to model object that
+            # matches session described in "new_event" session of the configparser
+            # 
+            window_dispatch.open_window(StudentBarcodeCameraWindow)
+
+        if event == "end_attendance":
+            window_dispatch.open_window(HomeWindow)
 
 
 class StaffNumberInputWindow(BaseGUIWindow):
@@ -679,7 +786,6 @@ class StaffNumberInputWindow(BaseGUIWindow):
 
     @classmethod
     def loop(cls, window, event, values):
-        global window_dispatch, app_config
         if event == "back":
             window_dispatch.open_window(HomeWindow)
             sg.popup(
@@ -727,6 +833,7 @@ class CameraWindow(BaseGUIWindow):
     @classmethod
     def window(cls):
         layout = [
+            [cls.window_title()],
             [cls.message_display_field()],
             [sg.Push(), sg.Image(filename="", key="image_display"), sg.Push()],
             [
@@ -768,14 +875,15 @@ class CameraWindow(BaseGUIWindow):
                     visible=False,
                 )
             )
-
+    @classmethod
+    def window_title(cls):
+        raise NotImplementedError
 
 class FaceCameraWindow(CameraWindow):
     @classmethod
     def loop(cls, window, event, values):
-        cam_on = True
         with Camera() as cam:
-            while cam_on:
+            while True:
                 event, values = window.read(timeout=20)
                 img = cam.feed()
                 face_count = FaceRecognition.face_count(img)
@@ -811,6 +919,10 @@ class FaceCameraWindow(CameraWindow):
     @staticmethod
     def cancel_camera():
         raise NotImplementedError
+
+    @classmethod
+    def window_title(cls):
+        return [sg.Push(), sg.Image(data=cls.get_icon("face_scanner", 0.5)), sg.Text("Position Face", font=("Any", 20))]
 
 
 class StudentFaceCameraWindow(FaceCameraWindow):
@@ -879,9 +991,8 @@ class StaffFaceCameraWindow(FaceCameraWindow):
 class BarcodeCameraWindow(CameraWindow):
     @classmethod
     def loop(cls, window, event, values):
-        cam_on = True
         with Camera() as cam:
-            while cam_on:
+            while True:
                 img = cam.feed()
                 barcodes = Barcode.decode_image(img)
                 event, values = window.read(timeout=20)
@@ -919,6 +1030,10 @@ class BarcodeCameraWindow(CameraWindow):
     def cancel_camera():
         window_dispatch.open_window(HomeWindow)
 
+    @classmethod
+    def window_title(cls):
+        return [[sg.Push(), sg.Image(data=cls.get_icon("qr_code", 0.5)), sg.Text("Present ID Card", font=("Any", 20)), sg.Push()],
+        [sg.Text("A staff must authorize the commencement of attendance-marking")]]
 
 class StudentBarcodeCameraWindow(BarcodeCameraWindow):
     """window responsible for processing student registration number
@@ -1167,7 +1282,10 @@ class StaffFaceEnrolmentWindow(FaceCameraWindow):
             captured_face_encodings
         )
         app_config.save()
-        Staff.objects.create_user(**dict(app_config["new_staff"]))
+        new_staff_dict = app_config.section_dict("new_staff")
+        department = Department.objects.get(id=new_staff_dict.pop("department"))
+        Staff.objects.create_user(department=department, **new_staff_dict)
+        
         window_dispatch.open_window(HomeWindow)
 
 
@@ -1314,9 +1432,8 @@ class StudentEnrolmentWindow(BaseGUIWindow):
             (values["student_last_name"], "last name"),
             (values["student_sex"], "sex"),
             (values["student_level_of_study"], "level of study"),
-            (values["student_possible_grad_yr"], "possible year of graduation")(
-                values["student_faculty"], "faculty"
-            ),
+            (values["student_possible_grad_yr"], "possible year of graduation"),
+            (values["student_faculty"], "faculty"),
             (values["student_department"], "department"),
         ]
         if cls.validate_required_fields(req_fields, window) is not None:
@@ -1369,19 +1486,17 @@ class StudentFaceEnrolmentWindow(FaceCameraWindow):
             captured_face_encodings
         )
         app_config.save()
-        new_student_dict = dict(app_config["new_student"])
-        for value in app_config["DEFAULT"].keys():
-            new_student_dict.pop(value)
+        new_student_dict = app_config.section_dict("new_student")
         department = Department.objects.get(
             id=new_student_dict.pop("department")
         )
 
         Student.objects.create(department=department, **new_student_dict)
-        return window_dispatch.open_window(HomeWindow)
+        window_dispatch.open_window(HomeWindow)
 
     @staticmethod
     def cancel_camera():
-        return window_dispatch.open_window(HomeWindow)
+        window_dispatch.open_window(HomeWindow)
 
 
 class AttendanceMenuWindow(BaseGUIWindow):
@@ -1397,14 +1512,13 @@ class AttendanceMenuWindow(BaseGUIWindow):
 
 def main():
     window_dispatch.open_window(HomeWindow)
-
+    loop_exit_code = True
     while True:
-        window, event, values = sg.read_all_windows()
+        window = window_dispatch.current_window
+        event, values = window.read(timeout=100)
         current_window = window_dispatch.find_window(window)
-
         if current_window:
             loop_exit_code = eval(current_window).loop(window, event, values)
-
         if not loop_exit_code:
             break
         if event == sg.WIN_CLOSED:
