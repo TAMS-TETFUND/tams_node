@@ -115,13 +115,19 @@ class HomeWindow(BaseGUIWindow):
             window_dispatch.open_window(EventMenuWindow)
         if event == "continue_attendance":
             if app_config.has_section("current_attendance_session"):
-                if app_config.has_option("current_attendance_session", "initiator_id"):
+                if app_config.has_option(
+                    "current_attendance_session", "initiator_id"
+                ):
                     window_dispatch.open_window(ActiveEventSummaryWindow)
                 else:
-                    app_config["new_event"] = app_config["current_attendance_session"]
+                    app_config["new_event"] = app_config[
+                        "current_attendance_session"
+                    ]
                     window_dispatch.open_window(NewEventSummaryWindow)
             else:
-                sg.popup("No active attendance-taking event found.", title="No Event")
+                sg.popup(
+                    "No active attendance-taking event found.", title="No Event"
+                )
         if event == "settings":
             window_dispatch.open_window(EnrolmentMenuWindow)
         if event == "quit":
@@ -563,7 +569,9 @@ class NewEventSummaryWindow(BaseGUIWindow):
         layout = [
             [
                 sg.Push(),
-                sg.Text("New {} Event".format(new_event_dict["type"].capitalize())),
+                sg.Text(
+                    "New {} Event".format(new_event_dict["type"].capitalize())
+                ),
                 sg.Push(),
             ],
             [sg.Text("_" * 80)],
@@ -621,13 +629,19 @@ class NewEventSummaryWindow(BaseGUIWindow):
                 att_session = AttendanceSession.objects.get(
                     **attendance_session_model_kwargs
                 )
-            app_config["current_attendance_session"] = app_config.section_dict("new_event")
-            app_config["current_attendance_session"]["session_id"] = str(att_session.id)
+            app_config["current_attendance_session"] = app_config.section_dict(
+                "new_event"
+            )
+            app_config["current_attendance_session"]["session_id"] = str(
+                att_session.id
+            )
             app_config.remove_section("new_event")
             app_config.save()
-            
+
             if att_session.initiator:
-                app_config["current_attendance_session"]["initiator_id"] = str(att_session.initiator.id)
+                app_config["current_attendance_session"]["initiator_id"] = str(
+                    att_session.initiator.id
+                )
                 window_dispatch.open_window(ActiveEventSummaryWindow)
                 return True
 
@@ -656,7 +670,11 @@ class ActiveEventSummaryWindow(BaseGUIWindow):
         layout = [
             [
                 sg.Push(),
-                sg.Text("On-going {} Event".format(new_event_dict["type"].capitalize())),
+                sg.Text(
+                    "On-going {} Event".format(
+                        new_event_dict["type"].capitalize()
+                    )
+                ),
                 sg.Push(),
             ],
             [sg.Text("_" * 80)],
@@ -692,9 +710,14 @@ class ActiveEventSummaryWindow(BaseGUIWindow):
             active_event = app_config["current_attendance_session"]
 
             try:
-                initiator = Staff.objects.get(id=active_event.getint("initiator_id"))
+                initiator = Staff.objects.get(
+                    id=active_event.getint("initiator_id")
+                )
             except ObjectDoesNotExist:
-                sg.popup("System error. Please try creating event again", title="Error")
+                sg.popup(
+                    "System error. Please try creating event again",
+                    title="Error",
+                )
                 window_dispatch.open_window(HomeWindow)
                 return True
 
