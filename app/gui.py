@@ -1388,8 +1388,8 @@ class StaffEnrolmentWindow(BaseGUIWindow):
             if cls.validate(values, window) is not None:
                 return True
 
-            app_config["new_staff"] = {}
             app_config["new_staff"] = {
+                "username": values["staff_number_input"],
                 "staff_number": values["staff_number_input"],
                 "first_name": values["staff_first_name"],
                 "last_name": values["staff_last_name"],
