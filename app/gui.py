@@ -1390,7 +1390,7 @@ class StaffEnrolmentWindow(BaseGUIWindow):
 
             app_config["new_staff"] = {}
             app_config["new_staff"] = {
-                "staff_number": values["staff_number"],
+                "staff_number": values["staff_number_input"],
                 "first_name": values["staff_first_name"],
                 "last_name": values["staff_last_name"],
                 "sex": Sex.str_to_value(values["sex"]),
