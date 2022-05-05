@@ -1397,7 +1397,7 @@ class StaffEnrolmentWindow(BaseGUIWindow):
                 "department": Department.get_id(values["staff_department"]),
             }
             app_config.save()
-            window_dispatch.open_window(HomeWindow)
+            window_dispatch.open_window(StaffFaceEnrolmentWindow)
         if event == "cancel":
             window_dispatch.open_window(HomeWindow)
         return True
