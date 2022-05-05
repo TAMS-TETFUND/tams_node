@@ -722,7 +722,7 @@ class ActiveEventSummaryWindow(BaseGUIWindow):
                 window_dispatch.open_window(HomeWindow)
                 return True
 
-            app_config["tmp_staff"] = dict(initiator.values("id", "staff_number", "first_name", "last_name", "department__name", "department__faculty__name", "face_encodings", "fingerprint_template",))
+            app_config["tmp_staff"] = initiator.values("id", "staff_number", "first_name", "last_name", "department__name", "department__faculty__name", "face_encodings", "fingerprint_template",).first()
             app_config.save()
             window_dispatch.open_window(StaffFaceCameraWindow)
         return True
@@ -1206,13 +1206,13 @@ class StudentBarcodeCameraWindow(BarcodeCameraWindow):
                 "No student found with given registration number", window
             )
             return False
-        app_config["tmp_student"] = dict(student.values(
+        app_config["tmp_student"] = student.values(
             "reg_number",
             "first_name",
             "last_name",
             "level_of_study",
             "department__name",
-            "department__faculty__name", "face_encodings", "fingerprint_template",))
+            "department__faculty__name", "face_encodings", "fingerprint_template",).first()
         app_config.save()
         window_dispatch.open_window(StudentFaceCameraWindow)
         return True
@@ -1236,9 +1236,9 @@ class StaffBarcodeCameraWindow(BarcodeCameraWindow):
             cls.display_message("No staff found with given staff ID", window)
             return False
 
-        app_config["tmp_staff"] = dict(staff.values("id", "staff_number", "first_name", "last_name", "department__name", "department__faculty__name",
+        app_config["tmp_staff"] = staff.values("id", "staff_number", "first_name", "last_name", "department__name", "department__faculty__name",
             "face_encodings",
-            "fingerprint_template",))
+            "fingerprint_template",).first()
         app_config.save()
         window_dispatch.open_window(StaffFaceCameraWindow)
         return True
