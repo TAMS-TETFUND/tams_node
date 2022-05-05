@@ -1024,6 +1024,7 @@ class FaceCameraWindow(CameraWindow):
                     if face_count == 1:
                         captured_encodings = FaceRecognition.face_encodings(img)
                         cls.process_image(captured_encodings, window)
+                        return True
 
                 if event == "cancel":
                     cls.cancel_camera()
@@ -1555,7 +1556,6 @@ class StudentEnrolmentWindow(BaseGUIWindow):
 
     @classmethod
     def loop(cls, window, event, values):
-        window.force_focus()
         if event == "student_faculty":
             if values["student_faculty"] in (cls.COMBO_DEFAULT, None):
                 window["student_faculty"].update(
