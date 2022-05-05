@@ -126,7 +126,7 @@ class HomeWindow(BaseGUIWindow):
                     window_dispatch.open_window(NewEventSummaryWindow)
             else:
                 sg.popup(
-                    "No active attendance-taking event found.", title="No Event"
+                    "No active attendance-taking event found.", title="No Event", keep_on_top=True
                 )
         if event == "settings":
             window_dispatch.open_window(EnrolmentMenuWindow)
@@ -717,6 +717,7 @@ class ActiveEventSummaryWindow(BaseGUIWindow):
                 sg.popup(
                     "System error. Please try creating event again",
                     title="Error",
+                    keep_on_top=True,
                 )
                 window_dispatch.open_window(HomeWindow)
                 return True
