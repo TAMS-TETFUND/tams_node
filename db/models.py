@@ -362,7 +362,7 @@ class AttendanceRecord(models.Model):
         to=AttendanceSession, on_delete=models.CASCADE
     )
     student = models.ForeignKey(to=Student, on_delete=models.CASCADE)
-    record_type = models.IntegerField(choices=RecordTypes.choices)
+    record_type = models.IntegerField(choices=RecordTypes.choices, default=RecordTypes.SIGN_IN)
     logged_by = models.DateTimeField(auto_now_add=True)
     is_valid = models.BooleanField(default=True)
 
