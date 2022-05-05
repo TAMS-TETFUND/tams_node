@@ -27,5 +27,5 @@ class AppConfigParser(configparser.ConfigParser):
         if no_default_section:
             for key in self["DEFAULT"].keys():
                 del section_dictionary[key]
-        
+
         return section_dictionary

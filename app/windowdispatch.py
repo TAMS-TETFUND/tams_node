@@ -32,7 +32,7 @@ class WindowDispatch(UserDict):
     @property
     def current_window(self):
         return self._current_window
-    
+
     @current_window.setter
     def current_window(self, value):
         if isinstance(value, sg.Window):

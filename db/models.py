@@ -51,12 +51,12 @@ class AppIntegerChoices(models.IntegerChoices):
 
 
 class AdmissionStatus(AppIntegerChoices):
-        REGULAR = 1, "Regular"
-        GRADUATE = 2, "Graduated"
-        EXTERNAL = 3, "External"
-        OVERSTAY = 4, "Overstay"
-        WITHDRAWN = 5, "Withdrawn"
-        SUSPENDED = 6, "Suspended"
+    REGULAR = 1, "Regular"
+    GRADUATE = 2, "Graduated"
+    EXTERNAL = 3, "External"
+    OVERSTAY = 4, "Overstay"
+    WITHDRAWN = 5, "Withdrawn"
+    SUSPENDED = 6, "Suspended"
 
 
 class Semester(AppIntegerChoices):
@@ -67,6 +67,7 @@ class Semester(AppIntegerChoices):
 class Sex(AppIntegerChoices):
     MALE = 1, "Male"
     FEMALE = 2, "Female"
+
 
 class EventType(AppIntegerChoices):
     LECTURE = 1, "Lecture"
@@ -79,9 +80,10 @@ class AttendanceSessionStatus(AppIntegerChoices):
     ACTIVE = 1, "Active"
     ENDED = 2, "Ended"
 
+
 class RecordTypes(AppIntegerChoices):
-        SIGN_IN = 1, "Sign In"
-        SIGN_OUT = 2, "Sign Out"
+    SIGN_IN = 1, "Sign In"
+    SIGN_OUT = 2, "Sign Out"
 
 
 class StaffTitle(models.Model):
@@ -362,10 +364,11 @@ class AttendanceRecord(models.Model):
         to=AttendanceSession, on_delete=models.CASCADE
     )
     student = models.ForeignKey(to=Student, on_delete=models.CASCADE)
-    record_type = models.IntegerField(choices=RecordTypes.choices, default=RecordTypes.SIGN_IN)
+    record_type = models.IntegerField(
+        choices=RecordTypes.choices, default=RecordTypes.SIGN_IN
+    )
     logged_by = models.DateTimeField(auto_now_add=True)
     is_valid = models.BooleanField(default=True)
-
 
     class Meta:
         constraints = [

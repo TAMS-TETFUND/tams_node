@@ -247,7 +247,9 @@ class AcademicSessionDetailsWindow(BaseGUIWindow):
                 sg.Text("Select Current Session:  "),
                 sg.Combo(
                     AcademicSession.get_all_academic_sessions(),
-                    default_value=AcademicSession.get_all_academic_sessions()[0],
+                    default_value=AcademicSession.get_all_academic_sessions()[
+                        0
+                    ],
                     enable_events=True,
                     key="current_session",
                     expand_y=True,
@@ -526,7 +528,7 @@ class EventDetailWindow(BaseGUIWindow):
             cls.display_message("Invalid value in duration", window)
             return True
 
-        start_datetime =f'{values["start_date"]} {values["start_hour"]}:{values["start_minute"]}'
+        start_datetime = f'{values["start_date"]} {values["start_hour"]}:{values["start_minute"]}'
         try:
             start_date = datetime.strptime(start_datetime, "%d-%m-%Y %H:%M")
         except ValueError:
@@ -550,24 +552,38 @@ class NewEventSummaryWindow(BaseGUIWindow):
     def window(cls):
         new_event_dict = app_config["new_event"]
         layout = [
-            [sg.Push(), sg.Text('{} Event'.format(new_event_dict['type'])), sg.Push()],
+            [
+                sg.Push(),
+                sg.Text("{} Event".format(new_event_dict["type"])),
+                sg.Push(),
+            ],
             [sg.Text("_" * 80)],
             [sg.VPush()],
             [cls.message_display_field()],
             [sg.Text(f"Course: {new_event_dict['course']}")],
-            [sg.Text(f"Session Details: {new_event_dict['session']} {new_event_dict['semester']}")],
-            [sg.Text(f"Start Time: {new_event_dict['start_date']} {new_event_dict['start_time']}")],
+            [
+                sg.Text(
+                    f"Session Details: {new_event_dict['session']} {new_event_dict['semester']}"
+                )
+            ],
+            [
+                sg.Text(
+                    f"Start Time: {new_event_dict['start_date']} {new_event_dict['start_time']}"
+                )
+            ],
             [sg.Text(f"Duration: {new_event_dict['duration']} Hours")],
             [sg.VPush()],
             [sg.Text("_" * 80)],
             [
-                sg.Button("Start Event", k="start_event"), 
+                sg.Button("Start Event", k="start_event"),
                 sg.Button("Schedule Event", k="schedule_event"),
                 sg.Button("Edit Details", k="edit"),
                 sg.Button("Cancel", k="cancel"),
-            ]
+            ],
         ]
-        window = sg.Window("New Event Summary", layout, **cls.window_init_dict())
+        window = sg.Window(
+            "New Event Summary", layout, **cls.window_init_dict()
+        )
         return window
 
     @classmethod
@@ -575,43 +591,53 @@ class NewEventSummaryWindow(BaseGUIWindow):
         if event in ("start_event" "schedule_event"):
             new_event = dict(app_config["new_event"])
             attendance_session_model_kwargs = {
-                "course_id":Course.str_to_course(new_event["course"]),
-                "session":AcademicSession.objects.get(session__iexact=new_event["session"]),
-                "event_type":EventType.str_to_value(new_event["type"]),
-                "start_time":datetime.strptime(
-                    f"{new_event['start_date']} {new_event['start_time']}", 
-                    "%d-%m-%Y %H:%M"
+                "course_id": Course.str_to_course(new_event["course"]),
+                "session": AcademicSession.objects.get(
+                    session__iexact=new_event["session"]
                 ),
-                "duration":timedelta(hours=int(new_event["duration"])),
-                "recurring":eval(new_event["recurring"])
+                "event_type": EventType.str_to_value(new_event["type"]),
+                "start_time": datetime.strptime(
+                    f"{new_event['start_date']} {new_event['start_time']}",
+                    "%d-%m-%Y %H:%M",
+                ),
+                "duration": timedelta(hours=int(new_event["duration"])),
+                "recurring": eval(new_event["recurring"]),
             }
             # att_session = AttendanceSession.objects.create(course_id=Course.str_to_course(new_event["course"]),
             #     session=AcademicSession.objects.get(session__iexact=new_event["session"]),
             #     event_type=EventType.str_to_value(new_event["type"]),
             #     start_time=datetime.strptime(
-            #         f"{new_event['start_date']} {new_event['start_time']}", 
+            #         f"{new_event['start_date']} {new_event['start_time']}",
             #         "%d-%m-%Y %H:%M"
             #     ),
             #     duration=timedelta(hours=int(new_event["duration"])),
             #     recurring=eval(new_event["recurring"])
             # )
             try:
-                att_session = AttendanceSession.objects.create(**attendance_session_model_kwargs)
+                att_session = AttendanceSession.objects.create(
+                    **attendance_session_model_kwargs
+                )
             except IntegrityError:
                 cls.display_message("Event has already been created", window)
-                att_session = AttendanceSession.objects.get(**attendance_session_model_kwargs)
+                att_session = AttendanceSession.objects.get(
+                    **attendance_session_model_kwargs
+                )
 
             # if att_session.initiator:
             #     app_config["current_attendance_session"] = app_config.section_dict("new_event")
             #     app_config["current_attendance_session"]["session_id"] = str(att_session.id)
             #     app_config["current_attendance_session"]["initiator_id"] = str(att_session.initiator.id)
-                # app_config.save()
+            # app_config.save()
             #     window_dispatch.open_window(ActiveEventSummaryWindow)
             #     return True
 
             if event == "start_event":
-                app_config["current_attendance_session"] = app_config.section_dict("new_event")
-                app_config["current_attendance_session"]["session_id"] = str(att_session.id)
+                app_config[
+                    "current_attendance_session"
+                ] = app_config.section_dict("new_event")
+                app_config["current_attendance_session"]["session_id"] = str(
+                    att_session.id
+                )
                 app_config.save()
                 window_dispatch.open_window(StaffBarcodeCameraWindow)
 
@@ -697,29 +723,46 @@ class VerifyAttendanceInitiatorWindow(BaseGUIWindow):
 class AttendanceSessionLandingWindow(BaseGUIWindow):
     @classmethod
     def window(cls):
-        event_dict = dict(app_config["current_attendance_session"]) #this event dict should not be coming from new_event section
+        event_dict = dict(
+            app_config["current_attendance_session"]
+        )  # this event dict should not be coming from new_event section
         layout = [
             [sg.Text("Attendance Session Details")],
             [sg.Text("_" * 80)],
             [sg.Text(f"Course: {event_dict['course']}")],
-            [sg.Text(f"Session Details: {event_dict['session']} {event_dict['semester']}")],
-            [sg.Text(f"Start Time: {event_dict['start_date']} {event_dict['start_time']}")],
+            [
+                sg.Text(
+                    f"Session Details: {event_dict['session']} {event_dict['semester']}"
+                )
+            ],
+            [
+                sg.Text(
+                    f"Start Time: {event_dict['start_date']} {event_dict['start_time']}"
+                )
+            ],
             [sg.Text(f"Duration: {event_dict['duration']} Hour(s)")],
-            [sg.Text(f"Number of students marked: "), sg.Text("", k="students_marked")],
+            [
+                sg.Text(f"Number of students marked: "),
+                sg.Text("", k="students_marked"),
+            ],
             [sg.Text("_" * 80)],
-            [sg.Button("Take Attendance", k="start_attendance"), 
-            sg.Button("End Attendance", k="end_attendance"),
-            sg.Button("Go back home", k="home")]
+            [
+                sg.Button("Take Attendance", k="start_attendance"),
+                sg.Button("End Attendance", k="end_attendance"),
+                sg.Button("Go back home", k="home"),
+            ],
         ]
-        
-        window = sg.Window("Attendance Session Page", layout, **cls.window_init_dict())
+
+        window = sg.Window(
+            "Attendance Session Page", layout, **cls.window_init_dict()
+        )
         return window
 
     @classmethod
     def loop(cls, window, event, values):
         if event == "home":
             window_dispatch.open_window(HomeWindow)
-        
+
         if event == "start_attendance":
             window_dispatch.open_window(StudentBarcodeCameraWindow)
 
@@ -874,9 +917,11 @@ class CameraWindow(BaseGUIWindow):
                     visible=False,
                 )
             )
+
     @classmethod
     def window_title(cls):
         raise NotImplementedError
+
 
 class FaceCameraWindow(CameraWindow):
     @classmethod
@@ -921,7 +966,11 @@ class FaceCameraWindow(CameraWindow):
 
     @classmethod
     def window_title(cls):
-        return [sg.Push(), sg.Image(data=cls.get_icon("face_scanner", 0.5)), sg.Text("Position Face", font=("Any", 20))]
+        return [
+            sg.Push(),
+            sg.Image(data=cls.get_icon("face_scanner", 0.5)),
+            sg.Text("Position Face", font=("Any", 20)),
+        ]
 
 
 class StudentFaceCameraWindow(FaceCameraWindow):
@@ -937,11 +986,18 @@ class StudentFaceCameraWindow(FaceCameraWindow):
             [str_to_face_enc(app_config["tmp_student"]["face_encodings"])],
             captured_face_encodings,
         ):
-            AttendanceRecord.objects.create(attendance_session_id=app_config.getint("current_attendance_sesson", "session_id"),
-                student_id=app_config.getint("tmp_student", "id"))
-            sg.popup_auto_close(f"{app_config['tmp_student']['reg_number']} checked in",
+            AttendanceRecord.objects.create(
+                attendance_session_id=app_config.getint(
+                    "current_attendance_sesson", "session_id"
+                ),
+                student_id=app_config.getint("tmp_student", "id"),
+            )
+            sg.popup_auto_close(
+                f"{app_config['tmp_student']['reg_number']} checked in",
                 image=cls.get_icon("ok"),
-                title="Success", auto_close_duration=3)
+                title="Success",
+                auto_close_duration=3,
+            )
             window_dispatch.open_window(StudentBarcodeCameraWindow)
             return True
         else:
@@ -971,15 +1027,20 @@ class StaffFaceCameraWindow(FaceCameraWindow):
             captured_face_encodings,
         ):
             cls.display_message(
-                f"{app_config['tmp_staff']['staff_number']} authorized attendance-marking", window
+                f"{app_config['tmp_staff']['staff_number']} authorized attendance-marking",
+                window,
             )
 
-            att_session = AttendanceSession.objects.get(id=app_config.getint("current_attendance_session", "session_id"))
+            att_session = AttendanceSession.objects.get(
+                id=app_config.getint("current_attendance_session", "session_id")
+            )
             att_session.initiator_id = app_config.getint("tmp_staff", "id")
             att_session.save()
-            app_config["current_attendance_session"]["initiator_id"] = app_config["tmp_staff"]["id"]
+            app_config["current_attendance_session"][
+                "initiator_id"
+            ] = app_config["tmp_staff"]["id"]
             app_config.save()
-        
+
             window_dispatch.open_window(AttendanceSessionLandingWindow)
             return True
         else:
@@ -1039,8 +1100,20 @@ class BarcodeCameraWindow(CameraWindow):
 
     @classmethod
     def window_title(cls):
-        return [[sg.Push(), sg.Image(data=cls.get_icon("qr_code", 0.5)), sg.Text("Present ID Card", font=("Any", 20)), sg.Push()],
-        [sg.Text("A staff must authorize the commencement of attendance-marking")]]
+        return [
+            [
+                sg.Push(),
+                sg.Image(data=cls.get_icon("qr_code", 0.5)),
+                sg.Text("Present ID Card", font=("Any", 20)),
+                sg.Push(),
+            ],
+            [
+                sg.Text(
+                    "A staff must authorize the commencement of attendance-marking"
+                )
+            ],
+        ]
+
 
 class StudentBarcodeCameraWindow(BarcodeCameraWindow):
     """window responsible for processing student registration number
@@ -1077,6 +1150,7 @@ class StudentBarcodeCameraWindow(BarcodeCameraWindow):
     @staticmethod
     def cancel_camera():
         window_dispatch.open_window(AttendanceSessionLandingWindow)
+
 
 class StaffBarcodeCameraWindow(BarcodeCameraWindow):
     @classmethod
@@ -1296,7 +1370,7 @@ class StaffFaceEnrolmentWindow(FaceCameraWindow):
         new_staff_dict = app_config.section_dict("new_staff")
         department = Department.objects.get(id=new_staff_dict.pop("department"))
         Staff.objects.create_user(department=department, **new_staff_dict)
-        
+
         window_dispatch.open_window(HomeWindow)
 
 
