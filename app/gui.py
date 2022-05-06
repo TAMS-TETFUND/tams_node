@@ -1017,7 +1017,7 @@ class FaceCameraWindow(CameraWindow):
                             image=cls.get_icon("cancel"),
                             title="Error",
                             auto_close_duration=3,
-                            keep_on_top_true=True,
+                            keep_on_top=True,
                         )
                     elif face_count == 0:
                         # cls.display_message(
@@ -1028,7 +1028,7 @@ class FaceCameraWindow(CameraWindow):
                             image=cls.get_icon("cancel"),
                             title="Error",
                             auto_close_duration=2,
-                            keep_on_top_true=True,
+                            keep_on_top=True,
                         )
                     else:
                         cls.hide_message_display_field(window)
@@ -1092,7 +1092,7 @@ class StudentFaceCameraWindow(FaceCameraWindow):
                 sg.popup_auto_close(f"{tmp_student['reg_number']} already checked in",
                 image=cls.get_icon("warning"),
                 title="Warning",
-                keep_on_top_true=True,
+                keep_on_top=True,
                 auto_close_duration=3,)
             else:
                 sg.popup_auto_close(
@@ -1100,7 +1100,7 @@ class StudentFaceCameraWindow(FaceCameraWindow):
                     image=cls.get_icon("ok"),
                     title="Success",
                     auto_close_duration=3,
-                    keep_on_top_true=True,
+                    keep_on_top=True,
                 )
             window_dispatch.open_window(StudentBarcodeCameraWindow)
             return True
@@ -1158,7 +1158,7 @@ class StaffFaceCameraWindow(FaceCameraWindow):
                     f"{app_config['tmp_staff']['staff_number']} authorized attendance-marking",
                     image=cls.get_icon("ok"),
                     title="Success",
-                    keep_on_top_true=True,
+                    keep_on_top=True,
                     auto_close_duration=3,
                 )
             window_dispatch.open_window(AttendanceSessionLandingWindow)
@@ -1173,7 +1173,7 @@ class StaffFaceCameraWindow(FaceCameraWindow):
                     image=cls.get_icon("cancel"),
                     title="Error",
                     auto_close_duration=3,
-                    keep_on_top_true=True,
+                    keep_on_top=True,
                 )
             return False
 
