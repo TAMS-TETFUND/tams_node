@@ -815,8 +815,8 @@ class AttendanceSessionLandingWindow(BaseGUIWindow):
             ],
             [sg.Text(f"Duration: {event_dict['duration']} Hour(s)")],
             [
-                sg.Text(f"Number of students marked: "),
-                sg.Text("", k="students_marked"),
+                sg.Text(f"Number of valid check-ins: "),
+                sg.Text("{}".format(cls.valid_check_in_count()), k="valid_checks"),
             ],
             [sg.Text("_" * 80)],
             [
@@ -842,6 +842,10 @@ class AttendanceSessionLandingWindow(BaseGUIWindow):
         if event == "end_attendance":
             app_config.remove_section("current_attendance_session")
             window_dispatch.open_window(HomeWindow)
+
+    @staticmethod
+    def valid_check_in_count():
+        return AttendanceRecord.objects.filter(attendance_session=app_config.getint("current_attendance_session", "session_id")).count()
 
 
 class StaffNumberInputWindow(BaseGUIWindow):
@@ -1454,6 +1458,7 @@ class StaffFaceEnrolmentWindow(FaceCameraWindow):
         Staff.objects.create_user(department=department, **new_staff_dict)
 
         window_dispatch.open_window(HomeWindow)
+        sg.popup_auto_close("Staff enrolment successful", title="Success", keep_on_top=True, auto_close_duration=3)
 
 
 class StudentEnrolmentWindow(BaseGUIWindow):
@@ -1659,6 +1664,7 @@ class StudentFaceEnrolmentWindow(FaceCameraWindow):
 
         Student.objects.create(department=department, **new_student_dict)
         window_dispatch.open_window(HomeWindow)
+        sg.popup_auto_close("Student enrolment successful", title="Success", keep_on_top=True, auto_close_duration=3)
 
     @staticmethod
     def cancel_camera():
