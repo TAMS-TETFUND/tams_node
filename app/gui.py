@@ -1158,7 +1158,7 @@ class StaffFaceCameraWindow(FaceCameraWindow):
             ] = tmp_staff["id"]
             app_config.save()
             sg.popup_auto_close(
-                    f"{tmp_staff['first_name'][0].upper()}. {tmp_staff['last Name'].capitalize()} ({tmp_staff['staff_number']}) authorized attendance-marking",
+                    f"{tmp_staff['first_name'][0].upper()}. {tmp_staff['last_name'].capitalize()} ({tmp_staff['staff_number']}) authorized attendance-marking",
                     image=cls.get_icon("ok"),
                     title="Success",
                     keep_on_top=True,
