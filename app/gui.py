@@ -1061,8 +1061,8 @@ class StudentFaceCameraWindow(FaceCameraWindow):
             return False
         tmp_student = app_config["tmp_student"]
         if FaceRecognition.face_match(
-            [str_to_face_enc(tmp_student["face_encodings"])],
-            captured_face_encodings,
+            known_face_encodings=[str_to_face_enc(tmp_student["face_encodings"])],
+            face_encoding_to_check=captured_face_encodings,
         ):
             try:
                 AttendanceRecord.objects.create(
@@ -1117,8 +1117,8 @@ class StaffFaceCameraWindow(FaceCameraWindow):
             return False
 
         if FaceRecognition.face_match(
-            [str_to_face_enc(app_config["tmp_staff"]["face_encodings"])],
-            captured_face_encodings,
+            known_face_encodings=[str_to_face_enc(app_config["tmp_staff"]["face_encodings"])],
+            face_encoding_to_check=captured_face_encodings,
         ):
             cls.display_message(
                 f"{app_config['tmp_staff']['staff_number']} authorized attendance-marking",
