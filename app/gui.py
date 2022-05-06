@@ -1085,7 +1085,7 @@ class StudentFaceCameraWindow(FaceCameraWindow):
             try:
                 AttendanceRecord.objects.create(
                     attendance_session_id=app_config.getint(
-                        "current_attendance_sesson", "session_id"
+                        "current_attendance_session", "session_id"
                     ),
                     student_id=tmp_student.getint("id"),
                 )
