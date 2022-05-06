@@ -1035,34 +1035,31 @@ class FaceCameraWindow(CameraWindow):
     @classmethod
     def loop(cls, window, event, values):
         with Camera() as cam:
-            process_this_time = True
             while True:
                 event, values = window.read(timeout=20)
                 img = cam.feed()
-                if process_this_time:
-                    face_locations = FaceRecognition.face_locations(img)
-                    face_count = len(face_locations)
-                    if event in ("capture", "image_display"):
-                        if face_count > 1:
-                            cls.popup_auto_close_error(
-                                "Multiple faces detected",
-                            )
-                        elif face_count == 0:
-                            cls.popup_auto_close_error("Camera did not find a face")
+                face_locations = FaceRecognition.face_locations(img)
+                face_count = len(face_locations)
+                if event in ("capture", "image_display"):
+                    if face_count > 1:
+                        cls.popup_auto_close_error(
+                            "Multiple faces detected",
+                        )
+                    elif face_count == 0:
+                        cls.popup_auto_close_error("Camera did not find a face")
 
-                        if face_count == 1:
-                            captured_encodings = FaceRecognition.face_encodings(img, face_locations[0])
-                            cls.process_image(captured_encodings, window)
-                            return True
-
-                    if event == "cancel":
-                        cls.cancel_camera()
+                    if face_count == 1:
+                        captured_encodings = FaceRecognition.face_encodings(img, face_locations[0])
+                        cls.process_image(captured_encodings, window)
                         return True
 
-                    if face_count > 0:
-                        for face_location in face_locations:
-                            FaceRecognition.draw_bounding_box(face_location, img)
-                    process_this_time = not process_this_time
+                if event == "cancel":
+                    cls.cancel_camera()
+                    return True
+
+                if face_count > 0:
+                    for face_location in face_locations:
+                        FaceRecognition.draw_bounding_box(face_location, img)
 
                 window["image_display"].update(data=cam.feed_to_bytes(img))
         return True
