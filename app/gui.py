@@ -1092,9 +1092,9 @@ class StudentFaceCameraWindow(FaceCameraWindow):
                 )
             except IntegrityError as e:
                 print(e)
-                sg.popup_auto_close(f"{tmp_student['first_name']} {tmp_student['last_name']} ({tmp_student['reg_number']}) already checked in",
-                image=cls.get_icon("warning"),
-                title="Warning",
+                sg.popup_auto_close("Something went wrong. Please contact admin.",
+                image=cls.get_icon("cancel"),
+                title="Error",
                 keep_on_top=True,
                 auto_close_duration=2,)
             else:
@@ -1261,7 +1261,7 @@ class StudentBarcodeCameraWindow(BarcodeCameraWindow):
 
         student = Student.objects.filter(reg_number=identification_num)        
         if not student.exists():
-            sg.popup_auto_close("No student found with given registration number", title="Error", image=cls.get_icon("cancel"), auto_close_duration=2, keep_on_top=True)
+            sg.popup_auto_close("No student found with given registration number. Ensure you have been duly registered on the system.", title="Error", image=cls.get_icon("cancel"), auto_close_duration=2, keep_on_top=True)
             return False
 
         app_config["tmp_student"] = app_config.dict_vals_to_str(student.values(
@@ -1272,6 +1272,18 @@ class StudentBarcodeCameraWindow(BarcodeCameraWindow):
             "level_of_study",
             "department__name",
             "department__faculty__name", "face_encodings", "fingerprint_template",).first())
+
+        tmp_student = app_config["tmp_student"]
+        if AttendanceRecord.objects.filter(session_id=app_config.get_int("current_attendance_session", "session_id"), student_id=tmp_student["id"]).exists():
+            sg.popup_auto_close(
+                f"{tmp_student['first_name']} {tmp_student['last_name']} ({tmp_student['reg_number']}) already checked in",
+                image=cls.get_icon("warning"),
+                title="Warning",
+                keep_on_top=True,
+                auto_close_duration=2,
+            )
+            return True
+
         app_config.save()
         window_dispatch.open_window(StudentFaceCameraWindow)
         return True
@@ -1289,10 +1301,10 @@ class StaffBarcodeCameraWindow(BarcodeCameraWindow):
             cls.display_message(val_check, window)
             return False
 
-        try:
-            staff = Staff.objects.filter(staff_number=identification_num)
-        except ObjectDoesNotExist:
-            cls.display_message("No staff found with given staff ID", window)
+        staff = Staff.objects.filter(staff_number=identification_num)
+        
+        if not staff.exists():
+            sg.popup_auto_close("No staff found with given staff ID. Ensure you have been duly registered on the system.", title="Error", image=cls.get_icon("cancel"), auto_close_duration=2, keep_on_top=True)
             return False
 
         app_config["tmp_staff"] = app_config.dict_vals_to_str(staff.values("id", "staff_number", "first_name", "last_name", "department__name", "department__faculty__name",
