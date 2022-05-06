@@ -128,7 +128,7 @@ class HomeWindow(BaseGUIWindow):
                     window_dispatch.open_window(NewEventSummaryWindow)
             else:
                 sg.popup(
-                    "No active attendance-taking event found.",
+                    "No active attendance-taking session found.",
                     title="No Event",
                     keep_on_top=True,
                 )
@@ -1087,7 +1087,7 @@ class StudentFaceCameraWindow(FaceCameraWindow):
     def process_image(cls, captured_face_encodings, window):
         if captured_face_encodings is None:
             cls.popup_auto_close_error("Eror. Image must have exactly one face")
-            return False
+            return
         tmp_student = app_config["tmp_student"]
         if FaceRecognition.face_match(
             known_face_encodings=[
@@ -1112,7 +1112,7 @@ class StudentFaceCameraWindow(FaceCameraWindow):
                     f"{tmp_student['reg_number']} checked in"
                 )
             window_dispatch.open_window(StudentBarcodeCameraWindow)
-            return True
+            return
         else:
             cls.display_message(
                 f"Error. Face did not match "
@@ -1130,12 +1130,12 @@ class StudentFaceCameraWindow(FaceCameraWindow):
                     title="Allowed Retries Exceeded",
                 )
                 window_dispatch.open_window(StudentBarcodeCameraWindow)
-                return False
+                return
             else:
                 tmp_student["failed_attempts"] = (
                     int(tmp_student["failed_attempts"]) + 1
                 )
-            return False
+            return
 
     @staticmethod
     def cancel_camera():
@@ -1148,7 +1148,7 @@ class StaffFaceCameraWindow(FaceCameraWindow):
     def process_image(cls, captured_face_encodings, window):
         if captured_face_encodings is None:
             cls.popup_auto_close_error("Eror. Image must have exactly one face")
-            return False
+            return
         tmp_staff = app_config["tmp_staff"]
         if FaceRecognition.face_match(
             known_face_encodings=[
@@ -1171,18 +1171,21 @@ class StaffFaceCameraWindow(FaceCameraWindow):
                 f"authorized attendance-marking",
             )
             window_dispatch.open_window(AttendanceSessionLandingWindow)
-            return True
+            return
         else:
             cls.popup_auto_close_error(
-                f"Error. Face did not match ({app_config['tmp_staff']['staff_number']})",
+                f"Error. Face did not match ({tmp_staff['staff_number']})",
             )
-            return False
+            return
 
     @staticmethod
     def cancel_camera():
-        """should navigate user back to the attendance initiator verification window"""
-        window_dispatch.open_window(NewEventSummaryWindow)
-
+        if app_config.has_option("current_attendance_session", "initiator_id"):
+            window_dispatch.open_window(ActiveEventSummaryWindow)
+        else:
+            app_config["new_event"] = app_config["current_attendance_session"]
+            window_dispatch.open_window(NewEventSummaryWindow)
+        return
 
 class BarcodeCameraWindow(CameraWindow):
     @classmethod
@@ -1250,7 +1253,7 @@ class StudentBarcodeCameraWindow(BarcodeCameraWindow):
         val_check = cls.validate_student_reg_number(identification_num)
         if val_check is not None:
             cls.popup_auto_close_error(val_check)
-            return False
+            return
 
         if "blocked_reg_number" in app_config[
             "current_attendance_session"
@@ -1263,7 +1266,7 @@ class StudentBarcodeCameraWindow(BarcodeCameraWindow):
                 f"{identification_num} not allowed any more retries.",
                 title="Not Allowed",
             )
-            return False
+            return
 
         student = Student.objects.filter(reg_number=identification_num)
         if not student.exists():
@@ -1271,7 +1274,7 @@ class StudentBarcodeCameraWindow(BarcodeCameraWindow):
                 "No student found with given registration number."
                 "Ensure you have been duly registered on the system."
             )
-            return False
+            return
 
         app_config["tmp_student"] = app_config.dict_vals_to_str(
             student.values(
@@ -1298,11 +1301,11 @@ class StudentBarcodeCameraWindow(BarcodeCameraWindow):
                 f"{tmp_student['first_name']} {tmp_student['last_name']} "
                 f"({tmp_student['reg_number']}) already checked in"
             )
-            return True
+            return
 
         app_config.save()
         window_dispatch.open_window(StudentFaceCameraWindow)
-        return True
+        return
 
     @staticmethod
     def cancel_camera():
@@ -1315,7 +1318,7 @@ class StaffBarcodeCameraWindow(BarcodeCameraWindow):
         val_check = cls.validate_staff_number(identification_num)
         if val_check is not None:
             cls.display_message(val_check, window)
-            return False
+            return
 
         staff = Staff.objects.filter(staff_number=identification_num)
 
@@ -1324,7 +1327,7 @@ class StaffBarcodeCameraWindow(BarcodeCameraWindow):
                 "No staff found with given staff ID. "
                 "Ensure you have been duly registered on the system."
             )
-            return False
+            return
 
         app_config["tmp_staff"] = app_config.dict_vals_to_str(
             staff.values(
@@ -1340,7 +1343,7 @@ class StaffBarcodeCameraWindow(BarcodeCameraWindow):
         )
         app_config.save()
         window_dispatch.open_window(StaffFaceCameraWindow)
-        return True
+        return
 
 
 # enrolment windows should not be available on all node devices;
@@ -1519,10 +1522,8 @@ class StaffFaceEnrolmentWindow(FaceCameraWindow):
     @classmethod
     def process_image(cls, captured_face_encodings, window):
         if captured_face_encodings is None:
-            cls.display_message(
-                "Error. Image must have exactly one face", window
-            )
-            return False
+            cls.popup_auto_close_error("Error. Image must have exactly one face")
+            return
 
         app_config["new_staff"]["face_encodings"] = face_enc_to_str(
             captured_face_encodings
@@ -1534,6 +1535,7 @@ class StaffFaceEnrolmentWindow(FaceCameraWindow):
 
         window_dispatch.open_window(HomeWindow)
         cls.popup_auto_close_success("Staff enrolment successful")
+        return
 
 
 class StudentEnrolmentWindow(BaseGUIWindow):
@@ -1727,7 +1729,7 @@ class StudentFaceEnrolmentWindow(FaceCameraWindow):
             cls.display_message(
                 "Error. Image must have exactly one face", window
             )
-            return False
+            return
 
         app_config["new_student"]["face_encodings"] = face_enc_to_str(
             captured_face_encodings
@@ -1741,21 +1743,11 @@ class StudentFaceEnrolmentWindow(FaceCameraWindow):
         Student.objects.create(department=department, **new_student_dict)
         window_dispatch.open_window(HomeWindow)
         cls.popup_auto_close_success("Student enrolment successful")
+        return
 
     @staticmethod
     def cancel_camera():
         window_dispatch.open_window(HomeWindow)
-
-
-class AttendanceMenuWindow(BaseGUIWindow):
-    @classmethod
-    def window(cls):
-        layout = [
-            [sg.VPush()],
-            [sg.Push(), sg.Button("Start Attendance Taking"), sg.Push()],
-            [sg.Push(), sg.Button("End Attendance Taking"), sg.Push()],
-            [sg.VPush()],
-        ]
 
 
 def main():
