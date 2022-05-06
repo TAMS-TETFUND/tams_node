@@ -1253,7 +1253,7 @@ class StudentBarcodeCameraWindow(BarcodeCameraWindow):
             sg.popup_auto_close(f"{identification_num} not allowed any more retries.", title="Not Allowed", image=cls.get_icon("cancel"), keep_on_top=True, auto_close_duration=3)
             return False
         try:
-            student = Student.objects.filter(reg_no=identification_num)
+            student = Student.objects.filter(reg_number=identification_num)
         except ObjectDoesNotExist:
             cls.display_message(
                 "No student found with given registration number", window
