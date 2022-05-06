@@ -1092,7 +1092,7 @@ class StudentFaceCameraWindow(FaceCameraWindow):
                 )
             except IntegrityError as e:
                 print(e)
-                sg.popup_auto_close(f"{tmp_student['reg_number']} already checked in",
+                sg.popup_auto_close(f"{tmp_student['first_name']} {tmp_student['last_name']} ({tmp_student['reg_number']}) already checked in",
                 image=cls.get_icon("warning"),
                 title="Warning",
                 keep_on_top=True,
@@ -1138,7 +1138,7 @@ class StaffFaceCameraWindow(FaceCameraWindow):
             # )
             sg.popup_auto_close("Eror. Image must have exactly one face", title="Error", keep_on_top=True, auto_close_duration=2, image=cls.get_icon("cancel"))
             return False
-
+        tmp_staff = app_config["tmp_staff"]
         if FaceRecognition.face_match(
             known_face_encodings=[str_to_face_enc(app_config["tmp_staff"]["face_encodings"])],
             face_encoding_to_check=captured_face_encodings,
@@ -1151,14 +1151,14 @@ class StaffFaceCameraWindow(FaceCameraWindow):
             att_session = AttendanceSession.objects.get(
                 id=app_config.getint("current_attendance_session", "session_id")
             )
-            att_session.initiator_id = app_config.getint("tmp_staff", "id")
+            att_session.initiator_id = tmp_staff.getint("id")
             att_session.save()
             app_config["current_attendance_session"][
                 "initiator_id"
-            ] = app_config["tmp_staff"]["id"]
+            ] = tmp_staff["id"]
             app_config.save()
             sg.popup_auto_close(
-                    f"{app_config['tmp_staff']['staff_number']} authorized attendance-marking",
+                    f"{tmp_staff['first_name'][0].upper()}. {tmp_staff['last Name'].capitalize()} ({tmp_staff['staff_number']}) authorized attendance-marking",
                     image=cls.get_icon("ok"),
                     title="Success",
                     keep_on_top=True,
@@ -1266,6 +1266,7 @@ class StudentBarcodeCameraWindow(BarcodeCameraWindow):
             )
             return False
         app_config["tmp_student"] = app_config.dict_vals_to_str(student.values(
+            "id",
             "reg_number",
             "first_name",
             "last_name",
