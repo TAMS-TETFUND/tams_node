@@ -1258,13 +1258,12 @@ class StudentBarcodeCameraWindow(BarcodeCameraWindow):
         if "blocked_reg_number" in app_config["current_attendance_session"] and identification_num in app_config["current_attendance_session"]["blocked_reg_number"].split(","):
             sg.popup_auto_close(f"{identification_num} not allowed any more retries.", title="Not Allowed", image=cls.get_icon("cancel"), keep_on_top=True, auto_close_duration=2)
             return False
-        try:
-            student = Student.objects.filter(reg_number=identification_num)
-        except ObjectDoesNotExist:
-            cls.display_message(
-                "No student found with given registration number", window
-            )
+
+        student = Student.objects.filter(reg_number=identification_num)        
+        if not student.exists():
+            sg.popup_auto_close("No student found with given registration number", title="Error", image=cls.get_icon("cancel"), auto_close_duration=2, keep_on_top=True)
             return False
+
         app_config["tmp_student"] = app_config.dict_vals_to_str(student.values(
             "id",
             "reg_number",
