@@ -956,7 +956,7 @@ class CameraWindow(BaseGUIWindow):
         layout = [
             [cls.window_title()],
             [cls.message_display_field()],
-            [sg.Push(), sg.Image(filename="", key="image_display"), sg.Push()],
+            [sg.Push(), sg.Image(filename="", key="image_display", enable_events=True), sg.Push()],
             [
                 sg.Push(),
                 sg.Button(
@@ -1010,7 +1010,7 @@ class FaceCameraWindow(CameraWindow):
                 event, values = window.read(timeout=20)
                 img = cam.feed()
                 face_count = FaceRecognition.face_count(img)
-                if event == "capture":
+                if event in ("capture", "image_display"):
                     if face_count > 1:
                         # cls.display_message("Multiple faces detected", window)
                         sg.popup_auto_close(
@@ -1194,7 +1194,7 @@ class BarcodeCameraWindow(CameraWindow):
                 img = cam.feed()
                 barcodes = Barcode.decode_image(img)
                 event, values = window.read(timeout=20)
-                if event == "capture":
+                if event in ("capture", "image_display"):
                     if len(barcodes) == 0:
                         # cls.display_message("No ID detected.")
                         sg.popup_auto_close("No ID detected.", title="Error", keep_on_top=True, auto_close_duration=2, image=cls.get_icon("cancel"))
