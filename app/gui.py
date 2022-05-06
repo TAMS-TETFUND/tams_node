@@ -128,7 +128,9 @@ class HomeWindow(BaseGUIWindow):
                     window_dispatch.open_window(NewEventSummaryWindow)
             else:
                 sg.popup(
-                    "No active attendance-taking event found.", title="No Event", keep_on_top=True
+                    "No active attendance-taking event found.",
+                    title="No Event",
+                    keep_on_top=True,
                 )
         if event == "settings":
             window_dispatch.open_window(EnrolmentMenuWindow)
@@ -545,7 +547,10 @@ class EventDetailWindow(BaseGUIWindow):
             cls.display_message("Invalid value in duration", window)
             return True
 
-        start_datetime = f'{values["start_date"]} {values["start_hour"]}:{values["start_minute"]}'
+        start_datetime = (
+            f'{values["start_date"]} '
+            f'{values["start_hour"]}:{values["start_minute"]}'
+        )
         try:
             start_date = datetime.strptime(start_datetime, "%d-%m-%Y %H:%M")
         except ValueError:
@@ -582,12 +587,14 @@ class NewEventSummaryWindow(BaseGUIWindow):
             [sg.Text(f"Course: {new_event_dict['course']}")],
             [
                 sg.Text(
-                    f"Session Details: {new_event_dict['session']} {new_event_dict['semester']}"
+                    f"Session Details: {new_event_dict['session']} "
+                    f"{new_event_dict['semester']}"
                 )
             ],
             [
                 sg.Text(
-                    f"Start Time: {new_event_dict['start_date']} {new_event_dict['start_time']}"
+                    f"Start Time: {new_event_dict['start_date']} "
+                    f"{new_event_dict['start_time']}"
                 )
             ],
             [sg.Text(f"Duration: {new_event_dict['duration']} Hours")],
@@ -685,12 +692,14 @@ class ActiveEventSummaryWindow(BaseGUIWindow):
             [sg.Text(f"Course: {new_event_dict['course']}")],
             [
                 sg.Text(
-                    f"Session Details: {new_event_dict['session']} {new_event_dict['semester']}"
+                    f"Session Details: {new_event_dict['session']} "
+                    f"{new_event_dict['semester']}"
                 )
             ],
             [
                 sg.Text(
-                    f"Start Time: {new_event_dict['start_date']} {new_event_dict['start_time']}"
+                    f"Start Time: {new_event_dict['start_date']} "
+                    f"{new_event_dict['start_time']}"
                 )
             ],
             [sg.Text(f"Duration: {new_event_dict['duration']} Hours")],
@@ -724,7 +733,18 @@ class ActiveEventSummaryWindow(BaseGUIWindow):
                 window_dispatch.open_window(HomeWindow)
                 return True
 
-            app_config["tmp_staff"] = app_config.dict_vals_to_str(initiator.values("id", "staff_number", "first_name", "last_name", "department__name", "department__faculty__name", "face_encodings", "fingerprint_template",).first())
+            app_config["tmp_staff"] = app_config.dict_vals_to_str(
+                initiator.values(
+                    "id",
+                    "staff_number",
+                    "first_name",
+                    "last_name",
+                    "department__name",
+                    "department__faculty__name",
+                    "face_encodings",
+                    "fingerprint_template",
+                ).first()
+            )
             app_config.save()
             window_dispatch.open_window(StaffFaceCameraWindow)
         return True
@@ -817,7 +837,9 @@ class AttendanceSessionLandingWindow(BaseGUIWindow):
             [sg.Text(f"Duration: {event_dict['duration']} Hour(s)")],
             [
                 sg.Text(f"Number of valid check-ins: "),
-                sg.Text("{}".format(cls.valid_check_in_count()), k="valid_checks"),
+                sg.Text(
+                    "{}".format(cls.valid_check_in_count()), k="valid_checks"
+                ),
             ],
             [sg.Text("_" * 80)],
             [
@@ -847,7 +869,11 @@ class AttendanceSessionLandingWindow(BaseGUIWindow):
 
     @staticmethod
     def valid_check_in_count():
-        return AttendanceRecord.objects.filter(attendance_session=app_config.getint("current_attendance_session", "session_id")).count()
+        return AttendanceRecord.objects.filter(
+            attendance_session=app_config.getint(
+                "current_attendance_session", "session_id"
+            )
+        ).count()
 
 
 class StaffNumberInputWindow(BaseGUIWindow):
@@ -955,8 +981,11 @@ class CameraWindow(BaseGUIWindow):
     def window(cls):
         layout = [
             [cls.window_title()],
-            [cls.message_display_field()],
-            [sg.Push(), sg.Image(filename="", key="image_display", enable_events=True), sg.Push()],
+            [
+                sg.Push(),
+                sg.Image(filename="", key="image_display", enable_events=True),
+                sg.Push(),
+            ],
             [
                 sg.Push(),
                 sg.Button(
@@ -1012,27 +1041,11 @@ class FaceCameraWindow(CameraWindow):
                 face_count = FaceRecognition.face_count(img)
                 if event in ("capture", "image_display"):
                     if face_count > 1:
-                        # cls.display_message("Multiple faces detected", window)
-                        sg.popup_auto_close(
+                        cls.popup_auto_close_error(
                             "Multiple faces detected",
-                            image=cls.get_icon("cancel"),
-                            title="Error",
-                            auto_close_duration=2,
-                            keep_on_top=True,
                         )
                     elif face_count == 0:
-                        # cls.display_message(
-                        #     "Camera did not find a face", window
-                        # )
-                        sg.popup_auto_close(
-                            "Camera did not find a face",
-                            image=cls.get_icon("cancel"),
-                            title="Error",
-                            auto_close_duration=2,
-                            keep_on_top=True,
-                        )
-                    else:
-                        cls.hide_message_display_field(window)
+                        cls.popup_auto_close_error("Camera did not find a face")
 
                     if face_count == 1:
                         captured_encodings = FaceRecognition.face_encodings(img)
@@ -1065,7 +1078,7 @@ class FaceCameraWindow(CameraWindow):
             sg.Push(),
             sg.Image(data=cls.get_icon("face_scanner", 0.4)),
             sg.Text("Position Face", font=("Any", 14)),
-            sg.Push()
+            sg.Push(),
         ]
 
 
@@ -1073,14 +1086,13 @@ class StudentFaceCameraWindow(FaceCameraWindow):
     @classmethod
     def process_image(cls, captured_face_encodings, window):
         if captured_face_encodings is None:
-            # cls.display_message(
-            #     "Eror. Image must have exactly one face", window
-            # )
-            sg.popup_auto_close("Eror. Image must have exactly one face", title="Error", keep_on_top=True, auto_close_duration=2)
+            cls.popup_auto_close_error("Eror. Image must have exactly one face")
             return False
         tmp_student = app_config["tmp_student"]
         if FaceRecognition.face_match(
-            known_face_encodings=[str_to_face_enc(tmp_student["face_encodings"])],
+            known_face_encodings=[
+                str_to_face_enc(tmp_student["face_encodings"])
+            ],
             face_encoding_to_check=captured_face_encodings,
         ):
             try:
@@ -1092,35 +1104,37 @@ class StudentFaceCameraWindow(FaceCameraWindow):
                 )
             except IntegrityError as e:
                 print(e)
-                sg.popup_auto_close("Something went wrong. Please contact admin.",
-                image=cls.get_icon("cancel"),
-                title="Error",
-                keep_on_top=True,
-                auto_close_duration=2,)
+                cls.popup_auto_close_error(
+                    "Something went wrong. Please contact admin."
+                )
             else:
-                sg.popup_auto_close(
-                    f"{tmp_student['reg_number']} checked in",
-                    image=cls.get_icon("ok"),
-                    title="Success",
-                    auto_close_duration=2,
-                    keep_on_top=True,
+                cls.popup_auto_close_success(
+                    f"{tmp_student['reg_number']} checked in"
                 )
             window_dispatch.open_window(StudentBarcodeCameraWindow)
             return True
         else:
             cls.display_message(
-                f"Error. Face did not match ({app_config['tmp_student']['reg_number']})",
+                f"Error. Face did not match "
+                f"({app_config['tmp_student']['reg_number']})",
                 window,
             )
             if "failed_attempts" not in tmp_student:
                 tmp_student["failed_attempts"] = 1
             elif tmp_student["failed_attempts"] >= 3:
-                app_config["current_attendance_session"]["blocked_reg_numbers"] += "," + tmp_student["reg_number"]
-                sg.popup_auto_close(f"{tmp_student['reg_number']} number of allowed retries exceeded", title="Allowed Retries Exceeded", auto_close_duration=2, image=cls.get_icon("cancel"), keep_on_top=True)
+                app_config["current_attendance_session"][
+                    "blocked_reg_numbers"
+                ] += ("," + tmp_student["reg_number"])
+                cls.popup_auto_close_error(
+                    f"{tmp_student['reg_number']} number of allowed retries exceeded",
+                    title="Allowed Retries Exceeded",
+                )
                 window_dispatch.open_window(StudentBarcodeCameraWindow)
                 return False
             else:
-                tmp_student["failed_attempts"] = int(tmp_student["failed_attempts"]) + 1
+                tmp_student["failed_attempts"] = (
+                    int(tmp_student["failed_attempts"]) + 1
+                )
             return False
 
     @staticmethod
@@ -1133,21 +1147,15 @@ class StaffFaceCameraWindow(FaceCameraWindow):
     @classmethod
     def process_image(cls, captured_face_encodings, window):
         if captured_face_encodings is None:
-            # cls.display_message(
-            #     "Error. Image must have exactly one face", window
-            # )
-            sg.popup_auto_close("Eror. Image must have exactly one face", title="Error", keep_on_top=True, auto_close_duration=2, image=cls.get_icon("cancel"))
+            cls.popup_auto_close_error("Eror. Image must have exactly one face")
             return False
         tmp_staff = app_config["tmp_staff"]
         if FaceRecognition.face_match(
-            known_face_encodings=[str_to_face_enc(app_config["tmp_staff"]["face_encodings"])],
+            known_face_encodings=[
+                str_to_face_enc(app_config["tmp_staff"]["face_encodings"])
+            ],
             face_encoding_to_check=captured_face_encodings,
         ):
-            # cls.display_message(
-            #     f"{app_config['tmp_staff']['staff_number']} authorized attendance-marking",
-            #     window,
-            # )
-
             att_session = AttendanceSession.objects.get(
                 id=app_config.getint("current_attendance_session", "session_id")
             )
@@ -1157,27 +1165,17 @@ class StaffFaceCameraWindow(FaceCameraWindow):
                 "initiator_id"
             ] = tmp_staff["id"]
             app_config.save()
-            sg.popup_auto_close(
-                    f"{tmp_staff['first_name'][0].upper()}. {tmp_staff['last_name'].capitalize()} ({tmp_staff['staff_number']}) authorized attendance-marking",
-                    image=cls.get_icon("ok"),
-                    title="Success",
-                    keep_on_top=True,
-                    auto_close_duration=2,
-                )
+            cls.popup_auto_close_success(
+                f"{tmp_staff['first_name'][0].upper()}."
+                f"{tmp_staff['last_name'].capitalize()} ({tmp_staff['staff_number']})"
+                f"authorized attendance-marking",
+            )
             window_dispatch.open_window(AttendanceSessionLandingWindow)
             return True
         else:
-            # cls.display_message(
-            #     f"Error. Face did not match ({app_config['tmp_staff']['staff_number']})",
-            #     window,
-            # )
-            sg.popup_auto_close(
-                    f"Error. Face did not match ({app_config['tmp_staff']['staff_number']})",
-                    image=cls.get_icon("cancel"),
-                    title="Error",
-                    auto_close_duration=2,
-                    keep_on_top=True,
-                )
+            cls.popup_auto_close_error(
+                f"Error. Face did not match ({app_config['tmp_staff']['staff_number']})",
+            )
             return False
 
     @staticmethod
@@ -1196,8 +1194,7 @@ class BarcodeCameraWindow(CameraWindow):
                 event, values = window.read(timeout=20)
                 if event in ("capture", "image_display"):
                     if len(barcodes) == 0:
-                        # cls.display_message("No ID detected.")
-                        sg.popup_auto_close("No ID detected.", title="Error", keep_on_top=True, auto_close_duration=2, image=cls.get_icon("cancel"))
+                        cls.popup_auto_close_error("No ID detected")
                     else:
                         cls.process_barcode(
                             Barcode.decode_barcode(barcodes[0]), window
@@ -1252,35 +1249,54 @@ class StudentBarcodeCameraWindow(BarcodeCameraWindow):
     def process_barcode(cls, identification_num, window):
         val_check = cls.validate_student_reg_number(identification_num)
         if val_check is not None:
-            cls.display_message(val_check, window)
+            cls.popup_auto_close_error(val_check)
             return False
 
-        if "blocked_reg_number" in app_config["current_attendance_session"] and identification_num in app_config["current_attendance_session"]["blocked_reg_number"].split(","):
-            sg.popup_auto_close(f"{identification_num} not allowed any more retries.", title="Not Allowed", image=cls.get_icon("cancel"), keep_on_top=True, auto_close_duration=2)
+        if "blocked_reg_number" in app_config[
+            "current_attendance_session"
+        ] and identification_num in app_config["current_attendance_session"][
+            "blocked_reg_number"
+        ].split(
+            ","
+        ):
+            cls.popup_auto_close_error(
+                f"{identification_num} not allowed any more retries.",
+                title="Not Allowed",
+            )
             return False
 
-        student = Student.objects.filter(reg_number=identification_num)        
+        student = Student.objects.filter(reg_number=identification_num)
         if not student.exists():
-            sg.popup_auto_close("No student found with given registration number. Ensure you have been duly registered on the system.", title="Error", image=cls.get_icon("cancel"), auto_close_duration=2, keep_on_top=True)
+            cls.popup_auto_close_error(
+                "No student found with given registration number."
+                "Ensure you have been duly registered on the system."
+            )
             return False
 
-        app_config["tmp_student"] = app_config.dict_vals_to_str(student.values(
-            "id",
-            "reg_number",
-            "first_name",
-            "last_name",
-            "level_of_study",
-            "department__name",
-            "department__faculty__name", "face_encodings", "fingerprint_template",).first())
+        app_config["tmp_student"] = app_config.dict_vals_to_str(
+            student.values(
+                "id",
+                "reg_number",
+                "first_name",
+                "last_name",
+                "level_of_study",
+                "department__name",
+                "department__faculty__name",
+                "face_encodings",
+                "fingerprint_template",
+            ).first()
+        )
 
         tmp_student = app_config["tmp_student"]
-        if not AttendanceRecord.objects.filter(session_id=app_config.get_int("current_attendance_session", "session_id"), student_id=tmp_student["id"]).exists():
-            sg.popup_auto_close(
-                f"{tmp_student['first_name']} {tmp_student['last_name']} ({tmp_student['reg_number']}) already checked in",
-                image=cls.get_icon("warning"),
-                title="Warning",
-                keep_on_top=True,
-                auto_close_duration=2,
+        if not AttendanceRecord.objects.filter(
+            session_id=app_config.get_int(
+                "current_attendance_session", "session_id"
+            ),
+            student_id=tmp_student["id"],
+        ).exists():
+            cls.popup_auto_close_warn(
+                f"{tmp_student['first_name']} {tmp_student['last_name']} "
+                f"({tmp_student['reg_number']}) already checked in"
             )
             return True
 
@@ -1302,14 +1318,26 @@ class StaffBarcodeCameraWindow(BarcodeCameraWindow):
             return False
 
         staff = Staff.objects.filter(staff_number=identification_num)
-        
+
         if not staff.exists():
-            sg.popup_auto_close("No staff found with given staff ID. Ensure you have been duly registered on the system.", title="Error", image=cls.get_icon("cancel"), auto_close_duration=2, keep_on_top=True)
+            cls.popup_auto_close_error(
+                "No staff found with given staff ID. "
+                "Ensure you have been duly registered on the system."
+            )
             return False
 
-        app_config["tmp_staff"] = app_config.dict_vals_to_str(staff.values("id", "staff_number", "first_name", "last_name", "department__name", "department__faculty__name",
-            "face_encodings",
-            "fingerprint_template",).first())
+        app_config["tmp_staff"] = app_config.dict_vals_to_str(
+            staff.values(
+                "id",
+                "staff_number",
+                "first_name",
+                "last_name",
+                "department__name",
+                "department__faculty__name",
+                "face_encodings",
+                "fingerprint_template",
+            ).first()
+        )
         app_config.save()
         window_dispatch.open_window(StaffFaceCameraWindow)
         return True
@@ -1505,7 +1533,7 @@ class StaffFaceEnrolmentWindow(FaceCameraWindow):
         Staff.objects.create_user(department=department, **new_staff_dict)
 
         window_dispatch.open_window(HomeWindow)
-        sg.popup_auto_close("Staff enrolment successful", title="Success", keep_on_top=True, auto_close_duration=2, image=cls.get_icon("ok"))
+        cls.popup_auto_close_success("Staff enrolment successful")
 
 
 class StudentEnrolmentWindow(BaseGUIWindow):
@@ -1684,7 +1712,8 @@ class StudentEnrolmentWindow(BaseGUIWindow):
             reg_number=values["student_reg_number_input"]
         ).exists():
             cls.display_message(
-                f"Student with registration number {values['student_reg_number_input']} already exists",
+                f"Student with registration number "
+                f"{values['student_reg_number_input']} already exists",
                 window,
             )
             return True
@@ -1711,7 +1740,7 @@ class StudentFaceEnrolmentWindow(FaceCameraWindow):
 
         Student.objects.create(department=department, **new_student_dict)
         window_dispatch.open_window(HomeWindow)
-        sg.popup_auto_close("Student enrolment successful", title="Success", keep_on_top=True, auto_close_duration=2, image=cls.get_icon("ok"))
+        cls.popup_auto_close_success("Student enrolment successful")
 
     @staticmethod
     def cancel_camera():
