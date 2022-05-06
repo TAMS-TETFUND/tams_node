@@ -843,6 +843,7 @@ class AttendanceSessionLandingWindow(BaseGUIWindow):
         if event == "end_attendance":
             app_config.remove_section("current_attendance_session")
             window_dispatch.open_window(HomeWindow)
+        return True
 
     @staticmethod
     def valid_check_in_count():
