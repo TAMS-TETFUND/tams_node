@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+from email.mime import image
 import time
 from turtle import title
 from unicodedata import name
@@ -1010,10 +1011,24 @@ class FaceCameraWindow(CameraWindow):
                 face_count = FaceRecognition.face_count(img)
                 if event == "capture":
                     if face_count > 1:
-                        cls.display_message("Multiple faces detected", window)
+                        # cls.display_message("Multiple faces detected", window)
+                        sg.popup_auto_close(
+                            "Multiple faces detected",
+                            image=cls.get_icon("cancel"),
+                            title="Error",
+                            auto_close_duration=3,
+                            keep_on_top_true=True,
+                        )
                     elif face_count == 0:
-                        cls.display_message(
-                            "Camera did not find a face", window
+                        # cls.display_message(
+                        #     "Camera did not find a face", window
+                        # )
+                        sg.popup_auto_close(
+                            "Camera did not find a face",
+                            image=cls.get_icon("cancel"),
+                            title="Error",
+                            auto_close_duration=2,
+                            keep_on_top_true=True,
                         )
                     else:
                         cls.hide_message_display_field(window)
@@ -1056,9 +1071,10 @@ class StudentFaceCameraWindow(FaceCameraWindow):
     @classmethod
     def process_image(cls, captured_face_encodings, window):
         if captured_face_encodings is None:
-            cls.display_message(
-                "Eror. Image must have exactly one face", window
-            )
+            # cls.display_message(
+            #     "Eror. Image must have exactly one face", window
+            # )
+            sg.popup_auto_close("Eror. Image must have exactly one face", title="Error", keep_on_top=True, auto_close_duration=3)
             return False
         tmp_student = app_config["tmp_student"]
         if FaceRecognition.face_match(
@@ -1076,6 +1092,7 @@ class StudentFaceCameraWindow(FaceCameraWindow):
                 sg.popup_auto_close(f"{tmp_student['reg_number']} already checked in",
                 image=cls.get_icon("warning"),
                 title="Warning",
+                keep_on_top_true=True,
                 auto_close_duration=3,)
             else:
                 sg.popup_auto_close(
@@ -1083,6 +1100,7 @@ class StudentFaceCameraWindow(FaceCameraWindow):
                     image=cls.get_icon("ok"),
                     title="Success",
                     auto_close_duration=3,
+                    keep_on_top_true=True,
                 )
             window_dispatch.open_window(StudentBarcodeCameraWindow)
             return True
@@ -1095,7 +1113,7 @@ class StudentFaceCameraWindow(FaceCameraWindow):
                 tmp_student["failed_attempts"] = 1
             elif tmp_student["failed_attempts"] >= 3:
                 app_config["current_attendance_session"]["blocked_reg_numbers"] += "," + tmp_student["reg_number"]
-                sg.popup_auto_close(f"{tmp_student['reg_number']} number of allowed retries exceeded", title="Allowed Retries Exceeded", auto_close_duration=3)
+                sg.popup_auto_close(f"{tmp_student['reg_number']} number of allowed retries exceeded", title="Allowed Retries Exceeded", auto_close_duration=3, image=cls.get_icon("cancel"), keep_on_top=True)
                 window_dispatch.open_window(StudentBarcodeCameraWindow)
                 return False
             else:
@@ -1112,19 +1130,20 @@ class StaffFaceCameraWindow(FaceCameraWindow):
     @classmethod
     def process_image(cls, captured_face_encodings, window):
         if captured_face_encodings is None:
-            cls.display_message(
-                "Error. Image must have exactly one face", window
-            )
+            # cls.display_message(
+            #     "Error. Image must have exactly one face", window
+            # )
+            sg.popup_auto_close("Eror. Image must have exactly one face", title="Error", keep_on_top=True, auto_close_duration=3, image=cls.get_icon("cancel"))
             return False
 
         if FaceRecognition.face_match(
             known_face_encodings=[str_to_face_enc(app_config["tmp_staff"]["face_encodings"])],
             face_encoding_to_check=captured_face_encodings,
         ):
-            cls.display_message(
-                f"{app_config['tmp_staff']['staff_number']} authorized attendance-marking",
-                window,
-            )
+            # cls.display_message(
+            #     f"{app_config['tmp_staff']['staff_number']} authorized attendance-marking",
+            #     window,
+            # )
 
             att_session = AttendanceSession.objects.get(
                 id=app_config.getint("current_attendance_session", "session_id")
@@ -1135,14 +1154,27 @@ class StaffFaceCameraWindow(FaceCameraWindow):
                 "initiator_id"
             ] = app_config["tmp_staff"]["id"]
             app_config.save()
-
+            sg.popup_auto_close(
+                    f"{app_config['tmp_staff']['staff_number']} authorized attendance-marking",
+                    image=cls.get_icon("ok"),
+                    title="Success",
+                    keep_on_top_true=True,
+                    auto_close_duration=3,
+                )
             window_dispatch.open_window(AttendanceSessionLandingWindow)
             return True
         else:
-            cls.display_message(
-                f"Error. Face did not match ({app_config['tmp_staff']['staff_number']})",
-                window,
-            )
+            # cls.display_message(
+            #     f"Error. Face did not match ({app_config['tmp_staff']['staff_number']})",
+            #     window,
+            # )
+            sg.popup_auto_close(
+                    f"Error. Face did not match ({app_config['tmp_staff']['staff_number']})",
+                    image=cls.get_icon("cancel"),
+                    title="Error",
+                    auto_close_duration=3,
+                    keep_on_top_true=True,
+                )
             return False
 
     @staticmethod
