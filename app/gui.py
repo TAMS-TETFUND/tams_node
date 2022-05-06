@@ -1017,7 +1017,7 @@ class FaceCameraWindow(CameraWindow):
                             "Multiple faces detected",
                             image=cls.get_icon("cancel"),
                             title="Error",
-                            auto_close_duration=3,
+                            auto_close_duration=2,
                             keep_on_top=True,
                         )
                     elif face_count == 0:
@@ -1041,6 +1041,7 @@ class FaceCameraWindow(CameraWindow):
 
                 if event == "cancel":
                     cls.cancel_camera()
+                    return True
 
                 if face_count > 0:
                     face_locations = FaceRecognition.face_locations(img)
@@ -1075,7 +1076,7 @@ class StudentFaceCameraWindow(FaceCameraWindow):
             # cls.display_message(
             #     "Eror. Image must have exactly one face", window
             # )
-            sg.popup_auto_close("Eror. Image must have exactly one face", title="Error", keep_on_top=True, auto_close_duration=3)
+            sg.popup_auto_close("Eror. Image must have exactly one face", title="Error", keep_on_top=True, auto_close_duration=2)
             return False
         tmp_student = app_config["tmp_student"]
         if FaceRecognition.face_match(
@@ -1089,18 +1090,19 @@ class StudentFaceCameraWindow(FaceCameraWindow):
                     ),
                     student_id=tmp_student.getint("id"),
                 )
-            except IntegrityError:
+            except IntegrityError as e:
+                print(e)
                 sg.popup_auto_close(f"{tmp_student['reg_number']} already checked in",
                 image=cls.get_icon("warning"),
                 title="Warning",
                 keep_on_top=True,
-                auto_close_duration=3,)
+                auto_close_duration=2,)
             else:
                 sg.popup_auto_close(
                     f"{tmp_student['reg_number']} checked in",
                     image=cls.get_icon("ok"),
                     title="Success",
-                    auto_close_duration=3,
+                    auto_close_duration=2,
                     keep_on_top=True,
                 )
             window_dispatch.open_window(StudentBarcodeCameraWindow)
@@ -1114,7 +1116,7 @@ class StudentFaceCameraWindow(FaceCameraWindow):
                 tmp_student["failed_attempts"] = 1
             elif tmp_student["failed_attempts"] >= 3:
                 app_config["current_attendance_session"]["blocked_reg_numbers"] += "," + tmp_student["reg_number"]
-                sg.popup_auto_close(f"{tmp_student['reg_number']} number of allowed retries exceeded", title="Allowed Retries Exceeded", auto_close_duration=3, image=cls.get_icon("cancel"), keep_on_top=True)
+                sg.popup_auto_close(f"{tmp_student['reg_number']} number of allowed retries exceeded", title="Allowed Retries Exceeded", auto_close_duration=2, image=cls.get_icon("cancel"), keep_on_top=True)
                 window_dispatch.open_window(StudentBarcodeCameraWindow)
                 return False
             else:
@@ -1134,7 +1136,7 @@ class StaffFaceCameraWindow(FaceCameraWindow):
             # cls.display_message(
             #     "Error. Image must have exactly one face", window
             # )
-            sg.popup_auto_close("Eror. Image must have exactly one face", title="Error", keep_on_top=True, auto_close_duration=3, image=cls.get_icon("cancel"))
+            sg.popup_auto_close("Eror. Image must have exactly one face", title="Error", keep_on_top=True, auto_close_duration=2, image=cls.get_icon("cancel"))
             return False
 
         if FaceRecognition.face_match(
@@ -1160,7 +1162,7 @@ class StaffFaceCameraWindow(FaceCameraWindow):
                     image=cls.get_icon("ok"),
                     title="Success",
                     keep_on_top=True,
-                    auto_close_duration=3,
+                    auto_close_duration=2,
                 )
             window_dispatch.open_window(AttendanceSessionLandingWindow)
             return True
@@ -1173,7 +1175,7 @@ class StaffFaceCameraWindow(FaceCameraWindow):
                     f"Error. Face did not match ({app_config['tmp_staff']['staff_number']})",
                     image=cls.get_icon("cancel"),
                     title="Error",
-                    auto_close_duration=3,
+                    auto_close_duration=2,
                     keep_on_top=True,
                 )
             return False
@@ -1194,17 +1196,21 @@ class BarcodeCameraWindow(CameraWindow):
                 event, values = window.read(timeout=20)
                 if event == "capture":
                     if len(barcodes) == 0:
-                        cls.display_message("No ID detected.")
+                        # cls.display_message("No ID detected.")
+                        sg.popup_auto_close("No ID detected.", title="Error", keep_on_top=True, auto_close_duration=2, image=cls.get_icon("cancel"))
                     else:
                         cls.process_barcode(
                             Barcode.decode_barcode(barcodes[0]), window
                         )
                         return True
+
                 if event == "keyboard":
                     cls.launch_keypad()
+                    return True
 
                 if event == "cancel":
                     cls.cancel_camera()
+                    return True
 
                 if len(barcodes) > 0:
                     cls.process_barcode(
@@ -1250,7 +1256,7 @@ class StudentBarcodeCameraWindow(BarcodeCameraWindow):
             return False
 
         if "blocked_reg_number" in app_config["current_attendance_session"] and identification_num in app_config["current_attendance_session"]["blocked_reg_number"].split(","):
-            sg.popup_auto_close(f"{identification_num} not allowed any more retries.", title="Not Allowed", image=cls.get_icon("cancel"), keep_on_top=True, auto_close_duration=3)
+            sg.popup_auto_close(f"{identification_num} not allowed any more retries.", title="Not Allowed", image=cls.get_icon("cancel"), keep_on_top=True, auto_close_duration=2)
             return False
         try:
             student = Student.objects.filter(reg_number=identification_num)
@@ -1487,7 +1493,7 @@ class StaffFaceEnrolmentWindow(FaceCameraWindow):
         Staff.objects.create_user(department=department, **new_staff_dict)
 
         window_dispatch.open_window(HomeWindow)
-        sg.popup_auto_close("Staff enrolment successful", title="Success", keep_on_top=True, auto_close_duration=3)
+        sg.popup_auto_close("Staff enrolment successful", title="Success", keep_on_top=True, auto_close_duration=2, image=cls.get_icon("ok"))
 
 
 class StudentEnrolmentWindow(BaseGUIWindow):
@@ -1693,7 +1699,7 @@ class StudentFaceEnrolmentWindow(FaceCameraWindow):
 
         Student.objects.create(department=department, **new_student_dict)
         window_dispatch.open_window(HomeWindow)
-        sg.popup_auto_close("Student enrolment successful", title="Success", keep_on_top=True, auto_close_duration=3)
+        sg.popup_auto_close("Student enrolment successful", title="Success", keep_on_top=True, auto_close_duration=2, image=cls.get_icon("ok"))
 
     @staticmethod
     def cancel_camera():
