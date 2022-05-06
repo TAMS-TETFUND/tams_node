@@ -1046,8 +1046,9 @@ class FaceCameraWindow(CameraWindow):
     def window_title(cls):
         return [
             sg.Push(),
-            sg.Image(data=cls.get_icon("face_scanner", 0.5)),
-            sg.Text("Position Face", font=("Any", 16)),
+            sg.Image(data=cls.get_icon("face_scanner", 0.4)),
+            sg.Text("Position Face", font=("Any", 14)),
+            sg.Push()
         ]
 
 
@@ -1197,14 +1198,9 @@ class BarcodeCameraWindow(CameraWindow):
         return [
             [
                 sg.Push(),
-                sg.Image(data=cls.get_icon("qr_code", 0.5)),
-                sg.Text("Present ID Card", font=("Any", 16)),
+                sg.Image(data=cls.get_icon("qr_code", 0.4)),
+                sg.Text("Present ID Card", font=("Any", 14)),
                 sg.Push(),
-            ],
-            [
-                sg.Text(
-                    "A staff must authorize the commencement of attendance-marking"
-                )
             ],
         ]
 
