@@ -8,10 +8,6 @@ import face_recognition
 
 class FaceRecognition:
     @staticmethod
-    def face_count(image):
-        return len(face_recognition.face_encodings(image))
-
-    @staticmethod
     def face_match(
         *, known_face_encodings, face_encoding_to_check, tolerance=0.6
     ):
@@ -23,11 +19,8 @@ class FaceRecognition:
             return False
 
     @classmethod
-    def face_encodings(cls, image):
-        if cls.face_count(image) == 1:
-            return face_recognition.face_encodings(image)[0]
-        else:
-            return None
+    def face_encodings(cls, image, face_location=None):
+        return face_recognition.face_encodings(image, face_location)[0]
 
     @staticmethod
     def face_locations(image) -> List:
