@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 import time
+from turtle import title
 from unicodedata import name
 
 import PySimpleGUI as sg
@@ -722,7 +723,7 @@ class ActiveEventSummaryWindow(BaseGUIWindow):
                 window_dispatch.open_window(HomeWindow)
                 return True
 
-            app_config["tmp_staff"] = initiator.values("id", "staff_number", "first_name", "last_name", "department__name", "department__faculty__name", "face_encodings", "fingerprint_template",).first()
+            app_config["tmp_staff"] = app_config.dict_vals_to_str(initiator.values("id", "staff_number", "first_name", "last_name", "department__name", "department__faculty__name", "face_encodings", "fingerprint_template",).first())
             app_config.save()
             window_dispatch.open_window(StaffFaceCameraWindow)
         return True
@@ -1042,7 +1043,7 @@ class FaceCameraWindow(CameraWindow):
         return [
             sg.Push(),
             sg.Image(data=cls.get_icon("face_scanner", 0.5)),
-            sg.Text("Position Face", font=("Any", 20)),
+            sg.Text("Position Face", font=("Any", 16)),
         ]
 
 
@@ -1054,23 +1055,30 @@ class StudentFaceCameraWindow(FaceCameraWindow):
                 "Eror. Image must have exactly one face", window
             )
             return False
-
+        tmp_student = app_config["tmp_student"]
         if FaceRecognition.face_match(
-            [str_to_face_enc(app_config["tmp_student"]["face_encodings"])],
+            [str_to_face_enc(tmp_student["face_encodings"])],
             captured_face_encodings,
         ):
-            AttendanceRecord.objects.create(
-                attendance_session_id=app_config.getint(
-                    "current_attendance_sesson", "session_id"
-                ),
-                student_id=app_config.getint("tmp_student", "id"),
-            )
-            sg.popup_auto_close(
-                f"{app_config['tmp_student']['reg_number']} checked in",
-                image=cls.get_icon("ok"),
-                title="Success",
-                auto_close_duration=3,
-            )
+            try:
+                AttendanceRecord.objects.create(
+                    attendance_session_id=app_config.getint(
+                        "current_attendance_sesson", "session_id"
+                    ),
+                    student_id=tmp_student.getint("id"),
+                )
+            except IntegrityError:
+                sg.popup_auto_close(f"{tmp_student['reg_number']} already checked in",
+                image=cls.get_icon("warning"),
+                title="Warning",
+                auto_close_duration=3,)
+            else:
+                sg.popup_auto_close(
+                    f"{tmp_student['reg_number']} checked in",
+                    image=cls.get_icon("ok"),
+                    title="Success",
+                    auto_close_duration=3,
+                )
             window_dispatch.open_window(StudentBarcodeCameraWindow)
             return True
         else:
@@ -1078,6 +1086,15 @@ class StudentFaceCameraWindow(FaceCameraWindow):
                 f"Error. Face did not match ({app_config['tmp_student']['reg_number']})",
                 window,
             )
+            if "failed_attempts" not in tmp_student:
+                tmp_student["failed_attempts"] = 1
+            elif tmp_student["failed_attempts"] >= 3:
+                app_config["current_attendance_session"]["blocked_reg_numbers"] += "," + tmp_student["reg_number"]
+                sg.popup_auto_close(f"{tmp_student['reg_number']} number of allowed retries exceeded", title="Allowed Retries Exceeded", auto_close_duration=3)
+                window_dispatch.open_window(StudentBarcodeCameraWindow)
+                return False
+            else:
+                tmp_student["failed_attempts"] = int(tmp_student["failed_attempts"]) + 1
             return False
 
     @staticmethod
@@ -1139,7 +1156,7 @@ class BarcodeCameraWindow(CameraWindow):
                 event, values = window.read(timeout=20)
                 if event == "capture":
                     if len(barcodes) == 0:
-                        cls.display_message("No ID detected")
+                        cls.display_message("No ID detected.")
                     else:
                         cls.process_barcode(
                             Barcode.decode_barcode(barcodes[0]), window
@@ -1177,7 +1194,7 @@ class BarcodeCameraWindow(CameraWindow):
             [
                 sg.Push(),
                 sg.Image(data=cls.get_icon("qr_code", 0.5)),
-                sg.Text("Present ID Card", font=("Any", 20)),
+                sg.Text("Present ID Card", font=("Any", 16)),
                 sg.Push(),
             ],
             [
@@ -1199,6 +1216,9 @@ class StudentBarcodeCameraWindow(BarcodeCameraWindow):
             cls.display_message(val_check, window)
             return False
 
+        if "blocked_reg_number" in app_config["current_attendance_session"] and identification_num in app_config["current_attendance_session"]["blocked_reg_number"].split(","):
+            sg.popup_auto_close(f"{identification_num} not allowed any more retries.", title="Not Allowed", image=cls.get_icon("cancel"), keep_on_top=True, auto_close_duration=3)
+            return False
         try:
             student = Student.objects.filter(reg_no=identification_num)
         except ObjectDoesNotExist:
@@ -1206,13 +1226,13 @@ class StudentBarcodeCameraWindow(BarcodeCameraWindow):
                 "No student found with given registration number", window
             )
             return False
-        app_config["tmp_student"] = student.values(
+        app_config["tmp_student"] = app_config.dict_vals_to_str(student.values(
             "reg_number",
             "first_name",
             "last_name",
             "level_of_study",
             "department__name",
-            "department__faculty__name", "face_encodings", "fingerprint_template",).first()
+            "department__faculty__name", "face_encodings", "fingerprint_template",).first())
         app_config.save()
         window_dispatch.open_window(StudentFaceCameraWindow)
         return True
@@ -1236,9 +1256,9 @@ class StaffBarcodeCameraWindow(BarcodeCameraWindow):
             cls.display_message("No staff found with given staff ID", window)
             return False
 
-        app_config["tmp_staff"] = staff.values("id", "staff_number", "first_name", "last_name", "department__name", "department__faculty__name",
+        app_config["tmp_staff"] = app_config.dict_vals_to_str(staff.values("id", "staff_number", "first_name", "last_name", "department__name", "department__faculty__name",
             "face_encodings",
-            "fingerprint_template",).first()
+            "fingerprint_template",).first())
         app_config.save()
         window_dispatch.open_window(StaffFaceCameraWindow)
         return True
