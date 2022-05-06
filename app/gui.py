@@ -1274,7 +1274,7 @@ class StudentBarcodeCameraWindow(BarcodeCameraWindow):
             "department__faculty__name", "face_encodings", "fingerprint_template",).first())
 
         tmp_student = app_config["tmp_student"]
-        if AttendanceRecord.objects.filter(session_id=app_config.get_int("current_attendance_session", "session_id"), student_id=tmp_student["id"]).exists():
+        if not AttendanceRecord.objects.filter(session_id=app_config.get_int("current_attendance_session", "session_id"), student_id=tmp_student["id"]).exists():
             sg.popup_auto_close(
                 f"{tmp_student['first_name']} {tmp_student['last_name']} ({tmp_student['reg_number']}) already checked in",
                 image=cls.get_icon("warning"),
