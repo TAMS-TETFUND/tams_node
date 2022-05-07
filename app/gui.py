@@ -11,7 +11,7 @@ from django.db.utils import IntegrityError
 from app.appconfigparser import AppConfigParser
 from app.basegui import BaseGUIWindow
 
-from app.camera import Camera
+# from app.camera import Camera
 from app.barcode import Barcode
 from app.facerec import FaceRecognition
 from app.windowdispatch import WindowDispatch
@@ -263,7 +263,7 @@ class AcademicSessionDetailsWindow(BaseGUIWindow):
             [sg.VPush()],
             [
                 [cls.message_display_field()],
-                sg.Text("Select Current Session:  "),
+                sg.Text("Select Current Session:   "),
                 sg.Combo(
                     AcademicSession.get_all_academic_sessions(),
                     default_value=AcademicSession.get_all_academic_sessions()[
@@ -272,6 +272,7 @@ class AcademicSessionDetailsWindow(BaseGUIWindow):
                     enable_events=True,
                     key="current_session",
                     expand_y=True,
+                    expand_x=True,
                 ),
             ],
             [
@@ -282,6 +283,7 @@ class AcademicSessionDetailsWindow(BaseGUIWindow):
                     enable_events=True,
                     key="current_semester",
                     expand_y=True,
+                    expand_x=True,
                 ),
             ],
             [sg.VPush()],
@@ -343,23 +345,25 @@ class EventDetailWindow(BaseGUIWindow):
     def window(cls):
         section1 = [
             [
-                sg.Text("Faculty:  "),
+                sg.Text("Faculty:          "),
                 sg.Combo(
                     Faculty.get_all_faculties(),
                     default_value=cls.COMBO_DEFAULT,
                     enable_events=True,
                     key="course_faculty",
                     expand_y=True,
+                    expand_x=True,
                 ),
             ],
             [
-                sg.Text("Department:  "),
+                sg.Text("Department:     "),
                 sg.Combo(
                     Department.get_departments(),
                     default_value=cls.COMBO_DEFAULT,
                     enable_events=True,
                     key="course_department",
                     expand_y=True,
+                    expand_x=True,
                 ),
             ],
         ]
@@ -397,7 +401,7 @@ class EventDetailWindow(BaseGUIWindow):
             ],
             [sg.Text("_" * 80)],
             [
-                sg.Text("Start Time: "),
+                sg.Text("Start Time:     "),
                 sg.Spin(
                     values=[str(a).zfill(2) for a in range(0, 24)],
                     initial_value="08",
@@ -426,7 +430,7 @@ class EventDetailWindow(BaseGUIWindow):
                 ),
             ],
             [
-                sg.Text("Duration: "),
+                sg.Text("Duration:        "),
                 sg.Spin(
                     values=[str(a).zfill(2) for a in range(0, 12)],
                     initial_value="01",
@@ -1500,21 +1504,23 @@ class StaffEnrolmentWindow(BaseGUIWindow):
     def window(cls):
         column1 = [
             [sg.Push(), sg.Text("Staff Enrolment"), sg.Push()],
+            [sg.Text('_' * 80)],
             [cls.message_display_field()],
             [
                 sg.Text("Staff Number:  "),
                 sg.Input(
-                    size=(15, 1), justification="left", key="staff_number_input"
+                    size=(15, 1), justification="left", key="staff_number_input",
+                    expand_x=True
                 ),
             ],
             [
-                sg.Text("First Name: "),
+                sg.Text("First Name:     "),
                 sg.Input(
                     expand_x=True, justification="left", key="staff_first_name"
                 ),
             ],
             [
-                sg.Text("Last Name: "),
+                sg.Text("Last Name:     "),
                 sg.Input(
                     expand_x=True, justification="left", key="staff_last_name"
                 ),
@@ -1526,15 +1532,16 @@ class StaffEnrolmentWindow(BaseGUIWindow):
                 ),
             ],
             [
-                sg.Text("Sex:  "),
+                sg.Text("Sex:               "),
                 sg.Combo(
                     values=Sex.labels,
                     default_value=cls.COMBO_DEFAULT,
                     key="staff_sex",
+                    expand_x=True,
                 ),
             ],
             [
-                sg.Text("Faculty: "),
+                sg.Text("Faculty:          "),
                 sg.Combo(
                     values=Faculty.get_all_faculties(),
                     default_value=cls.COMBO_DEFAULT,
@@ -1544,7 +1551,7 @@ class StaffEnrolmentWindow(BaseGUIWindow):
                 ),
             ],
             [
-                sg.Text("Department: "),
+                sg.Text("Department:    "),
                 sg.Combo(
                     values=Department.get_departments(),
                     default_value=cls.COMBO_DEFAULT,
@@ -1665,13 +1672,13 @@ class StudentEnrolmentWindow(BaseGUIWindow):
             [
                 sg.Text("Registration Number:  "),
                 sg.Input(
-                    size=(15, 1),
                     justification="left",
                     key="student_reg_number_input",
+                    expand_x=True,
                 ),
             ],
             [
-                sg.Text("First Name: "),
+                sg.Text("First Name:               "),
                 sg.Input(
                     expand_x=True,
                     justification="left",
@@ -1679,13 +1686,13 @@ class StudentEnrolmentWindow(BaseGUIWindow):
                 ),
             ],
             [
-                sg.Text("Last Name: "),
+                sg.Text("Last Name:               "),
                 sg.Input(
                     expand_x=True, justification="left", key="student_last_name"
                 ),
             ],
             [
-                sg.Text("Other Names: "),
+                sg.Text("Other Names:            "),
                 sg.Input(
                     expand_x=True,
                     justification="left",
@@ -1693,31 +1700,33 @@ class StudentEnrolmentWindow(BaseGUIWindow):
                 ),
             ],
             [
-                sg.Text("Sex:  "),
+                sg.Text("Sex:                         "),
                 sg.Combo(
                     values=Sex.labels,
                     default_value=cls.COMBO_DEFAULT,
                     key="student_sex",
+                    expand_x=True,
                 ),
             ],
             [
-                sg.Text("Level of study:  "),
+                sg.Text("Level of study:          "),
                 sg.Input(
                     size=(5, 1),
                     justification="left",
                     key="student_level_of_study",
+                    expand_x=True,
                 ),
             ],
             [
-                sg.Text("Possible year of graduation:  "),
+                sg.Text("Possible graduation year:  "),
                 sg.Input(
-                    size=(10, 1),
                     justification="left",
                     key="student_possible_grad_yr",
+                    expand_x=True,
                 ),
             ],
             [
-                sg.Text("Faculty: "),
+                sg.Text("Faculty:                   "),
                 sg.Combo(
                     values=Faculty.get_all_faculties(),
                     default_value=cls.COMBO_DEFAULT,
@@ -1727,7 +1736,7 @@ class StudentEnrolmentWindow(BaseGUIWindow):
                 ),
             ],
             [
-                sg.Text("Department: "),
+                sg.Text("Department:             "),
                 sg.Combo(
                     values=Department.get_departments(),
                     default_value=cls.COMBO_DEFAULT,
