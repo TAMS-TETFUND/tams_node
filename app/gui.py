@@ -675,39 +675,49 @@ class NewEventSummaryWindow(BaseGUIWindow):
 class ActiveEventSummaryWindow(BaseGUIWindow):
     @classmethod
     def window(cls):
-        new_event_dict = app_config["current_attendance_session"]
+        event_dict = app_config["current_attendance_session"]
+        try:
+            initiator = Staff.objects.get(id=event_dict.getint("initiator_id"))
+        except Exception as e:
+            print(e)
+            initiator = None
         layout = [
             [
                 sg.Push(),
                 sg.Text(
-                    "On-going {} Event".format(
-                        new_event_dict["type"].capitalize()
-                    )
+                    "On-going {} Event".format(event_dict["type"].capitalize())
                 ),
                 sg.Push(),
             ],
             [sg.Text("_" * 80)],
             [sg.VPush()],
             [cls.message_display_field()],
-            [sg.Text(f"Course: {new_event_dict['course']}")],
+            [sg.Text(f"Course: {event_dict['course']}")],
             [
                 sg.Text(
-                    f"Session Details: {new_event_dict['session']} "
-                    f"{new_event_dict['semester']}"
+                    f"Session Details: {event_dict['session']} "
+                    f"{event_dict['semester']}"
                 )
             ],
             [
                 sg.Text(
-                    f"Start Time: {new_event_dict['start_date']} "
-                    f"{new_event_dict['start_time']}"
+                    f"Start Time: {event_dict['start_date']} "
+                    f"{event_dict['start_time']}"
                 )
             ],
-            [sg.Text(f"Duration: {new_event_dict['duration']} Hours")],
+            [sg.Text(f"Duration: {event_dict['duration']} Hours")],
             [sg.VPush()],
             [sg.Text("_" * 80)],
             [
                 sg.Button("Continue Event", k="continue_event"),
                 sg.Button("Cancel", k="cancel"),
+            ],
+            [
+                sg.Text(
+                    f"Consenting Staff: "
+                    f"{'Unknown' if initiator is None else initiator.first_name}"
+                    f" {'' if initiator is None else initiator.last_name}"
+                )
             ],
         ]
         window = sg.Window(
@@ -1161,6 +1171,25 @@ class StudentFaceCameraWindow(FaceCameraWindow):
         """should navigate user back to the attendance session landing page"""
         window_dispatch.open_window(AttendanceSessionLandingWindow)
 
+    @classmethod
+    def window_title(cls):
+        tmp_student = app_config["tmp_student"]
+        course = app_config["current_attendance_session"]["course"].split(":")
+        event = app_config["current_attendance_session"]["type"].capitalize()
+        return [
+            [sg.Push(), f"{course[0]} {event} Attendance", sg.Push()],
+            [
+                sg.Push(),
+                sg.Image(data=cls.get_icon("face_scanner", 0.3)),
+                sg.Text(
+                    f"Face Verification for: {tmp_student['last_name']} "
+                    f"{tmp_student['first_name']}",
+                    font=("Any", 14),
+                ),
+                sg.Push(),
+            ],
+        ]
+
 
 class StaffFaceCameraWindow(FaceCameraWindow):
     @classmethod
@@ -1186,7 +1215,7 @@ class StaffFaceCameraWindow(FaceCameraWindow):
             app_config.save()
             cls.popup_auto_close_success(
                 f"{tmp_staff['first_name'][0].upper()}."
-                f"{tmp_staff['last_name'].capitalize()} ({tmp_staff['staff_number']})"
+                f"{tmp_staff['last_name'].capitalize()}"
                 f"authorized attendance-marking",
             )
             window_dispatch.open_window(AttendanceSessionLandingWindow)
@@ -1205,6 +1234,25 @@ class StaffFaceCameraWindow(FaceCameraWindow):
             app_config["new_event"] = app_config["current_attendance_session"]
             window_dispatch.open_window(NewEventSummaryWindow)
         return
+
+    @classmethod
+    def window_title(cls):
+        tmp_staff = app_config["tmp_staff"]
+        course = app_config["current_attendance_session"]["course"].split(":")
+        event = app_config["current_attendance_session"]["type"].capitalize()
+        return [
+            [sg.Push(), f"{course[0]} {event} Attendance Consent", sg.Push()],
+            [
+                sg.Push(),
+                sg.Image(data=cls.get_icon("face_scanner", 0.3)),
+                sg.Text(
+                    f"Face Verification for: {tmp_staff['last_name']} "
+                    f"{tmp_staff['first_name'][0]}",
+                    font=("Any", 14),
+                ),
+                sg.Push(),
+            ],
+        ]
 
 
 class BarcodeCameraWindow(CameraWindow):
@@ -1257,7 +1305,7 @@ class BarcodeCameraWindow(CameraWindow):
         return [
             [
                 sg.Push(),
-                sg.Image(data=cls.get_icon("qr_code", 0.4)),
+                sg.Image(data=cls.get_icon("qr_code", 0.3)),
                 sg.Text("Present ID Card", font=("Any", 14)),
                 sg.Push(),
             ],
@@ -1331,13 +1379,31 @@ class StudentBarcodeCameraWindow(BarcodeCameraWindow):
     def cancel_camera():
         window_dispatch.open_window(AttendanceSessionLandingWindow)
 
+    @classmethod
+    def window_title(cls):
+        course = app_config["current_attendance_session"]["course"].split(":")
+        event = app_config["current_attendance_session"]["type"]
+        return [
+            [
+                sg.Push(),
+                sg.Text(f"{course[0]} {event.capitalize()} Attendance"),
+                sg.Push(),
+            ],
+            [
+                sg.Push(),
+                sg.Image(data=cls.get_icon("qr_code", 0.3)),
+                sg.Text("Present Student ID Card (Barcode)", font=("Any", 13)),
+                sg.Push(),
+            ],
+        ]
+
 
 class StaffBarcodeCameraWindow(BarcodeCameraWindow):
     @classmethod
     def process_barcode(cls, identification_num, window):
         val_check = cls.validate_staff_number(identification_num)
         if val_check is not None:
-            cls.display_message(val_check, window)
+            cls.popup_auto_close_error(val_check)
             return
 
         staff = Staff.objects.filter(staff_number=identification_num)
@@ -1361,9 +1427,31 @@ class StaffBarcodeCameraWindow(BarcodeCameraWindow):
                 "fingerprint_template",
             ).first()
         )
+
         app_config.save()
         window_dispatch.open_window(StaffFaceCameraWindow)
         return
+
+    @classmethod
+    def window_title(cls):
+        course = app_config["current_attendance_session"]["course"].split(":")
+        event = app_config["current_attendance_session"]["type"]
+        return [
+            [
+                sg.Push(),
+                sg.Text(f"{course[0]} {event.capitalize()} Attendance Consent"),
+                sg.Push(),
+            ],
+            [
+                sg.Push(),
+                sg.Image(data=cls.get_icon("qr_code", 0.3)),
+                sg.Text(
+                    "Present Staff ID Card (Barcode) to authorize attendance-taking",
+                    font=("Any", 13),
+                ),
+                sg.Push(),
+            ],
+        ]
 
 
 # enrolment windows should not be available on all node devices;
