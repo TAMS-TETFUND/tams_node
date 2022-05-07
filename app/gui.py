@@ -857,14 +857,26 @@ class AttendanceSessionLandingWindow(BaseGUIWindow):
     @classmethod
     def loop(cls, window, event, values):
         if event == "home":
-            window_dispatch.open_window(HomeWindow)
+            confirm = sg.popup_ok_cancel(
+                "Leaving attendance-taking. System will verify staff again " 
+                "to continue attendance-taking. Do you wish to continue?",
+                title="Go back?"
+            )
+            if confirm:
+                window_dispatch.open_window(HomeWindow)
 
         if event == "start_attendance":
             window_dispatch.open_window(StudentBarcodeCameraWindow)
 
         if event == "end_attendance":
-            app_config.remove_section("current_attendance_session")
-            window_dispatch.open_window(HomeWindow)
+            confirm = sg.popup_ok_cancel(
+                "This will permanently end attendance-taking for this event"
+                "Do you wish to continue?",
+                title="End Attendance Session?"
+            )
+            if confirm:
+                app_config.remove_section("current_attendance_session")
+                window_dispatch.open_window(HomeWindow)
         return True
 
     @staticmethod
