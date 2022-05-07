@@ -706,18 +706,18 @@ class ActiveEventSummaryWindow(BaseGUIWindow):
                 )
             ],
             [sg.Text(f"Duration: {event_dict['duration']} Hours")],
-            [sg.VPush()],
-            [sg.Text("_" * 80)],
-            [
-                sg.Button("Continue Event", k="continue_event"),
-                sg.Button("Cancel", k="cancel"),
-            ],
             [
                 sg.Text(
                     f"Consenting Staff: "
                     f"{'Unknown' if initiator is None else initiator.first_name}"
                     f" {'' if initiator is None else initiator.last_name}"
                 )
+            ],
+            [sg.VPush()],
+            [sg.Text("_" * 80)],
+            [
+                sg.Button("Continue Event", k="continue_event"),
+                sg.Button("Cancel", k="cancel"),
             ],
         ]
         window = sg.Window(
@@ -1104,10 +1104,10 @@ class FaceCameraWindow(CameraWindow):
     @classmethod
     def window_title(cls):
         return [
-            sg.Push(),
+            [sg.Push(),
             sg.Image(data=cls.get_icon("face_scanner", 0.4)),
             sg.Text("Position Face", font=("Any", 14)),
-            sg.Push(),
+            sg.Push(),]
         ]
 
 
