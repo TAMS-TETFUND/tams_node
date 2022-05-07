@@ -1007,7 +1007,7 @@ class CameraWindow(BaseGUIWindow):
     @classmethod
     def window(cls):
         layout = [
-            [cls.window_title()],
+            # [cls.window_title()],
             [
                 sg.Push(),
                 sg.Image(filename="", key="image_display", enable_events=True),
