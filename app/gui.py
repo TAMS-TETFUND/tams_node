@@ -1291,7 +1291,7 @@ class StudentBarcodeCameraWindow(BarcodeCameraWindow):
         )
 
         tmp_student = app_config["tmp_student"]
-        if not AttendanceRecord.objects.filter(
+        if AttendanceRecord.objects.filter(
             attendance_session_id=app_config.getint(
                 "current_attendance_session", "session_id"
             ),
