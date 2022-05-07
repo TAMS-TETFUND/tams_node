@@ -863,7 +863,8 @@ class AttendanceSessionLandingWindow(BaseGUIWindow):
             confirm = sg.popup_ok_cancel(
                 "Leaving attendance-taking. System will verify staff again " 
                 "to continue attendance-taking. Do you wish to continue?",
-                title="Go back?"
+                title="Go back?",
+                keep_on_top=True
             )
             if confirm:
                 window_dispatch.open_window(HomeWindow)
@@ -875,7 +876,8 @@ class AttendanceSessionLandingWindow(BaseGUIWindow):
             confirm = sg.popup_ok_cancel(
                 "This will permanently end attendance-taking for this event"
                 "Do you wish to continue?",
-                title="End Attendance Session?"
+                title="End Attendance Session?",
+                keep_on_top=True
             )
             if confirm:
                 app_config.remove_section("current_attendance_session")
