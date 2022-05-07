@@ -1041,6 +1041,7 @@ class CameraWindow(BaseGUIWindow):
                     button_color=cls.ICON_BUTTON_COLOR,
                     key="keyboard",
                     visible=True,
+                    disabled=True
                 )
             )
         else:
