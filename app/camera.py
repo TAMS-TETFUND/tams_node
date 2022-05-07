@@ -5,6 +5,7 @@ from picamera import PiCamera
 import cv2
 import numpy as np
 
+from app.basegui import BaseGUIWindow as bgw
 
 class Camera(PiCamera):
     def __init__(self) -> None:
@@ -20,7 +21,9 @@ class Camera(PiCamera):
 
     @staticmethod
     def feed_to_bytes(img):
-        return cv2.imencode(".png", img)[1].tobytes()
+        return cv2.imencode(".png", 
+            cv2.resize(img, dsize=(x // 4 for x in reversed(bgw.SCREEN_SIZE)), inerpolation=cv2.INTER_CUBIC)
+        )[1].tobytes()
 
     def save_feed(
         self, filename="demo_img", path=os.path.dirname("demo_images/")
