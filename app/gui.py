@@ -1019,7 +1019,7 @@ class CameraWindow(BaseGUIWindow):
 
     @classmethod
     def get_keyboard_button(cls):
-        if isinstance(cls, BarcodeCameraWindow):
+        if issubclass(cls, BarcodeCameraWindow):
             return sg.pin(
                 sg.Button(
                     image_data=cls.get_icon("keyboard", 0.5),
