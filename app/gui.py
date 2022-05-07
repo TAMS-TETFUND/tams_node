@@ -747,7 +747,7 @@ class ActiveEventSummaryWindow(BaseGUIWindow):
             )
             app_config.save()
             window_dispatch.open_window(StaffFaceCameraWindow)
-        
+
         if event == "cancel":
             window_dispatch.open_window(HomeWindow)
         return True
@@ -860,11 +860,11 @@ class AttendanceSessionLandingWindow(BaseGUIWindow):
     @classmethod
     def loop(cls, window, event, values):
         if event == "home":
-            confirm = sg.popup_ok_cancel(
-                "Leaving attendance-taking. System will verify staff again " 
+            confirm = sg.popup_yes_no(
+                "Leaving attendance-taking. System will verify staff again "
                 "to continue attendance-taking. Do you wish to continue?",
                 title="Go back?",
-                keep_on_top=True
+                keep_on_top=True,
             )
             if confirm:
                 window_dispatch.open_window(HomeWindow)
@@ -873,11 +873,11 @@ class AttendanceSessionLandingWindow(BaseGUIWindow):
             window_dispatch.open_window(StudentBarcodeCameraWindow)
 
         if event == "end_attendance":
-            confirm = sg.popup_ok_cancel(
+            confirm = sg.popup_yes_no(
                 "This will permanently end attendance-taking for this event"
                 "Do you wish to continue?",
                 title="End Attendance Session?",
-                keep_on_top=True
+                keep_on_top=True,
             )
             if confirm:
                 app_config.remove_section("current_attendance_session")
@@ -1066,7 +1066,9 @@ class FaceCameraWindow(CameraWindow):
                         cls.popup_auto_close_error("Camera did not find a face")
 
                     if face_count == 1:
-                        captured_encodings = FaceRecognition.face_encodings(img, [face_locations[0]])
+                        captured_encodings = FaceRecognition.face_encodings(
+                            img, [face_locations[0]]
+                        )
                         cls.process_image(captured_encodings, window)
                         return True
 
@@ -1203,6 +1205,7 @@ class StaffFaceCameraWindow(FaceCameraWindow):
             app_config["new_event"] = app_config["current_attendance_session"]
             window_dispatch.open_window(NewEventSummaryWindow)
         return
+
 
 class BarcodeCameraWindow(CameraWindow):
     @classmethod
@@ -1539,7 +1542,9 @@ class StaffFaceEnrolmentWindow(FaceCameraWindow):
     @classmethod
     def process_image(cls, captured_face_encodings, window):
         if captured_face_encodings is None:
-            cls.popup_auto_close_error("Error. Image must have exactly one face")
+            cls.popup_auto_close_error(
+                "Error. Image must have exactly one face"
+            )
             return
 
         app_config["new_staff"]["face_encodings"] = face_enc_to_str(
