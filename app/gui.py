@@ -747,6 +747,9 @@ class ActiveEventSummaryWindow(BaseGUIWindow):
             )
             app_config.save()
             window_dispatch.open_window(StaffFaceCameraWindow)
+        
+        if event == "cancel":
+            window_dispatch.open_window(HomeWindow)
         return True
 
 
