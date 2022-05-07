@@ -101,6 +101,12 @@ should the loop method be a class method in the gui window classes/subclasses
 -notify user of enrolment success - staff/student enrolment success window?
 -refactor attendance session initiation/marking process
 -finish the connection to the models and make sure they are seemless
+-class-level implementation of the popup_auto_close to reduce code
+-enable tapping on the image to trigger capture in camera window
+-make face camera window more smoother by making the face_recognition more efficient; add progress bars too
+-ensure that navigation between all windows works properly. (cancel in camera window from continue session seems to be giving an error)
+-make camera windows more descriptive either by adding appropriate text/changing presentation of the camera feed to
+        suggest what the system requires
 ===================================input validation====================================
 -a method was added to the base class for handling generic validation for required fields
 
@@ -115,3 +121,7 @@ should the loop method be a class method in the gui window classes/subclasses
 ===========================blocking student registration number====================
 -after 3 tries the system blocks a student from the attendance marking process for that particular event. 
     Is this the optimal approach?
+
+-todos
+    -implementation of the on-screen keyboard feature for barcode window
+    -implementation of the fingerprint scan feature
