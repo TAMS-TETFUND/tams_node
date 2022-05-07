@@ -1007,7 +1007,7 @@ class CameraWindow(BaseGUIWindow):
     @classmethod
     def window(cls):
         layout = [
-            [sg.Column(cls.window_title())],
+            [sg.Push(), sg.Column(cls.window_title()), sg.Push()],
             [
                 sg.Push(),
                 sg.Image(filename="", key="image_display", enable_events=True),
@@ -1171,20 +1171,44 @@ class StudentFaceCameraWindow(FaceCameraWindow):
         """should navigate user back to the attendance session landing page"""
         window_dispatch.open_window(AttendanceSessionLandingWindow)
 
+#     @classmethod
+#     def window_title(cls):
+#         tmp_student = app_config["tmp_student"]
+#         course = app_config["current_attendance_session"]["course"].split(":")
+#         event = app_config["current_attendance_session"]["type"].capitalize()
+#         return [
+#             [sg.Push(), f"{course[0]} {event} Attendance", sg.Push()],
+#             [
+#                 sg.Push(),
+#                 sg.Image(data=cls.get_icon("face_scanner", 0.3)),
+#                 sg.Text(
+#                     f"Face Verification for: {tmp_student['last_name']} "
+#                     f"{tmp_student['first_name']}",
+#                     font=("Any", 14),
+#                 ),
+#                 sg.Push(),
+#             ],
+#         ]
+
+
     @classmethod
     def window_title(cls):
-        tmp_student = app_config["tmp_student"]
         course = app_config["current_attendance_session"]["course"].split(":")
-        event = app_config["current_attendance_session"]["type"].capitalize()
+        event = app_config["current_attendance_session"]["type"]
+        student_fname = app_config["tmp_student"]["first_name"]
+        student_lname = app_config["tmp_student"]["last_name"]
+        student_reg_number =app_config["tmp_student"]["reg_number"]
         return [
-            [sg.Push(), f"{course[0]} {event} Attendance", sg.Push()],
+            [
+                sg.Push(),
+                sg.Text(f"{course[0]} {event.capitalize()} Attendance"),
+                sg.Push(),
+            ],
             [
                 sg.Push(),
                 sg.Image(data=cls.get_icon("face_scanner", 0.3)),
                 sg.Text(
-                    f"Face Verification for: {tmp_student['last_name']} "
-                    f"{tmp_student['first_name']}",
-                    font=("Any", 14),
+                    f"Face Verification for: {student_fname[0]}. {student_lname} ({student_reg_number})",
                 ),
                 sg.Push(),
             ],
@@ -1235,25 +1259,47 @@ class StaffFaceCameraWindow(FaceCameraWindow):
             window_dispatch.open_window(NewEventSummaryWindow)
         return
 
+#     @classmethod
+#     def window_title(cls):
+#         tmp_staff = app_config["tmp_staff"]
+#         course = app_config["current_attendance_session"]["course"].split(":")
+#         event = app_config["current_attendance_session"]["type"].capitalize()
+#         return [
+#             [sg.Push(), f"{course[0]} {event} Attendance Consent", sg.Push()],
+#             [
+#                 sg.Push(),
+#                 sg.Image(data=cls.get_icon("face_scanner", 0.3)),
+#                 sg.Text(
+#                     f"Face Verification for: {tmp_staff['last_name']} "
+#                     f"{tmp_staff['first_name'][0]}",
+#                     font=("Any", 14),
+#                 ),
+#                 sg.Push(),
+#             ],
+#         ]
+
+
     @classmethod
     def window_title(cls):
-        tmp_staff = app_config["tmp_staff"]
         course = app_config["current_attendance_session"]["course"].split(":")
-        event = app_config["current_attendance_session"]["type"].capitalize()
+        event = app_config["current_attendance_session"]["type"]
+        staff_fname = app_config['tmp_staff']['first_name']
+        staff_lname = app_config['tmp_staff']['last_name']
         return [
-            [sg.Push(), f"{course[0]} {event} Attendance Consent", sg.Push()],
+            [
+                sg.Push(),
+                sg.Text(f"Staff Consent for {course[0]} {event.capitalize()} Attendance"),
+                sg.Push(),
+            ],
             [
                 sg.Push(),
                 sg.Image(data=cls.get_icon("face_scanner", 0.3)),
                 sg.Text(
-                    f"Face Verification for: {tmp_staff['last_name']} "
-                    f"{tmp_staff['first_name'][0]}",
-                    font=("Any", 14),
+                    f"Face Verification for: {staff_fname[0]}. {staff_lname}",
                 ),
                 sg.Push(),
             ],
         ]
-
 
 class BarcodeCameraWindow(CameraWindow):
     @classmethod
