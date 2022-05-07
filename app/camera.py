@@ -22,9 +22,9 @@ class Camera(PiCamera):
     @staticmethod
     def feed_to_bytes(img):
         print(img.shape)
-        print(bgw.SCREEN_SIZE)
+        new_image_size = tuple(x * 0.5 for x in bgw.SCREEN_SIZE)
         return cv2.imencode(".png", 
-            cv2.resize(img, dsize=(x * 0.5 for x in bgw.SCREEN_SIZE), fx=0.6, fy=0.6, interpolation=cv2.INTER_AREA)
+            cv2.resize(img, dsize=new_image_size, fx=0.6, fy=0.6, interpolation=cv2.INTER_AREA)
             # cv2.resize(img, dsize=img.shape[:2], fx=0.6, fy=0.6, interpolation=cv2.INTER_AREA)
             # img[::2, ::2]            
         )[1].tobytes()
