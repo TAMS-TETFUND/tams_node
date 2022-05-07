@@ -1049,7 +1049,7 @@ class FaceCameraWindow(CameraWindow):
                         cls.popup_auto_close_error("Camera did not find a face")
 
                     if face_count == 1:
-                        captured_encodings = FaceRecognition.face_encodings(img, face_locations[0])
+                        captured_encodings = FaceRecognition.face_encodings(img, [face_locations[0]])
                         cls.process_image(captured_encodings, window)
                         return True
 
