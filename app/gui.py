@@ -1171,25 +1171,6 @@ class StudentFaceCameraWindow(FaceCameraWindow):
         """should navigate user back to the attendance session landing page"""
         window_dispatch.open_window(AttendanceSessionLandingWindow)
 
-#     @classmethod
-#     def window_title(cls):
-#         tmp_student = app_config["tmp_student"]
-#         course = app_config["current_attendance_session"]["course"].split(":")
-#         event = app_config["current_attendance_session"]["type"].capitalize()
-#         return [
-#             [sg.Push(), f"{course[0]} {event} Attendance", sg.Push()],
-#             [
-#                 sg.Push(),
-#                 sg.Image(data=cls.get_icon("face_scanner", 0.3)),
-#                 sg.Text(
-#                     f"Face Verification for: {tmp_student['last_name']} "
-#                     f"{tmp_student['first_name']}",
-#                     font=("Any", 14),
-#                 ),
-#                 sg.Push(),
-#             ],
-#         ]
-
 
     @classmethod
     def window_title(cls):
@@ -1258,26 +1239,6 @@ class StaffFaceCameraWindow(FaceCameraWindow):
             app_config["new_event"] = app_config["current_attendance_session"]
             window_dispatch.open_window(NewEventSummaryWindow)
         return
-
-#     @classmethod
-#     def window_title(cls):
-#         tmp_staff = app_config["tmp_staff"]
-#         course = app_config["current_attendance_session"]["course"].split(":")
-#         event = app_config["current_attendance_session"]["type"].capitalize()
-#         return [
-#             [sg.Push(), f"{course[0]} {event} Attendance Consent", sg.Push()],
-#             [
-#                 sg.Push(),
-#                 sg.Image(data=cls.get_icon("face_scanner", 0.3)),
-#                 sg.Text(
-#                     f"Face Verification for: {tmp_staff['last_name']} "
-#                     f"{tmp_staff['first_name'][0]}",
-#                     font=("Any", 14),
-#                 ),
-#                 sg.Push(),
-#             ],
-#         ]
-
 
     @classmethod
     def window_title(cls):
