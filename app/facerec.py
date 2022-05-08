@@ -9,11 +9,11 @@ import face_recognition
 class FaceRecognition:
     @staticmethod
     def face_match(
-        *, known_face_encodings, face_encoding_to_check, tolerance=0.6
+        *, known_face_encodings, face_encoding_to_check, tolerance=0.4
     ):
         if face_recognition.compare_faces(
             known_face_encodings, face_encoding_to_check, tolerance
-        ):
+        )[0]:
             return True
         else:
             return False
