@@ -342,7 +342,7 @@ class AcademicSessionDetailsWindow(BaseGUIWindow):
             return True
 
         if not AcademicSession.objects.filter(
-            session=values["session"]
+            session=values["current_session"]
         ).exists():
             cls.display_message(
                 "Academic Session has not been registered.", window
