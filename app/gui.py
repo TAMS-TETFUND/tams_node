@@ -1,8 +1,4 @@
 from datetime import datetime, timedelta
-from email.mime import image
-import time
-from turtle import title
-from unicodedata import name
 
 import PySimpleGUI as sg
 from django.core.exceptions import ObjectDoesNotExist
@@ -238,6 +234,7 @@ class EventMenuWindow(BaseGUIWindow):
         if event in ("lecture", "examination", "lab", "quiz"):
             app_config["new_event"] = {}
             app_config["new_event"]["type"] = event
+            app_config["new_event"]["recurring"] = "False"
             if event in ("lecture", "lab"):
                 recurring = sg.popup_yes_no(
                     f"Is this {event} a weekly activity?",
@@ -246,8 +243,6 @@ class EventMenuWindow(BaseGUIWindow):
                 )
                 if recurring == "Yes":
                     app_config["new_event"]["recurring"] = "True"
-                else:
-                    app_config["new_event"]["recurring"] = "False"
 
             app_config.save()
             window_dispatch.open_window(AcademicSessionDetailsWindow)
@@ -273,6 +268,12 @@ class AcademicSessionDetailsWindow(BaseGUIWindow):
                     key="current_session",
                     expand_y=True,
                     expand_x=True,
+                ),
+            ],
+            [
+                sg.Push(),
+                sg.Text(
+                    "New Academic Session?", k="new_session", enable_events=True
                 ),
             ],
             [
@@ -315,6 +316,8 @@ class AcademicSessionDetailsWindow(BaseGUIWindow):
             window_dispatch.open_window(EventMenuWindow)
         elif event == "cancel":
             window_dispatch.open_window(HomeWindow)
+        elif event == "new_session":
+            window_dispatch.open_window(NewAcademicSessionWindow)
         return True
 
     @classmethod
@@ -337,7 +340,147 @@ class AcademicSessionDetailsWindow(BaseGUIWindow):
         if validation_val is not None:
             cls.display_message(validation_val, window)
             return True
+
+        if not AcademicSession.objects.filter(
+            session=values["session"]
+        ).exists():
+            cls.display_message(
+                "Academic Session has not been registered.", window
+            )
+            return True
         return None
+
+
+class NewAcademicSessionWindow(BaseGUIWindow):
+    @classmethod
+    def window(cls):
+        current_year = datetime.now().year
+        allowed_yrs = [x for x in range(current_year, current_year + 4)]
+        layout = [
+            [sg.Push(), sg.Text("New Academic Session"), sg.Push()],
+            [sg.Text("_" * 80)],
+            [sg.VPush()],
+            [
+                sg.Text("Session:  "),
+                sg.Spin(
+                    values=allowed_yrs,
+                    initial_value=current_year,
+                    k="session_start",
+                    expand_x=True,
+                    enable_events=True,
+                ),
+                sg.Text("/"),
+                sg.Spin(
+                    values=allowed_yrs[1:],
+                    initial_value=(current_year + 1),
+                    k="session_end",
+                    expand_x=True,
+                    enable_events=True,
+                ),
+            ],
+            [sg.Check("Is this the current session?", k="is_current_session")],
+            [sg.VPush()],
+            [
+                sg.Button(
+                    "<<Back",
+                    k="back",
+                    font="Any 12",
+                ),
+                sg.Button(
+                    "Create Academic Session",
+                    k="create_session",
+                    font="Any 12",
+                ),
+                sg.Button(
+                    "Home",
+                    k="home",
+                    font="Any 12",
+                ),
+            ],
+        ]
+        window = sg.Window(
+            "New Academic Session",
+            layout,
+            font="Any 14",
+            **cls.window_init_dict(),
+        )
+        return window
+
+    @classmethod
+    def loop(cls, window, event, values):
+        if event == "back":
+            window_dispatch.open_window(AcademicSessionDetailsWindow)
+        if event == "home":
+            window_dispatch.open_window(HomeWindow)
+
+        if event == "create_session":
+            for val in ("session_start", "session_end"):
+                try:
+                    val_int = int(values[val])
+                except ValueError:
+                    cls.display_message(
+                        "Enter numeric values for Academic Session Years",
+                        window,
+                    )
+                    return True
+
+                new_session = (
+                    str(values["session_start"])
+                    + "/"
+                    + str(values["session_end"])
+                )
+                is_current_session = values["is_current_session"]
+                val_check = cls.validate_academic_session(new_session)
+                if val_check is not None:
+                    cls.display_message(val_check, window)
+                    return True
+
+                try:
+                    new_session = AcademicSession.objects.create(
+                        session=new_session,
+                        is_current_session=is_current_session,
+                    )
+                except IntegrityError as e:
+                    cls.display_message(
+                        "Error. You may be trying to create a"
+                        " session that already exists",
+                        window,
+                    )
+                    print(e)
+                    return True
+
+                cls.popup_auto_close_success(
+                    f"Academic session {new_session.session} created successfully"
+                )
+                window_dispatch.open_window(HomeWindow)
+                return True
+
+        if event == "session_start":
+            try:
+                session_start_int = int(values["session_start"])
+            except ValueError:
+                cls.display_message("Enter numeric values for Academic Session")
+                return True
+            else:
+                if session_start_int > 0:
+                    window["session_end"].update(value=session_start_int + 1)
+                else:
+                    window["session_end"].update(value=0)
+                return True
+
+        if event == "session_end":
+            try:
+                session_end_int = int(values["session_end"])
+            except ValueError:
+                cls.display_message("Enter numeric values for Academic Session")
+                return True
+            else:
+                if session_end_int > 0:
+                    window["session_start"].update(value=session_end_int - 1)
+                else:
+                    window["session_start"].update(value=0)
+                return True
+        return True
 
 
 class EventDetailWindow(BaseGUIWindow):
@@ -1045,7 +1188,7 @@ class CameraWindow(BaseGUIWindow):
                     button_color=cls.ICON_BUTTON_COLOR,
                     key="keyboard",
                     visible=True,
-                    disabled=True
+                    disabled=True,
                 )
             )
         else:
@@ -1109,10 +1252,12 @@ class FaceCameraWindow(CameraWindow):
     @classmethod
     def window_title(cls):
         return [
-            [sg.Push(),
-            sg.Image(data=cls.get_icon("face_scanner", 0.4)),
-            sg.Text("Position Face", font=("Any", 14)),
-            sg.Push(),]
+            [
+                sg.Push(),
+                sg.Image(data=cls.get_icon("face_scanner", 0.4)),
+                sg.Text("Position Face", font=("Any", 14)),
+                sg.Push(),
+            ]
         ]
 
 
@@ -1176,14 +1321,13 @@ class StudentFaceCameraWindow(FaceCameraWindow):
         """should navigate user back to the attendance session landing page"""
         window_dispatch.open_window(AttendanceSessionLandingWindow)
 
-
     @classmethod
     def window_title(cls):
         course = app_config["current_attendance_session"]["course"].split(":")
         event = app_config["current_attendance_session"]["type"]
         student_fname = app_config["tmp_student"]["first_name"]
         student_lname = app_config["tmp_student"]["last_name"]
-        student_reg_number =app_config["tmp_student"]["reg_number"]
+        student_reg_number = app_config["tmp_student"]["reg_number"]
         return [
             [
                 sg.Push(),
@@ -1249,12 +1393,14 @@ class StaffFaceCameraWindow(FaceCameraWindow):
     def window_title(cls):
         course = app_config["current_attendance_session"]["course"].split(":")
         event = app_config["current_attendance_session"]["type"]
-        staff_fname = app_config['tmp_staff']['first_name']
-        staff_lname = app_config['tmp_staff']['last_name']
+        staff_fname = app_config["tmp_staff"]["first_name"]
+        staff_lname = app_config["tmp_staff"]["last_name"]
         return [
             [
                 sg.Push(),
-                sg.Text(f"Staff Consent for {course[0]} {event.capitalize()} Attendance"),
+                sg.Text(
+                    f"Staff Consent for {course[0]} {event.capitalize()} Attendance"
+                ),
                 sg.Push(),
             ],
             [
@@ -1266,6 +1412,7 @@ class StaffFaceCameraWindow(FaceCameraWindow):
                 sg.Push(),
             ],
         ]
+
 
 class BarcodeCameraWindow(CameraWindow):
     @classmethod
@@ -1504,13 +1651,15 @@ class StaffEnrolmentWindow(BaseGUIWindow):
     def window(cls):
         column1 = [
             [sg.Push(), sg.Text("Staff Enrolment"), sg.Push()],
-            [sg.Text('_' * 80)],
+            [sg.Text("_" * 80)],
             [cls.message_display_field()],
             [
                 sg.Text("Staff Number:  "),
                 sg.Input(
-                    size=(15, 1), justification="left", key="staff_number_input",
-                    expand_x=True
+                    size=(15, 1),
+                    justification="left",
+                    key="staff_number_input",
+                    expand_x=True,
                 ),
             ],
             [
