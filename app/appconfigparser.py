@@ -9,7 +9,8 @@ class AppConfigParser(configparser.ConfigParser):
     """
 
     CONFIG_FILE = os.path.join(
-        Path(os.path.abspath(__file__)).parent, "config.ini"
+        Path(os.path.abspath(__file__)).parent,
+        ("config.ini" if os.name != "posix" else ".config.ini"),
     )
 
     def __init__(self):
