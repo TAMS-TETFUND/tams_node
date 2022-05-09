@@ -3,6 +3,7 @@ import cv2
 
 from app.basegui import BaseGUIWindow as bgw
 
+
 class Camera:
     FRAME_WIDTH = 1280
     FRAME_HEIGHT = 720
@@ -21,11 +22,11 @@ class Camera:
 
     def camera_ok(self):
         """method to check for camera presence. On posix systems"""
-        if os.path.exists('/dev/video0'):
+        if os.path.exists("/dev/video0"):
             return True
         else:
             raise RuntimeError("Camera not installed")
-        
+
     def feed(self):
         ret, frame = self.cap.read()
         if not ret:

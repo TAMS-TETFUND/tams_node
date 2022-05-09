@@ -1297,8 +1297,13 @@ class StudentFaceCameraWindow(FaceCameraWindow):
             if "failed_attempts" not in tmp_student:
                 tmp_student["failed_attempts"] = str(1)
             elif tmp_student.getint("failed_attempts") >= 3:
-                if "blocked_reg_numbers" not in app_config["current_attendance_session"]:
-                    app_config["current_attendance_session"]["blocked_reg_numbers"] = ""
+                if (
+                    "blocked_reg_numbers"
+                    not in app_config["current_attendance_session"]
+                ):
+                    app_config["current_attendance_session"][
+                        "blocked_reg_numbers"
+                    ] = ""
                 app_config["current_attendance_session"][
                     "blocked_reg_numbers"
                 ] += ("," + tmp_student["reg_number"])
@@ -1317,8 +1322,8 @@ class StudentFaceCameraWindow(FaceCameraWindow):
                 f"Error. Face did not match "
                 f"({app_config['tmp_student']['reg_number']})\n"
                 f"You have {4 - tmp_student.getint('failed_attempts')} attempts left",
-                title="No Face"
-            )            
+                title="No Face",
+            )
             return
 
     @staticmethod
@@ -2007,7 +2012,9 @@ class StudentFaceEnrolmentWindow(FaceCameraWindow):
     @classmethod
     def process_image(cls, captured_face_encodings, window):
         if captured_face_encodings is None:
-            cls.popup_auto_close_error("Error. Image must have exactly one face")
+            cls.popup_auto_close_error(
+                "Error. Image must have exactly one face"
+            )
             return
 
         app_config["new_student"]["face_encodings"] = face_enc_to_str(
