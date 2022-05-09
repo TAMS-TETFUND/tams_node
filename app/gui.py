@@ -1294,11 +1294,6 @@ class StudentFaceCameraWindow(FaceCameraWindow):
             window_dispatch.open_window(StudentBarcodeCameraWindow)
             return
         else:
-            cls.popup_auto_close_error(
-                f"Error. Face did not match "
-                f"({app_config['tmp_student']['reg_number']})",
-                title="No Face"
-            )
             if "failed_attempts" not in tmp_student:
                 tmp_student["failed_attempts"] = str(1)
             elif tmp_student.getint("failed_attempts") >= 3:
@@ -1318,6 +1313,12 @@ class StudentFaceCameraWindow(FaceCameraWindow):
                 tmp_student["failed_attempts"] = str(
                     tmp_student.getint("failed_attempts") + 1
                 )
+            cls.popup_auto_close_error(
+                f"Error. Face did not match "
+                f"({app_config['tmp_student']['reg_number']})\n"
+                f"You have {4 - tmp_student.getint('failed_attempts')} attempts left",
+                title="No Face"
+            )            
             return
 
     @staticmethod
@@ -1486,10 +1487,10 @@ class StudentBarcodeCameraWindow(BarcodeCameraWindow):
             cls.popup_auto_close_error(val_check)
             return
 
-        if "blocked_reg_number" in app_config[
+        if "blocked_reg_numbers" in app_config[
             "current_attendance_session"
         ] and identification_num in app_config["current_attendance_session"][
-            "blocked_reg_number"
+            "blocked_reg_numbers"
         ].split(
             ","
         ):
