@@ -11,9 +11,9 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils import timezone
 
-from manage import init_django
+# from manage import init_django
 
-init_django()
+# init_django()
 
 
 # configuring the staff_number and studnet reg number format
