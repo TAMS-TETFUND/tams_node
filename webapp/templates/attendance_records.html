@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Attendance Records{% endblock %}
+{% block content %}
+{% if qs %}
+<table class="table">
+    <thead>
+        <tr>
+            <th scope="col">Course</th>
+            <th scope="col">Event Type</th>
+            <th scope="col">Start Time</th>
+            <th scope="col">Duration (Hrs)</th>
+        </tr>
+    </thead>
+{% for session in qs %}
+<tr>
+    <td>{{ qs.course__code }}: {{ qs.course__title }}</td>
+    <td>{{ qs.event_type }}</td>
+    <td>{{ qs.start_time }}</td>
+    <td>{{ qs.duration }}</td>
+</tr>
+{% endfor %}
+</table>
+{% else %}
+<b>No attendance records found for staff</b>
+{% endif %}
+{% endblock %}
