@@ -1,0 +1,29 @@
+There could be a small web app on the node device for sharing 
+logged attendance with lecturers at the end of the attendance-
+taking process. 
+- Only Staff should be allowed to access this web app
+- A staff should only have access to attendance records that they initiated
+- If the attendance record model on every node device maintains the same state 
+    (i.e. if they're synchronized), then a Staff could fetch her attendance
+    records whenever they are in proximity with any of the node device or they
+    could get it by connecting to the server. 
+- If how much of the attendance records should actually be maintained by the 
+    node devices?
+- It does not seem useful for a node device to maintain attendance records of
+    previous academic sessions. (This data could be retained on the server for 
+    a longer period of time).
+
+- what will happen if a user erroneously alters the session settings and causes 
+    the system to clear all attendance records that the alteration renders 
+    unnecessary? 
+
+** -To allow for some margin, let the node devices retain attendance records
+    for EXACTLY TWO ACADEMIC SESSIONS **
+
+
+================================node device web app==================================
+    
+    On the node device web app:
+    - Staff should be prompted to login
+    - staff will find their dashboard with the option of downloading attendance records
+        that they initiated.
