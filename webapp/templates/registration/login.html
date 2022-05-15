@@ -1,3 +1,4 @@
+{% extends 'base.html' %}
 {% block content %}
 
 {% if form.errors %}
@@ -33,6 +34,5 @@
 </form>
 
 {# Assume you setup the password reset view in your URLconf #}
-<p><a href="{% url 'password_reset' %}">Lost Password?</a></p>
 
 {% endblock %}
