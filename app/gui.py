@@ -4,6 +4,9 @@ import PySimpleGUI as sg
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.utils import IntegrityError
 
+# from django.conf import settings
+# from tams_node import tamsnode_defaults
+import tams_node
 from app.appconfigparser import AppConfigParser
 from app.basegui import BaseGUIWindow
 
@@ -12,9 +15,11 @@ from app.camera2 import Camera
 from app.barcode import Barcode
 from app.facerec import FaceRecognition
 from app.windowdispatch import WindowDispatch
-from manage import init_django
+from tams_node.settings import DEBUG
 
-init_django()
+# if not settings.configured:
+# settings.configure(tams_node.settings, DEBUG=True)
+
 
 from db.models import (
     AttendanceRecord,

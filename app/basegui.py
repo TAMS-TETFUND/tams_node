@@ -6,9 +6,6 @@ import base64
 
 from PIL import Image
 import PySimpleGUI as sg
-from manage import init_django
-
-init_django()
 
 from db.models import (
     AcademicSession,
