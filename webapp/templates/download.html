@@ -1,9 +1,9 @@
-{% exends 'base.html' %}
+{% extends 'base.html' %}
 {% load static %}
 {% block content %}
 
-{% if message %}
-    message.details
+{% if details %}
+    {{ details }}
 {% endif %}
 
 {% endblock %}

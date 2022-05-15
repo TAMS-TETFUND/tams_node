@@ -3,7 +3,7 @@
 
 {% block title %}Attendance Records{% endblock %}
 {% block content %}
-{% if qs %}
+{% if records %}
 <table class="table">
     <thead>
         <tr>
@@ -13,14 +13,16 @@
             <th scope="col">Duration (Hrs)</th>
         </tr>
     </thead>
-{% for session in qs %}
-<tr>
-    <td>{{ qs.course__code }}: {{ qs.course__title }}</td>
-    <td>{{ qs.event_type }}</td>
-    <td>{{ qs.start_time }}</td>
-    <td>{{ qs.duration }}</td>
-</tr>
-{% endfor %}
+    {% for session in records %}
+    <tr>
+        
+            <td><a href="/session/{{session.id}}">{{ session.course.code }}: {{ session.course.title }}</td></a>
+            <td>{{ session.get_event_type_display }}</td>
+            <td>{{ session.start_time }}</td>
+            <td>{{ session.duration }}</td>
+        </a>
+    </tr>
+    {% endfor %}
 </table>
 {% else %}
 <b>No attendance records found for staff</b>
