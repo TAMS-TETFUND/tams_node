@@ -16,10 +16,11 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 from django.urls.conf import include
-from webapp.views import attendance_records, dashboard
+from webapp.views import attendance_records, dashboard, download_attendance
 urlpatterns = [
     path('', dashboard, name='dashboard'),
     path('attendance/', attendance_records, name='attendance'),
     path('admin/', admin.site.urls),
-    path('accounts/', include('django.contrib.auth.urls'))
+    path('accounts/', include('django.contrib.auth.urls')),
+    path('session/<int:pk>', download_attendance, name="download")
 ]
