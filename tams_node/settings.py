@@ -31,8 +31,6 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
-    'db',
-    'app',
     'webapp',
     'django.contrib.admin',
     'django.contrib.auth',
@@ -40,6 +38,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'db',
+    'app',
 ]
 
 MIDDLEWARE = [
@@ -110,7 +110,7 @@ AUTH_USER_MODEL = 'db.AppUser'
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Africa/Lagos'
 
 USE_I18N = True
 
