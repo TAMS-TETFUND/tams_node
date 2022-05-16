@@ -27,3 +27,15 @@ taking process.
     - Staff should be prompted to login
     - staff will find their dashboard with the option of downloading attendance records
         that they initiated.
+==============================todos===============================================
+    -   add paginator to the attendance records page of the web app
+    -   finish implementation of the fingerprint class
+    -   add desktop feature that starts up the web app and stops it.
+    -   show status of an attendance session (with option of ending it on the web app) or 
+        it could be that when a user opts to download attendance logged for an event, you 
+        prompt the user to end attendance. and prevent the user from downloading attendance
+        records when attendance session is still active.
+    -   ideally, the casing of staff number should not matter when logging in. Handle issue of
+        letter casing affecting authentication.
+    -   could implement the printing of ID card on the web app. (is this advisable?)
+    -   UI/UX issues on both desktop app and web app.
