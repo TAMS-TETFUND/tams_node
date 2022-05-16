@@ -2,11 +2,19 @@
 """Django's command-line utility for administrative tasks."""
 import os
 import sys
+from django import setup
+
+def configure_settings_module():
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "tams_node.settings")
+
+def django_setup():
+    configure_settings_module()
+    setup()
 
 
 def main():
     """Run administrative tasks."""
-    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "tams_node.settings")
+    configure_settings_module()
     try:
         from django.core.management import execute_from_command_line
     except ImportError as exc:

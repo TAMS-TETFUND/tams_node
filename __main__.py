@@ -1,12 +1,10 @@
 import sys
 import os
-import django
 
-import tams_node
 from app import gui
+from manage import django_setup
 
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "tams_node.settings")
-django.setup()
+django_setup()
 sys.path.append(".")
 
 gui.main()
