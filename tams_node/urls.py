@@ -21,6 +21,7 @@ urlpatterns = [
     path('', dashboard, name='dashboard'),
     path('attendance/', attendance_records, name='attendance'),
     path('admin/', admin.site.urls),
+    path('accounts/profile/', dashboard, name='profile'),
     path('accounts/', include('django.contrib.auth.urls')),
     path('session/<int:pk>', download_attendance, name="download")
 ]
