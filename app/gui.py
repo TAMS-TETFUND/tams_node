@@ -1,25 +1,20 @@
 from datetime import datetime, timedelta
+import time
 
 import PySimpleGUI as sg
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.utils import IntegrityError
+import app
 
-# from django.conf import settings
-# from tams_node import tamsnode_defaults
-import tams_node
 from app.appconfigparser import AppConfigParser
 from app.basegui import BaseGUIWindow
-
+from app.fingerprint import FingerprintScanner
 # from app.camera import Camera
 from app.camera2 import Camera
 from app.barcode import Barcode
 from app.facerec import FaceRecognition
 from app.windowdispatch import WindowDispatch
 from tams_node.settings import DEBUG
-
-# if not settings.configured:
-# settings.configure(tams_node.settings, DEBUG=True)
-
 
 from db.models import (
     AttendanceRecord,
@@ -250,7 +245,6 @@ class EventMenuWindow(BaseGUIWindow):
                 if recurring == "Yes":
                     app_config["new_event"]["recurring"] = "True"
 
-            app_config.save()
             window_dispatch.open_window(AcademicSessionDetailsWindow)
         return True
 
@@ -316,7 +310,6 @@ class AcademicSessionDetailsWindow(BaseGUIWindow):
 
             app_config["DEFAULT"]["semester"] = values["current_semester"]
             app_config["DEFAULT"]["session"] = values["current_session"]
-            app_config.save()
             window_dispatch.open_window(EventDetailWindow)
         elif event == "back":
             window_dispatch.open_window(EventMenuWindow)
@@ -660,11 +653,9 @@ class EventDetailWindow(BaseGUIWindow):
             )
             app_config["new_event"]["start_date"] = values["start_date"]
             app_config["new_event"]["duration"] = values["duration"]
-            app_config.save()
             window_dispatch.open_window(NewEventSummaryWindow)
         if event == "cancel":
             app_config.remove_section("new_event")
-            app_config.save()
             window_dispatch.open_window(HomeWindow)
         return True
 
@@ -798,7 +789,6 @@ class NewEventSummaryWindow(BaseGUIWindow):
                 att_session.id
             )
             app_config.remove_section("new_event")
-            app_config.save()
 
             if att_session.initiator:
                 app_config["current_attendance_session"]["initiator_id"] = str(
@@ -820,7 +810,6 @@ class NewEventSummaryWindow(BaseGUIWindow):
 
         if event == "cancel":
             app_config.remove_section("new_event")
-            app_config.save()
             window_dispatch.open_window(HomeWindow)
         return True
 
@@ -908,8 +897,7 @@ class ActiveEventSummaryWindow(BaseGUIWindow):
                     "fingerprint_template",
                 ).first()
             )
-            app_config.save()
-            window_dispatch.open_window(StaffFaceCameraWindow)
+            window_dispatch.open_window(StaffFaceVerificationWindow)
 
         if event == "cancel":
             window_dispatch.open_window(HomeWindow)
@@ -1136,7 +1124,6 @@ class StaffNumberInputWindow(BaseGUIWindow):
             app_config["new_event"]["initiator_staff_num"] = (
                 "SS." + keys_entered
             )
-            app_config.save()
             window_dispatch.open_window(VerifyAttendanceInitiatorWindow)
             return True
         window["staff_number_input"].update(keys_entered)
@@ -1184,7 +1171,7 @@ class CameraWindow(BaseGUIWindow):
         ]
         window = sg.Window("Camera", layout, **cls.window_init_dict())
         return window
-
+    
     @classmethod
     def get_keyboard_button(cls):
         if issubclass(cls, BarcodeCameraWindow):
@@ -1267,7 +1254,7 @@ class FaceCameraWindow(CameraWindow):
         ]
 
 
-class StudentFaceCameraWindow(FaceCameraWindow):
+class StudentFaceVerificationWindow(FaceCameraWindow):
     @classmethod
     def process_image(cls, captured_face_encodings, window):
         if captured_face_encodings is None:
@@ -1360,7 +1347,7 @@ class StudentFaceCameraWindow(FaceCameraWindow):
         ]
 
 
-class StaffFaceCameraWindow(FaceCameraWindow):
+class StaffFaceVerificationWindow(FaceCameraWindow):
     @classmethod
     def process_image(cls, captured_face_encodings, window):
         if captured_face_encodings is None:
@@ -1381,7 +1368,6 @@ class StaffFaceCameraWindow(FaceCameraWindow):
             app_config["current_attendance_session"][
                 "initiator_id"
             ] = tmp_staff["id"]
-            app_config.save()
             cls.popup_auto_close_success(
                 f"{tmp_staff['first_name'][0].upper()}."
                 f"{tmp_staff['last_name'].capitalize()}"
@@ -1544,9 +1530,7 @@ class StudentBarcodeCameraWindow(BarcodeCameraWindow):
                 f"({tmp_student['reg_number']}) already checked in"
             )
             return
-
-        app_config.save()
-        window_dispatch.open_window(StudentFaceCameraWindow)
+        window_dispatch.open_window(StudentFaceVerificationWindow)
         return
 
     @staticmethod
@@ -1601,9 +1585,7 @@ class StaffBarcodeCameraWindow(BarcodeCameraWindow):
                 "fingerprint_template",
             ).first()
         )
-
-        app_config.save()
-        window_dispatch.open_window(StaffFaceCameraWindow)
+        window_dispatch.open_window(StaffFaceVerificationWindow)
         return
 
     @classmethod
@@ -1660,7 +1642,7 @@ class EnrolmentMenuWindow(BaseGUIWindow):
 
 
 class StaffEnrolmentWindow(BaseGUIWindow):
-    """The GUI for enrolment of staff"""
+    """The GUI window for enrolment of staff biodata"""
 
     @classmethod
     def window(cls):
@@ -1755,22 +1737,30 @@ class StaffEnrolmentWindow(BaseGUIWindow):
                     ),
                     value=cls.COMBO_DEFAULT,
                 )
+
         if event == "submit":
             if cls.validate(values, window) is not None:
                 return True
 
+            values["staff_number_input"] = values["staff_number_input"].upper()
+            
             app_config["new_staff"] = {
                 "username": values["staff_number_input"],
                 "staff_number": values["staff_number_input"],
                 "first_name": values["staff_first_name"],
                 "last_name": values["staff_last_name"],
-                # "sex": Sex.str_to_value(values["staff_sex"]),
                 "department": Department.get_id(values["staff_department"]),
             }
-            app_config.save()
+
+            new_staff_dict = app_config.section_dict("new_staff")
+            department = Department.objects.get(id=new_staff_dict.pop("department"))
+            Staff.objects.create_user(department=department, **new_staff_dict)
+
             window_dispatch.open_window(StaffFaceEnrolmentWindow)
+
         if event == "cancel":
             window_dispatch.open_window(HomeWindow)
+
         return True
 
     @classmethod
@@ -1813,17 +1803,19 @@ class StaffFaceEnrolmentWindow(FaceCameraWindow):
                 "Error. Image must have exactly one face"
             )
             return
+        new_staff = app_config["new_staff"]
 
-        app_config["new_staff"]["face_encodings"] = face_enc_to_str(
-            captured_face_encodings
-        )
-        app_config.save()
-        new_staff_dict = app_config.section_dict("new_staff")
-        department = Department.objects.get(id=new_staff_dict.pop("department"))
-        Staff.objects.create_user(department=department, **new_staff_dict)
+        try:
+            staff = Staff.objects.get(staff_number=new_staff["staff_number"])
+        except Exception as e:
+            cls.popup_auto_close_error(e)
+            return
 
-        window_dispatch.open_window(HomeWindow)
-        cls.popup_auto_close_success("Staff enrolment successful")
+        staff.face_encodings = face_enc_to_str(captured_face_encodings)
+        staff.save()
+
+        window_dispatch.open_window(StaffFingerprintEnrolmentWindow)
+        cls.popup_auto_close_success("Biometric data saved")
         return
 
 
@@ -1957,7 +1949,10 @@ class StudentEnrolmentWindow(BaseGUIWindow):
                 "sex": Sex.str_to_value(values["student_sex"]),
                 "department": Department.get_id(values["student_department"]),
             }
-            app_config.save()
+            new_student_dict = app_config.section_dict("new_student")
+            department = Department.objects.get(id=new_student_dict.pop("department"))
+            Student.objects.create(department=department, **new_student_dict)
+
             window_dispatch.open_window(StudentFaceEnrolmentWindow)
         if event == "cancel":
             window_dispatch.open_window(HomeWindow)
@@ -2021,25 +2016,226 @@ class StudentFaceEnrolmentWindow(FaceCameraWindow):
                 "Error. Image must have exactly one face"
             )
             return
+        new_student = app_config["new_student"]
 
-        app_config["new_student"]["face_encodings"] = face_enc_to_str(
-            captured_face_encodings
-        )
-        app_config.save()
-        new_student_dict = app_config.section_dict("new_student")
-        department = Department.objects.get(
-            id=new_student_dict.pop("department")
-        )
+        try:
+            student = Student.objects.get(reg_number=new_student["reg_number"])
+        except Exception as e:
+            cls.popup_auto_close_error(e)
+            return
 
-        Student.objects.create(department=department, **new_student_dict)
-        window_dispatch.open_window(HomeWindow)
-        cls.popup_auto_close_success("Student enrolment successful")
+        student.face_encodings = face_enc_to_str(captured_face_encodings)
+        student.save()
+        cls.popup_auto_close_success("Biometric data saved")
+        window_dispatch.open_window(StudentFingerprintEnrolmentWindow)
         return
 
     @staticmethod
     def cancel_camera():
         window_dispatch.open_window(HomeWindow)
 
+
+class FingerprintGenericWindow(BaseGUIWindow):
+    @classmethod
+    def window(cls):
+        layout = [
+            [
+                sg.Push(),
+                cls.message_display_field(),
+                sg.Push()
+            ],
+            [
+                sg.Push(),
+                sg.Image(cls.get_icon("fingerprint", 2)),
+                sg.Push(),
+            ],
+            [
+                sg.Push(),
+                cls.get_camera_button(),
+                sg.Button(
+                    image_data=cls.get_icon("cancel", 0.5),
+                    button_color=cls.ICON_BUTTON_COLOR,
+                    key="cancel",
+                ),
+            ]
+        ]
+        window = sg.Window(
+            "Fingerprint Verification",
+            layout,
+            **cls.window_init_dict()
+        )
+        return window
+    
+    @classmethod
+    def get_camera_button(cls):
+        if "verification" in cls.__name__.lower():
+            return sg.Pin(
+                sg.Button(
+                    image_data=cls.get_icon("camera", 0.5),
+                    button_color=cls.ICON_BUTTON_COLOR,
+                    key="camera",
+                    visible=True
+            ))
+        else:
+            sg.Pin(
+                sg.Button(
+                    image_data=cls.get_icon("camera", 0.5),
+                    button_color=cls.ICON_BUTTON_COLOR,
+                    key="camera",
+                    visible=False,
+                                        
+                )
+            )
+
+
+class StudentFingerprintVerificationWindow(FingerprintGenericWindow):
+    @classmethod
+    def loop(cls, window, event, values):
+        if event == "cancel":
+            window_dispatch.open_window(AttendanceSessionLandingWindow)
+            return True
+        if event == "camera":
+            window_dispatch.open_window(StudentFaceVerificationWindow)
+    
+        tmp_student = app_config["tmp_student"]
+        fp_template = tmp_student.get("fingerprint_template")
+        if len(fp_template) <= 1:
+            cls.display_message(
+                "Did not find valid fingerprint data from "
+                "student registration"
+            )
+            return True
+        
+        fp_scanner = FingerprintScanner()
+
+        if not fp_scanner:
+            cls.display_message(fp_scanner.error, window)
+            return True
+
+        cls.display_message("Waiting for finger print...", window)
+        if not fp_scanner.capture_fingerprint_image():
+            cls.display_message(fp_scanner.error, window)
+            return True
+        
+        if not fp_scanner.verify(fp_template):
+            cls.display_message("Fingerprint did not match registration data")
+            return True
+
+        cls.popup_auto_close_success(
+            f"{tmp_student['last_name']} {tmp_student['first_name'][0]}."
+            f"({tmp_student['reg_number']}) checked in"
+        )
+        window_dispatch.open_window(StudentBarcodeCameraWindow)
+        return True
+
+
+class StaffFingerprintVerificationWindow(FingerprintGenericWindow):
+    @classmethod
+    def loop(cls, window, event, values):
+        tmp_staff = app_config["tmp_staff"]
+        fp_template = tmp_staff.get("fingerprint_template")
+        if len(fp_template) <= 1:
+            cls.display_message(
+                "Did not find valid fingerprint data from "
+                "staff registraton"
+            )
+            return True
+        
+        fp_scanner = FingerprintScanner()
+        if not fp_scanner:
+            cls.display_message(fp_scanner.error, window)
+            return True
+
+        cls.display_message("Waiting for fingerprint...", window)
+        if not fp_scanner.capture_fingerprint_image():
+            cls.display_message(fp_scanner.error, window)
+            return True
+        
+        if not fp_scanner.verify(fp_template):
+            cls.display_message("Fingerprint did not match registration data")
+            return True
+
+        cls.popup_auto_close_success(
+            f"{tmp_staff['last_name']} {tmp_staff['first_name'][0]}. checked in"
+        )
+        window_dispatch.open_window(AttendanceSessionLandingWindow)
+        return True
+
+
+class FingerprintEnrolmentWindow(FingerprintGenericWindow):
+
+    @classmethod
+    def loop(cls, window, event, values):
+        fp_scanner = FingerprintScanner()
+        if not fp_scanner:
+            cls.display_message(fp_scanner.error, window)
+            return True
+
+        for fingerimg in range(1, 3):
+            if fingerimg == 1:
+                cls.display_message("Place finger on fingerprint sensor...", window)
+            else:
+                cls.display_message("Place same finger again...", window)
+
+            if fp_scanner.capture_fingerprint_image(fingerimg):
+                cls.display_message("Templated")
+            else:
+                cls.display_message(fp_scanner.error)
+                return True #should this return True?
+            i = fp_scanner.image_2_tz(fingerimg)
+
+            if fingerimg == 1:
+                cls.display_message("Remove finger")
+                time.sleep(1)
+                while not fp_scanner.finger_detected(fingerimg):
+                    i = fp_scanner.get_image()
+
+            cls.display_message("Creating model", window)
+            if not fp_scanner.create_model():
+                cls.popup_auto_close_error(fp_scanner.error)
+                return True
+            
+            cls.display_message("Place finger on fingerprint sensor one more time")
+            fp_scanner.fp_capture()
+            cls.process_fingerprint(fp_scanner)
+
+
+    @classmethod
+    def process_fingerprint(cls, fp_scanner: FingerprintScanner):
+        raise NotImplementedError
+
+
+class StudentFingerprintEnrolmentWindow(FingerprintEnrolmentWindow):
+    @classmethod
+    def process_fingerprint(cls, fp_scanner):
+        new_student = app_config["new_student"]
+        
+        try:
+            student = Student.objects.get(reg_number=new_student["reg_number"])
+        except Exception as e:
+            cls.popup_auto_close_error(e)
+            return
+        student.fingerprint_template = str(fp_scanner.get_fpdata())
+        student.save()
+        cls.popup_auto_close_success("Student enrolment successful")
+        return
+
+
+class StaffFingerprintEnrolmentWindow(FingerprintEnrolmentWindow):
+    @classmethod
+    def process_fingerprint(cls, fp_scanner):
+        new_staff = app_config["new_staff"]
+
+        try:
+            staff = Staff.objects.get(staff_number=new_staff["staff_number"])
+        except Exception as e:
+            cls.popup_auto_close_error(e)
+            return
+
+        staff.fingerprint_template = str(fp_scanner.get_fpdata())
+        staff.save()
+        cls.popup_auto_close_success("Staff enrolment successful")
+        return
 
 def main():
     window_dispatch.open_window(HomeWindow)
