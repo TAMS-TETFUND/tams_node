@@ -17,9 +17,10 @@ class FingerprintScanner:
             self.uart = serial.Serial(
                 self.SERIAL_PATH, baudrate=self.BAUD_RATE, timeout=1
             )
-
-        self.finger = adafruit_fingerprint.Adafruit_Fingerprint(self.uart)
-        if not self.scanner_functional():
+            self.finger = adafruit_fingerprint.Adafruit_Fingerprint(self.uart)
+            if not self.scanner_functional():
+                self.finger = None
+        else:
             self.finger = None
 
     @property
@@ -31,10 +32,10 @@ class FingerprintScanner:
         self._error = value
 
     def scanner_present(self):
-        if not os.path.exists(self.SERIAL_PATH):
-            return False
-        else:
+        if os.path.exists(self.SERIAL_PATH):
             return True
+        else:
+            return False
 
     def scanner_functional(self):
         if self.finger.read_templates() != adafruit_fingerprint.OK:
