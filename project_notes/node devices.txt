@@ -39,3 +39,17 @@ taking process.
         letter casing affecting authentication.
     -   could implement the printing of ID card on the web app. (is this advisable?)
     -   UI/UX issues on both desktop app and web app.
+    -   One of the requirements states that every attendance session should be automatically 
+        closed after the start day of the event passes. This has not been implemented.
+    -   closed events get reloaded when the application restarts: clear closed eventes from config.ini file 
+        and save changes immediately.
+
+    - there should be utilities for easily checking availability of camera and fingerprint scanner.
+
+    -refactor the appconfigparser module, compose the class with the ConfigParser class and override the setitem and getitem
+        magic methods of the class
+    
+    -modify the __setitem__ method of the appconfigparser class to handle conversion of input values to str
+    -finish writing unit tests for the app and webapp modules of the project
+    -implement logic for app to detect when a verification module is unavailable
+    -annotate code/add doc strings where necessary
