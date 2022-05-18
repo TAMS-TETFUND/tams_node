@@ -5,6 +5,10 @@ from django.db.utils import IntegrityError
 from django.utils import timezone
 from django.core.exceptions import ValidationError
 
+from manage import django_setup
+
+django_setup()
+
 from .models import (
     Faculty,
     StaffTitle,
@@ -18,11 +22,11 @@ from .models import (
     AttendanceSession,
     CourseRegistration,
     Sex,
+    EventType,
+    RecordTypes,
+
 )
 
-from manage import init_django
-
-init_django()
 
 
 class SemesterTestCase(TestCase):
@@ -298,7 +302,7 @@ class AttendanceSessionTestCase(TestCase):
             initiator=staff_obj,
             course=course_obj,
             session=acad_session,
-            event_type=AttendanceSession.EventType.LECTURE,
+            event_type=EventType.LECTURE,
             start_time=start_time,
             duration=timedelta(hours=2),
         )
@@ -306,7 +310,7 @@ class AttendanceSessionTestCase(TestCase):
             "initiator": staff_obj,
             "course": course_obj,
             "session": acad_session,
-            "event_type": AttendanceSession.EventType.LECTURE,
+            "event_type": EventType.LECTURE,
             "start_time": start_time,
             "duration": timedelta(hours=2),
         }
@@ -347,7 +351,7 @@ class AttendanceSessionTestCase(TestCase):
             "initiator": staff_obj,
             "course": course_obj,
             "session": acad_session,
-            "event_type": AttendanceSession.EventType.LECTURE,
+            "event_type": EventType.LECTURE,
             "start_time": start_time,
             "duration": timedelta(microseconds=0),
         }
@@ -398,7 +402,7 @@ class AttendanceRecordTestCase(TestCase):
             initiator=staff_obj,
             course=course_obj,
             session=acad_session,
-            event_type=AttendanceSession.EventType.LECTURE,
+            event_type=EventType.LECTURE,
             start_time=timezone.now(),
             duration=timedelta(hours=1),
         )
@@ -406,13 +410,13 @@ class AttendanceRecordTestCase(TestCase):
         AttendanceRecord.objects.create(
             attendance_session=att_session,
             student=student_obj,
-            record_type=AttendanceRecord.RecordTypes.SIGN_IN,
+            record_type=RecordTypes.SIGN_IN,
         )
 
         record_details = {
             "attendance_session": att_session,
             "student": student_obj,
-            "record_type": AttendanceRecord.RecordTypes.SIGN_IN,
+            "record_type": RecordTypes.SIGN_IN,
         }
         self.assertRaises(
             IntegrityError, AttendanceRecord.objects.create, **record_details
