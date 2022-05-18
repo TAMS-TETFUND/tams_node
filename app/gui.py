@@ -10,11 +10,16 @@ from app.appconfigparser import AppConfigParser
 from app.basegui import BaseGUIWindow
 from app.fingerprint import FingerprintScanner
 # from app.camera import Camera
-from app.camera2 import Camera
+# from app.camera2 import Camera
 from app.barcode import Barcode
 from app.facerec import FaceRecognition
 from app.windowdispatch import WindowDispatch
 from tams_node.settings import DEBUG
+
+try:
+    from app.camera import Camera
+except ModuleNotFoundError:
+    from app.camera2 import Camera
 
 from db.models import (
     AttendanceRecord,
