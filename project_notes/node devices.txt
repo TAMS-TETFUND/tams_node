@@ -31,10 +31,15 @@ taking process.
     -   add paginator to the attendance records page of the web app
     -   finish implementation of the fingerprint class
     -   add desktop feature that starts up the web app and stops it.
+
+
     -   show status of an attendance session (with option of ending it on the web app) or 
         it could be that when a user opts to download attendance logged for an event, you 
         prompt the user to end attendance. and prevent the user from downloading attendance
         records when attendance session is still active.
+    -   only attendsnce sessions that have been closed should be downloadable on the webapp
+
+
     -   ideally, the casing of staff number should not matter when logging in. Handle issue of
         letter casing affecting authentication.
     -   could implement the printing of ID card on the web app. (is this advisable?)
@@ -53,3 +58,8 @@ taking process.
     -finish writing unit tests for the app and webapp modules of the project
     -implement logic for app to detect when a verification module is unavailable
     -annotate code/add doc strings where necessary
+
+    - issue has arisen from hardcoded window navigation. Cannot decide where to send user when 
+        fingerprint scanner is not working. 
+            -there is also a chance that faceverification is unavailable.
+    ========================================================================
