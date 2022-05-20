@@ -26,6 +26,9 @@ class WindowDispatch(UserDict):
     def close_window(self, window_name: str):
         return self.pop(window_name).close()
 
+    def find_window(self, window_object: sg.Window):
+        return next((k for k, v in self.items() if v == window_object), None)
+
     @property
     def current_window(self):
         return self._current_window
