@@ -9,8 +9,7 @@ import app
 from app.appconfigparser import AppConfigParser
 from app.basegui import BaseGUIWindow
 from app.fingerprint import FingerprintScanner
-# from app.camera import Camera
-# from app.camera2 import Camera
+
 from app.barcode import Barcode
 from app.facerec import FaceRecognition
 from app.windowdispatch import WindowDispatch
@@ -25,6 +24,7 @@ from db.models import (
     AttendanceRecord,
     AttendanceSession,
     AcademicSession,
+    AttendanceSessionStatus,
     EventType,
     Student,
     Sex,
@@ -119,6 +119,35 @@ class HomeWindow(BaseGUIWindow):
             window_dispatch.open_window(EventMenuWindow)
         if event == "continue_attendance":
             if app_config.has_section("current_attendance_session"):
+                current_att_session = app_config["current_attendance_session"]
+                session_strt_time = datetime.strptime(
+                    f"{current_att_session['start_date']} {current_att_session['start_time']}",
+                    "%d-%m-%Y %H:%M",
+                )
+
+                if datetime.now() - session_strt_time > timedelta(hours=24):
+                    try:
+                        attendance_session = AttendanceSession.objects.get(
+                            id=current_att_session["session_id"]
+                        )
+                    except Exception as e:
+                        pass
+                    else:
+                        if attendance_session.initiator_id is None:
+                            attendance_session.delete()
+                        else:
+                            attendance_session.status = (
+                                AttendanceSessionStatus.ENDED
+                            )
+                            attendance_session.save()
+                    
+                    cls.popup_auto_close_warn(
+                        f"{current_att_session['course']} {current_att_session['type']} "
+                        f"attendance session has expired"
+                    )
+                    app_config.remove_section("current_attendance_session")
+                    return True
+
                 if app_config.has_option(
                     "current_attendance_session", "initiator_id"
                 ):
@@ -763,7 +792,7 @@ class NewEventSummaryWindow(BaseGUIWindow):
 
     @classmethod
     def loop(cls, window, event, values):
-        if event in ("start_event" "schedule_event"):
+        if event in ("start_event", "schedule_event"):
             new_event = dict(app_config["new_event"])
             attendance_session_model_kwargs = {
                 "course_id": Course.str_to_course(new_event["course"]),
@@ -976,9 +1005,7 @@ class VerifyAttendanceInitiatorWindow(BaseGUIWindow):
 class AttendanceSessionLandingWindow(BaseGUIWindow):
     @classmethod
     def window(cls):
-        event_dict = dict(
-            app_config["current_attendance_session"]
-        )  # this event dict should not be coming from new_event section
+        event_dict = dict(app_config["current_attendance_session"])
         layout = [
             [sg.Text("Attendance Session Details")],
             [sg.Text("_" * 80)],
@@ -1030,12 +1057,15 @@ class AttendanceSessionLandingWindow(BaseGUIWindow):
 
         if event == "end_attendance":
             confirm = sg.popup_yes_no(
-                "This will permanently end attendance-taking for this event"
+                "This will permanently end attendance-taking for this event. "
                 "Do you wish to continue?",
                 title="End Attendance Session?",
                 keep_on_top=True,
             )
-            if confirm:
+            if confirm == "Yes":
+                att_session = AttendanceSession.objects.get(session_id=app_config["current_attendance_session"]["sesson_id"])
+                att_session.status = AttendanceSessionStatus.ENDED
+                att_session.save()
                 app_config.remove_section("current_attendance_session")
                 window_dispatch.open_window(HomeWindow)
         return True
@@ -1170,13 +1200,14 @@ class CameraWindow(BaseGUIWindow):
                     button_color=cls.ICON_BUTTON_COLOR,
                     key="cancel",
                 ),
+                cls.get_fingerprint_button(),
                 cls.get_keyboard_button(),
                 sg.Push(),
             ],
         ]
         window = sg.Window("Camera", layout, **cls.window_init_dict())
         return window
-    
+
     @classmethod
     def get_keyboard_button(cls):
         if issubclass(cls, BarcodeCameraWindow):
@@ -1200,6 +1231,28 @@ class CameraWindow(BaseGUIWindow):
             )
 
     @classmethod
+    def get_fingerprint_button(cls):
+        if "verification" in cls.__name__.lower():
+            return sg.pin(
+                sg.Button(
+                    image_data=cls.get_icon("fingerprint", 0.5),
+                    button_color=cls.ICON_BUTTON_COLOR,
+                    key="fingerprint",
+                    visible=True,
+                )
+            )
+        else:
+            return sg.pin(
+                sg.Button(
+                    image_data=cls.get_icon("fingerprint", 0.5),
+                    button_color=cls.ICON_BUTTON_COLOR,
+                    key="fingerprint",
+                    visible=False,
+                    disabled=True,
+                )
+            )
+
+    @classmethod
     def window_title(cls):
         raise NotImplementedError
 
@@ -1210,6 +1263,15 @@ class FaceCameraWindow(CameraWindow):
         with Camera() as cam:
             while True:
                 event, values = window.read(timeout=20)
+
+                if event == "cancel":
+                    cls.cancel_camera()
+                    return True
+
+                if event == "fingerprint":
+                    cls.open_fingerprint()
+                    return True
+
                 img = cam.feed()
                 face_locations = FaceRecognition.face_locations(img)
                 face_count = len(face_locations)
@@ -1228,10 +1290,6 @@ class FaceCameraWindow(CameraWindow):
                         cls.process_image(captured_encodings, window)
                         return True
 
-                if event == "cancel":
-                    cls.cancel_camera()
-                    return True
-
                 if face_count > 0:
                     for face_location in face_locations:
                         FaceRecognition.draw_bounding_box(face_location, img)
@@ -1245,6 +1303,10 @@ class FaceCameraWindow(CameraWindow):
 
     @staticmethod
     def cancel_camera():
+        raise NotImplementedError
+
+    @staticmethod
+    def open_fingerprint():
         raise NotImplementedError
 
     @classmethod
@@ -1288,6 +1350,7 @@ class StudentFaceVerificationWindow(FaceCameraWindow):
                 cls.popup_auto_close_success(
                     f"{tmp_student['reg_number']} checked in"
                 )
+                app_config.remove_section("tmp_status")
             window_dispatch.open_window(StudentBarcodeCameraWindow)
             return
         else:
@@ -1351,6 +1414,11 @@ class StudentFaceVerificationWindow(FaceCameraWindow):
             ],
         ]
 
+    @staticmethod
+    def open_fingerprint():
+        window_dispatch.open_window(StudentFingerprintVerificationWindow)
+        return
+
 
 class StaffFaceVerificationWindow(FaceCameraWindow):
     @classmethod
@@ -1374,10 +1442,12 @@ class StaffFaceVerificationWindow(FaceCameraWindow):
                 "initiator_id"
             ] = tmp_staff["id"]
             cls.popup_auto_close_success(
-                f"{tmp_staff['first_name'][0].upper()}."
-                f"{tmp_staff['last_name'].capitalize()}"
+                f"{tmp_staff['first_name'][0].upper()}. "
+                f"{tmp_staff['last_name'].capitalize()} "
                 f"authorized attendance-marking",
             )
+
+            app_config.remove_section("tmp_staff")
             window_dispatch.open_window(AttendanceSessionLandingWindow)
             return
         else:
@@ -1388,6 +1458,7 @@ class StaffFaceVerificationWindow(FaceCameraWindow):
 
     @staticmethod
     def cancel_camera():
+
         if app_config.has_option("current_attendance_session", "initiator_id"):
             window_dispatch.open_window(ActiveEventSummaryWindow)
         else:
@@ -1418,6 +1489,11 @@ class StaffFaceVerificationWindow(FaceCameraWindow):
                 sg.Push(),
             ],
         ]
+
+    @staticmethod
+    def open_fingerprint():
+        window_dispatch.open_window(StaffFingerprintVerificationWindow)
+        return
 
 
 class BarcodeCameraWindow(CameraWindow):
@@ -1748,7 +1824,7 @@ class StaffEnrolmentWindow(BaseGUIWindow):
                 return True
 
             values["staff_number_input"] = values["staff_number_input"].upper()
-            
+
             app_config["new_staff"] = {
                 "username": values["staff_number_input"],
                 "staff_number": values["staff_number_input"],
@@ -1758,13 +1834,21 @@ class StaffEnrolmentWindow(BaseGUIWindow):
             }
 
             new_staff_dict = app_config.section_dict("new_staff")
-            department = Department.objects.get(id=new_staff_dict.pop("department"))
-            
-            if Staff.objects.filter(staff_number=new_staff_dict["staff_number"]).exists():
-                staff = Staff.objects.filter(staff_number=new_staff_dict["staff_number"])
+            department = Department.objects.get(
+                id=new_staff_dict.pop("department")
+            )
+
+            if Staff.objects.filter(
+                staff_number=new_staff_dict["staff_number"]
+            ).exists():
+                staff = Staff.objects.filter(
+                    staff_number=new_staff_dict["staff_number"]
+                )
                 staff.update(**new_staff_dict)
             else:
-                Staff.objects.create_user(department=department, **new_staff_dict)
+                Staff.objects.create_user(
+                    department=department, **new_staff_dict
+                )
 
             window_dispatch.open_window(StaffPasswordSettingWindow)
 
@@ -1813,45 +1897,73 @@ class StaffPasswordSettingWindow(BaseGUIWindow):
             [sg.Text("_" * 80)],
             [cls.message_display_field()],
             [
-                sg.Text("Password:              "), 
-                sg.Input(key="staff_password", expand_x=True, enable_events=True, password_char="*")
+                sg.Text("Password:              "),
+                sg.Input(
+                    key="staff_password",
+                    expand_x=True,
+                    enable_events=True,
+                    password_char="*",
+                ),
             ],
             [
-                sg.Text("Confirm Password:  "), 
-                sg.Input(key="staff_password_confirm", expand_x=True, password_char="*")
+                sg.Text("Confirm Password:  "),
+                sg.Input(
+                    key="staff_password_confirm",
+                    expand_x=True,
+                    password_char="*",
+                ),
             ],
             [
-                sg.Button("Submit", key="submit"), 
-                sg.Button("Cancel", key="cancel")],
+                sg.Button("Submit", key="submit"),
+                sg.Button("Cancel", key="cancel"),
+            ],
         ]
-        window = sg.Window("Staff Password Setup", layout, **cls.window_init_dict())
+        window = sg.Window(
+            "Staff Password Setup", layout, **cls.window_init_dict()
+        )
         return window
 
     @classmethod
     def loop(cls, window, event, values):
         if event in ("staff_password", "staff_password_confirm"):
             if values["staff_password"] != values["staff_password_confirm"]:
-                cls.display_message("Re-enter the same password in the 'Confirm Password' field", window)
-        
-        if event in ('cancel', 'submit'):
+                cls.display_message(
+                    "Re-enter the same password in the 'Confirm Password' field",
+                    window,
+                )
+            else:
+                cls.display_message("", window)
+
+        if event in ("cancel", "submit"):
             new_staff = app_config["new_staff"]
             try:
-                staff = Staff.objects.get(staff_number=new_staff["staff_number"])
+                staff = Staff.objects.get(
+                    staff_number=new_staff["staff_number"]
+                )
             except Exception as e:
                 cls.display_message(e, window)
                 return True
 
-            if event == 'submit':
-                for field in (values["staff_password"], values["staff_password_confirm"]):
+            if event == "submit":
+                for field in (
+                    values["staff_password"],
+                    values["staff_password_confirm"],
+                ):
                     if field in (None, ""):
-                        cls.display_message("Enter password and confirmation", window)
+                        cls.display_message(
+                            "Enter password and confirmation", window
+                        )
                         return True
                 staff.set_password(values["staff_password"])
                 staff.save()
                 window_dispatch.open_window(StaffFaceEnrolmentWindow)
-            
-            if event == 'cancel':
-                confirm = sg.popup_yes_no("Cancel Staff registration?", title="Cancel Registration", keep_on_top=True)
+
+            if event == "cancel":
+                confirm = sg.popup_yes_no(
+                    "Cancel Staff registration?",
+                    title="Cancel Registration",
+                    keep_on_top=True,
+                )
                 if confirm == "Yes":
                     staff.delete()
                     window_dispatch.open_window(StaffEnrolmentWindow)
@@ -1882,6 +1994,17 @@ class StaffFaceEnrolmentWindow(FaceCameraWindow):
 
         window_dispatch.open_window(StaffFingerprintEnrolmentWindow)
         cls.popup_auto_close_success("Biometric data saved")
+        return
+
+    @staticmethod
+    def cancel_camera():
+        confirm = sg.popup_yes_no(
+            "Staff details will be saved with no biometric data. Continue?",
+            keep_on_top=True,
+        )
+        if confirm == "Yes":
+            app_config.remove_section("new_staff")
+            window_dispatch.open_window(HomeWindow)
         return
 
 
@@ -2016,13 +2139,21 @@ class StudentEnrolmentWindow(BaseGUIWindow):
                 "department": Department.get_id(values["student_department"]),
             }
             new_student_dict = app_config.section_dict("new_student")
-            department = Department.objects.get(id=new_student_dict.pop("department"))
-            
-            if Student.objects.filter(reg_number=new_student_dict["reg_number"]).exists():
-                student = Student.objects.filter(reg_number=new_student_dict["reg_number"])
+            department = Department.objects.get(
+                id=new_student_dict.pop("department")
+            )
+
+            if Student.objects.filter(
+                reg_number=new_student_dict["reg_number"]
+            ).exists():
+                student = Student.objects.filter(
+                    reg_number=new_student_dict["reg_number"]
+                )
                 student.update(**new_student_dict)
             else:
-                Student.objects.create(department=department, **new_student_dict)
+                Student.objects.create(
+                    department=department, **new_student_dict
+                )
 
             window_dispatch.open_window(StudentFaceEnrolmentWindow)
         if event == "cancel":
@@ -2103,18 +2234,21 @@ class StudentFaceEnrolmentWindow(FaceCameraWindow):
 
     @staticmethod
     def cancel_camera():
-        window_dispatch.open_window(HomeWindow)
+        confirm = sg.popup_yes_no(
+            "Student details will be saved with no biometric data. Continue?",
+            keep_on_top=True,
+        )
+        if confirm == "Yes":
+            app_config.remove_section("new_student")
+            window_dispatch.open_window(HomeWindow)
+        return
 
 
 class FingerprintGenericWindow(BaseGUIWindow):
     @classmethod
     def window(cls):
         layout = [
-            [
-                sg.Push(),
-                cls.message_display_field(),
-                sg.Push()
-            ],
+            [sg.Push(), cls.message_display_field(), sg.Push()],
             [
                 sg.Push(),
                 sg.Image(cls.get_icon("fingerprint", 2)),
@@ -2128,33 +2262,31 @@ class FingerprintGenericWindow(BaseGUIWindow):
                     button_color=cls.ICON_BUTTON_COLOR,
                     key="cancel",
                 ),
-            ]
+            ],
         ]
         window = sg.Window(
-            "Fingerprint Verification",
-            layout,
-            **cls.window_init_dict()
+            "Fingerprint Verification", layout, **cls.window_init_dict()
         )
         return window
-    
+
     @classmethod
     def get_camera_button(cls):
         if "verification" in cls.__name__.lower():
-            return sg.Pin(
+            return sg.pin(
                 sg.Button(
                     image_data=cls.get_icon("camera", 0.5),
                     button_color=cls.ICON_BUTTON_COLOR,
                     key="camera",
-                    visible=True
-            ))
+                    visible=True,
+                )
+            )
         else:
-            sg.Pin(
+            return sg.pin(
                 sg.Button(
                     image_data=cls.get_icon("camera", 0.5),
                     button_color=cls.ICON_BUTTON_COLOR,
                     key="camera",
                     visible=False,
-                                        
                 )
             )
 
@@ -2167,7 +2299,7 @@ class StudentFingerprintVerificationWindow(FingerprintGenericWindow):
             return True
         if event == "camera":
             window_dispatch.open_window(StudentFaceVerificationWindow)
-    
+
         tmp_student = app_config["tmp_student"]
         fp_template = tmp_student.get("fingerprint_template")
         if len(fp_template) <= 1:
@@ -2176,18 +2308,19 @@ class StudentFingerprintVerificationWindow(FingerprintGenericWindow):
                 "student registration"
             )
             return True
-        
-        fp_scanner = FingerprintScanner()
 
-        if not fp_scanner:
-            cls.display_message(fp_scanner.error, window)
+        try:
+            fp_scanner = FingerprintScanner()
+        except RuntimeError as e:
+            cls.popup_auto_close_error(e, duration=5)
+            window_dispatch.open_window(StudentBarcodeCameraWindow)
             return True
 
         cls.display_message("Waiting for finger print...", window)
         if not fp_scanner.capture_fingerprint_image():
             cls.display_message(fp_scanner.error, window)
             return True
-        
+
         if not fp_scanner.verify(fp_template):
             cls.display_message("Fingerprint did not match registration data")
             return True
@@ -2207,21 +2340,33 @@ class StaffFingerprintVerificationWindow(FingerprintGenericWindow):
         fp_template = tmp_staff.get("fingerprint_template")
         if len(fp_template) <= 1:
             cls.display_message(
-                "Did not find valid fingerprint data from "
-                "staff registraton"
+                "Did not find valid fingerprint data from " "staff registraton"
             )
             return True
-        
-        fp_scanner = FingerprintScanner()
-        if not fp_scanner:
-            cls.display_message(fp_scanner.error, window)
+        try:
+            fp_scanner = FingerprintScanner()
+        except RuntimeError as e:
+            confirm = sg.popup_yes_no(
+                str(e) + ". Use Face verification instead?",
+                title="Error",
+                keep_on_top=True,
+            )
+            if confirm == "Yes":
+                window_dispatch.open_window(StaffFaceVerificationWindow)
+            else:
+                if app_config.has_option(
+                    "current_attendance_session", "initiator_id"
+                ):
+                    window_dispatch.open_window(ActiveEventSummaryWindow)
+                else:
+                    window_dispatch.open_window(NewEventSummaryWindow)
             return True
 
         cls.display_message("Waiting for fingerprint...", window)
         if not fp_scanner.capture_fingerprint_image():
             cls.display_message(fp_scanner.error, window)
             return True
-        
+
         if not fp_scanner.verify(fp_template):
             cls.display_message("Fingerprint did not match registration data")
             return True
@@ -2234,17 +2379,24 @@ class StaffFingerprintVerificationWindow(FingerprintGenericWindow):
 
 
 class FingerprintEnrolmentWindow(FingerprintGenericWindow):
-
     @classmethod
     def loop(cls, window, event, values):
-        fp_scanner = FingerprintScanner()
-        if not fp_scanner:
-            cls.display_message(fp_scanner.error, window)
+        if event == "cancel":
+            cls.cancel_fp_enrolment()
+
+        try:
+            fp_scanner = FingerprintScanner()
+        except RuntimeError as e:
+            cls.popup_auto_close_error(e, duration=5)
+            cls.remove_enrolment_config()
+            window_dispatch.open_window(HomeWindow)
             return True
 
         for fingerimg in range(1, 3):
             if fingerimg == 1:
-                cls.display_message("Place finger on fingerprint sensor...", window)
+                cls.display_message(
+                    "Place finger on fingerprint sensor...", window
+                )
             else:
                 cls.display_message("Place same finger again...", window)
 
@@ -2252,7 +2404,7 @@ class FingerprintEnrolmentWindow(FingerprintGenericWindow):
                 cls.display_message("Templated")
             else:
                 cls.display_message(fp_scanner.error)
-                return True #should this return True?
+                return True
             i = fp_scanner.image_2_tz(fingerimg)
 
             if fingerimg == 1:
@@ -2265,14 +2417,24 @@ class FingerprintEnrolmentWindow(FingerprintGenericWindow):
             if not fp_scanner.create_model():
                 cls.popup_auto_close_error(fp_scanner.error)
                 return True
-            
-            cls.display_message("Place finger on fingerprint sensor one more time")
+
+            cls.display_message(
+                "Place finger on fingerprint sensor one more time"
+            )
             fp_scanner.fp_capture()
             cls.process_fingerprint(fp_scanner)
-
+        return True
 
     @classmethod
     def process_fingerprint(cls, fp_scanner: FingerprintScanner):
+        raise NotImplementedError
+
+    @staticmethod
+    def cancel_fp_enrolment():
+        raise NotImplementedError
+
+    @staticmethod
+    def remove_enrolment_config():
         raise NotImplementedError
 
 
@@ -2280,7 +2442,7 @@ class StudentFingerprintEnrolmentWindow(FingerprintEnrolmentWindow):
     @classmethod
     def process_fingerprint(cls, fp_scanner):
         new_student = app_config["new_student"]
-        
+
         try:
             student = Student.objects.get(reg_number=new_student["reg_number"])
         except Exception as e:
@@ -2288,7 +2450,25 @@ class StudentFingerprintEnrolmentWindow(FingerprintEnrolmentWindow):
             return
         student.fingerprint_template = str(fp_scanner.get_fpdata())
         student.save()
+        app_config.remove_section("new_student")
         cls.popup_auto_close_success("Student enrolment successful")
+        window_dispatch.open_window(StudentEnrolmentWindow)
+        return
+
+    @staticmethod
+    def cancel_fp_enrolment():
+        confirm = sg.popup_yes_no(
+            "Student details will be saved with no fingerprint biometric data. Continue?",
+            keep_on_top=True,
+        )
+        if confirm == "Yes":
+            app_config.remove_section("new_student")
+            window_dispatch.open_window(HomeWindow)
+        return
+
+    @staticmethod
+    def remove_enrolment_config():
+        app_config.remove_section("new_student")
         return
 
 
@@ -2305,8 +2485,27 @@ class StaffFingerprintEnrolmentWindow(FingerprintEnrolmentWindow):
 
         staff.fingerprint_template = str(fp_scanner.get_fpdata())
         staff.save()
+        app_config.remove_section("new_staff")
         cls.popup_auto_close_success("Staff enrolment successful")
+        window_dispatch.open_window(StaffEnrolmentWindow)
         return
+
+    @staticmethod
+    def cancel_fp_enrolment():
+        confirm = sg.popup_yes_no(
+            "Staff details will be saved with no biometric data. Continue?",
+            keep_on_top=True,
+        )
+        if confirm == "Yes":
+            app_config.remove_section("new_staff")
+            window_dispatch.open_window(HomeWindow)
+        return
+
+    @staticmethod
+    def remove_enrolment_config():
+        app_config.remove_section("new_staff")
+        return
+
 
 def main():
     window_dispatch.open_window(HomeWindow)
