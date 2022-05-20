@@ -342,7 +342,10 @@ class AttendanceSession(models.Model):
     start_time = models.DateTimeField(default=timezone.now())
     duration = models.DurationField()
     created_on = models.DateTimeField(auto_now_add=True)
-    # status = models.IntegerField(choices=AttendanceSessionStatus.choices)
+    status = models.IntegerField(
+        choices=AttendanceSessionStatus.choices,
+        default=AttendanceSessionStatus.ACTIVE,
+    )
     recurring = models.BooleanField(default=False)
 
     class Meta:
