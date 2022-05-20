@@ -4,8 +4,10 @@ import os
 import sys
 from django import setup
 
+
 def configure_settings_module():
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "tams_node.settings")
+
 
 def django_setup():
     configure_settings_module()

@@ -24,9 +24,7 @@ from .models import (
     Sex,
     EventType,
     RecordTypes,
-
 )
-
 
 
 class SemesterTestCase(TestCase):
