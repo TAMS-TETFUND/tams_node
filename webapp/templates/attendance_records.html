@@ -12,15 +12,26 @@
             <th scope="col">Event Type</th>
             <th scope="col">Start Time</th>
             <th scope="col">Duration (Hrs)</th>
+            <th scope="col">Event Status</th>
+
         </tr>
     </thead>
     {% for session in records %}
     <tr>
-        
-            <td><a href="/session/{{session.id}}">{{ session.course.code }}: {{ session.course.title }}</td></a>
-            <td>{{ session.get_event_type_display }}</td>
-            <td>{{ session.start_time }}</td>
-            <td>{{ session.duration }}</td>
+
+        <td>
+            {% if session.status == 2 %}
+            <a href="/session/{{session.id}}">
+            {{ session.course.code }}: {{ session.course.title }}
+            </a>
+            {% else %}
+            <p>{{ session.course.code }}: {{ session.course.title }}</p>
+            {% endif %}
+        </td>
+        <td>{{ session.get_event_type_display }}</td>
+        <td>{{ session.start_time }}</td>
+        <td>{{ session.duration }}</td>
+        <td>{{ session.get_status_display }}</td>
         </a>
     </tr>
     {% endfor %}
