@@ -65,32 +65,32 @@ class BaseGUIWindow:
         )
 
     @classmethod
-    def popup_auto_close_success(cls, message, title=None):
+    def popup_auto_close_success(cls, message, title=None, duration=2):
         return sg.popup_auto_close(
             message,
             title=(title or "Success"),
             image=cls.get_icon("ok"),
-            auto_close_duration=2,
+            auto_close_duration=duration,
             keep_on_top=True,
         )
 
     @classmethod
-    def popup_auto_close_error(cls, message, title=None):
+    def popup_auto_close_error(cls, message, title=None, duration=2):
         return sg.popup_auto_close(
             message,
             title=(title or "Error"),
             image=cls.get_icon("cancel"),
-            auto_close_duration=2,
+            auto_close_duration=duration,
             keep_on_top=True,
         )
 
     @classmethod
-    def popup_auto_close_warn(cls, message, title=None):
+    def popup_auto_close_warn(cls, message, title=None, duration=2):
         return sg.popup_auto_close(
             message,
             title=(title or "Warning"),
             image=cls.get_icon("warning"),
-            auto_close_duration=2,
+            auto_close_duration=duration,
             keep_on_top=True,
         )
 
