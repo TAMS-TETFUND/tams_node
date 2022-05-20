@@ -4,10 +4,13 @@ from datetime import datetime
 from django.http import HttpResponse
 from django.db.models import Q, F, Value
 from django.shortcuts import render
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.http.response import HttpResponseRedirect
+from django.urls import reverse
 
-from db.models import AttendanceRecord, AttendanceSession
-
+from db.models import AttendanceRecord, AttendanceSession, AttendanceSessionStatus
+from app.appconfigparser import AppConfigParser
 
 @login_required
 def dashboard(request):
@@ -22,6 +25,34 @@ def attendance_records(request):
         initiator=request.user
     ).prefetch_related("course")
     return render(request, template, {"records": qs})
+
+@login_required
+def end_attendance_session(request, pk):
+    # lookup session with pk
+    # confirm it is not the session active on the device right now
+    # end session
+    # render attendance records
+    app_config = AppConfigParser()
+
+    if app_config.has_option("current_attendance_session", "session_id"):
+        if app_config.getint("current_attendance_session", "session_id") == pk:
+            messages.add_message(
+                request,
+                messages.ERROR, 
+                "This is an active attendance session. It can only "
+                "be ended on the primary attendance device."
+            )
+        else:
+            attendance_session = AttendanceSession.objects.get(id=pk)
+            attendance_session.status = AttendanceSessionStatus.ENDED
+            attendance_session.save()
+    else:
+        messages.add_message(
+            request,
+            messages.ERROR,
+            "Error. Something went wrong."
+        )
+    return HttpResponseRedirect(reverse("attendance"))
 
 
 @login_required

@@ -3,6 +3,13 @@
 
 {% block title %}Attendance Records{% endblock %}
 {% block content %}
+
+{% if messages %}
+{% for message in messages %}
+<p>{{ message }}</p>
+{% endfor %}
+{% endif %}
+
 {% if records %}
 <h3 class="mx-auto">Attendance Records</h3>
 <table class="table text-light">
@@ -31,7 +38,7 @@
         <td>{{ session.get_event_type_display }}</td>
         <td>{{ session.start_time }}</td>
         <td>{{ session.duration }}</td>
-        <td>{{ session.get_status_display }}</td>
+        <td>{{ session.get_status_display }} {% if session.status == 1 %}<a href="/session/{{session.id}}/end">| end session</a>{% endif %}</td>
         </a>
     </tr>
     {% endfor %}
