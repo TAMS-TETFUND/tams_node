@@ -20,8 +20,11 @@ class FingerprintScanner:
             self.finger = adafruit_fingerprint.Adafruit_Fingerprint(self.uart)
             if not self.scanner_functional():
                 self.finger = None
+                raise RuntimeError("Fingerprint Scanner is not functional")
+
         else:
             self.finger = None
+            raise RuntimeError("Fingerprint scanner connection not detected")
 
     @property
     def error(self):
@@ -87,10 +90,10 @@ class FingerprintScanner:
             else:
                 self.error = "Other error"
             return False
-    
+
     def fp_capture(self):
         while self.finger.get_image() != adafruit_fingerprint.OK:
-            pass        
+            pass
 
     def store_template_in_file(self, filename):
         img = Image.new("L", (256, 288), "white")
@@ -118,7 +121,7 @@ class FingerprintScanner:
             return False
         else:
             return True
-    
+
     def get_fpdata(self, sensorbuffer="char", scanner_slot=1):
         if sensorbuffer == "char":
             return self.get_fpdata(sensorbuffer, scanner_slot)
@@ -129,7 +132,10 @@ class FingerprintScanner:
         return self.finger.image_2_tz(scanner_slot)
 
     def finger_detected(self, scanner_slot):
-        if self.finger.image_2_tz(scanner_slot) == adafruit_fingerprint.NOFINGER:
+        if (
+            self.finger.image_2_tz(scanner_slot)
+            == adafruit_fingerprint.NOFINGER
+        ):
             return False
         else:
             return True
