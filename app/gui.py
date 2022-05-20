@@ -1759,9 +1759,14 @@ class StaffEnrolmentWindow(BaseGUIWindow):
 
             new_staff_dict = app_config.section_dict("new_staff")
             department = Department.objects.get(id=new_staff_dict.pop("department"))
-            Staff.objects.create_user(department=department, **new_staff_dict)
+            
+            if Staff.objects.filter(staff_number=new_staff_dict["staff_number"]).exists():
+                staff = Staff.objects.filter(staff_number=new_staff_dict["staff_number"])
+                staff.update(**new_staff_dict)
+            else:
+                Staff.objects.create_user(department=department, **new_staff_dict)
 
-            window_dispatch.open_window(StaffFaceEnrolmentWindow)
+            window_dispatch.open_window(StaffPasswordSettingWindow)
 
         if event == "cancel":
             window_dispatch.open_window(HomeWindow)
@@ -1798,6 +1803,62 @@ class StaffEnrolmentWindow(BaseGUIWindow):
                 cls.display_message(criteria, window)
                 return True
         return None
+
+
+class StaffPasswordSettingWindow(BaseGUIWindow):
+    @classmethod
+    def window(cls):
+        layout = [
+            [sg.Text("Set Password")],
+            [sg.Text("_" * 80)],
+            [cls.message_display_field()],
+            [
+                sg.Text("Password:              "), 
+                sg.Input(key="staff_password", expand_x=True, enable_events=True, password_char="*")
+            ],
+            [
+                sg.Text("Confirm Password:  "), 
+                sg.Input(key="staff_password_confirm", expand_x=True, password_char="*")
+            ],
+            [
+                sg.Button("Submit", key="submit"), 
+                sg.Button("Cancel", key="cancel")],
+        ]
+        window = sg.Window("Staff Password Setup", layout, **cls.window_init_dict())
+        return window
+
+    @classmethod
+    def loop(cls, window, event, values):
+        if event in ("staff_password", "staff_password_confirm"):
+            if values["staff_password"] != values["staff_password_confirm"]:
+                cls.display_message("Re-enter the same password in the 'Confirm Password' field", window)
+        
+        if event in ('cancel', 'submit'):
+            new_staff = app_config["new_staff"]
+            try:
+                staff = Staff.objects.get(staff_number=new_staff["staff_number"])
+            except Exception as e:
+                cls.display_message(e, window)
+                return True
+
+            if event == 'submit':
+                for field in (values["staff_password"], values["staff_password_confirm"]):
+                    if field in (None, ""):
+                        cls.display_message("Enter password and confirmation", window)
+                        return True
+                staff.set_password(values["staff_password"])
+                staff.save()
+                window_dispatch.open_window(StaffFaceEnrolmentWindow)
+            
+            if event == 'cancel':
+                confirm = sg.popup_yes_no("Cancel Staff registration?", title="Cancel Registration", keep_on_top=True)
+                if confirm == "Yes":
+                    staff.delete()
+                    window_dispatch.open_window(StaffEnrolmentWindow)
+                    return True
+                else:
+                    return True
+        return True
 
 
 class StaffFaceEnrolmentWindow(FaceCameraWindow):
@@ -1956,7 +2017,12 @@ class StudentEnrolmentWindow(BaseGUIWindow):
             }
             new_student_dict = app_config.section_dict("new_student")
             department = Department.objects.get(id=new_student_dict.pop("department"))
-            Student.objects.create(department=department, **new_student_dict)
+            
+            if Student.objects.filter(reg_number=new_student_dict["reg_number"]).exists():
+                student = Student.objects.filter(reg_number=new_student_dict["reg_number"])
+                student.update(**new_student_dict)
+            else:
+                Student.objects.create(department=department, **new_student_dict)
 
             window_dispatch.open_window(StudentFaceEnrolmentWindow)
         if event == "cancel":
