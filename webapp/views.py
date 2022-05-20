@@ -18,10 +18,9 @@ def dashboard(request):
 @login_required
 def attendance_records(request):
     template = "attendance_records.html"
-    qs = (
-        AttendanceSession.objects.filter(initiator=request.user)
-        .prefetch_related("course")
-    )
+    qs = AttendanceSession.objects.filter(
+        initiator=request.user
+    ).prefetch_related("course")
     return render(request, template, {"records": qs})
 
 
@@ -64,7 +63,7 @@ def download_attendance(request, pk):
             f'Attendance {datetime.strftime(attendance_session.start_time, "%d-%m-%Y")}.csv'
         },
     )
-    
+
     field_names = ["S/N", "Name", "Reg. Number"]
     attendance_writer = csv.DictWriter(response, fieldnames=field_names)
     attendance_writer.writerow(
