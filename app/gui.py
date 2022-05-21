@@ -140,7 +140,7 @@ class HomeWindow(BaseGUIWindow):
                                 AttendanceSessionStatus.ENDED
                             )
                             attendance_session.save()
-                    
+
                     cls.popup_auto_close_warn(
                         f"{current_att_session['course']} {current_att_session['type']} "
                         f"attendance session has expired"
@@ -1049,8 +1049,9 @@ class AttendanceSessionLandingWindow(BaseGUIWindow):
                 title="Go back?",
                 keep_on_top=True,
             )
-            if confirm:
+            if confirm == "Yes":
                 window_dispatch.open_window(HomeWindow)
+            return True
 
         if event == "start_attendance":
             window_dispatch.open_window(StudentBarcodeCameraWindow)
@@ -1063,7 +1064,11 @@ class AttendanceSessionLandingWindow(BaseGUIWindow):
                 keep_on_top=True,
             )
             if confirm == "Yes":
-                att_session = AttendanceSession.objects.get(session_id=app_config["current_attendance_session"]["sesson_id"])
+                att_session = AttendanceSession.objects.get(
+                    session_id=app_config["current_attendance_session"][
+                        "sesson_id"
+                    ]
+                )
                 att_session.status = AttendanceSessionStatus.ENDED
                 att_session.save()
                 app_config.remove_section("current_attendance_session")
@@ -1526,7 +1531,8 @@ class BarcodeCameraWindow(CameraWindow):
                         Barcode.decode_barcode(barcodes[0]), window
                     )
                     return True
-                window["image_display"].update(data=cam.feed_to_bytes(img))
+                img_bnw = cam.image_to_grayscale(img)
+                window["image_display"].update(data=cam.feed_to_bytes(img_bnw))
         return True
 
     @classmethod
