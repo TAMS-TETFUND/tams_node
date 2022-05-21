@@ -16,10 +16,10 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 from django.urls.conf import include
-from webapp.views import attendance_records, dashboard, download_attendance, end_attendance_session
+from webapp.views import AttendanceRecordView, dashboard, download_attendance, end_attendance_session
 urlpatterns = [
     path('', dashboard, name='dashboard'),
-    path('attendance/', attendance_records, name='attendance'),
+    path('attendance/', AttendanceRecordView.as_view(), name='attendance'),
     path('admin/', admin.site.urls),
     path('accounts/profile/', dashboard, name='profile'),
     path('accounts/', include('django.contrib.auth.urls')),

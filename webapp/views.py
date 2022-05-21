@@ -8,9 +8,15 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.http.response import HttpResponseRedirect
 from django.urls import reverse
+from django.views.generic import ListView
 
-from db.models import AttendanceRecord, AttendanceSession, AttendanceSessionStatus
+from db.models import (
+    AttendanceRecord,
+    AttendanceSession,
+    AttendanceSessionStatus,
+)
 from app.appconfigparser import AppConfigParser
+
 
 @login_required
 def dashboard(request):
@@ -18,29 +24,27 @@ def dashboard(request):
     return render(request, template, {})
 
 
-@login_required
-def attendance_records(request):
-    template = "attendance_records.html"
-    qs = AttendanceSession.objects.filter(
-        initiator=request.user
-    ).prefetch_related("course")
-    return render(request, template, {"records": qs})
+class AttendanceRecordView(ListView):
+    template_name = 'attendancesession_list.html'
+    paginate_by: int = 20
+    model = AttendanceSession
+
+    def get_queryset(self):
+        queryset = AttendanceSession.objects.filter(initiator=self.request.user)
+        return queryset
+
 
 @login_required
 def end_attendance_session(request, pk):
-    # lookup session with pk
-    # confirm it is not the session active on the device right now
-    # end session
-    # render attendance records
     app_config = AppConfigParser()
 
     if app_config.has_option("current_attendance_session", "session_id"):
         if app_config.getint("current_attendance_session", "session_id") == pk:
             messages.add_message(
                 request,
-                messages.ERROR, 
+                messages.ERROR,
                 "This is an active attendance session. It can only "
-                "be ended on the primary attendance device."
+                "be ended on the primary attendance device.",
             )
         else:
             attendance_session = AttendanceSession.objects.get(id=pk)
@@ -48,9 +52,7 @@ def end_attendance_session(request, pk):
             attendance_session.save()
     else:
         messages.add_message(
-            request,
-            messages.ERROR,
-            "Error. Something went wrong."
+            request, messages.ERROR, "Error. Something went wrong."
         )
     return HttpResponseRedirect(reverse("attendance"))
 
