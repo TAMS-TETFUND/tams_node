@@ -34,6 +34,11 @@ class Camera:
         return frame
 
     @staticmethod
+    def image_to_grayscale(img):
+        return cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+
+
+    @staticmethod
     def feed_to_bytes(img):
         new_image_size = tuple(int(x * 0.6) for x in bgw.SCREEN_SIZE)
         return cv2.imencode(
