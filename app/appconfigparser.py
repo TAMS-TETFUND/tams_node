@@ -13,9 +13,10 @@ class AppConfigParser(configparser.ConfigParser):
         ("config.ini" if os.name != "posix" else ".config.ini"),
     )
 
-    def __init__(self):
+    def __init__(self, file_path=None):
         super(AppConfigParser, self).__init__()
-        self.read(self.CONFIG_FILE)
+        self.config_file = file_path or self.CONFIG_FILE
+        self.read(self.config_file)
 
     def __setitem__(self, key: str, value) -> None:
         super().__setitem__(key, value)
@@ -27,7 +28,7 @@ class AppConfigParser(configparser.ConfigParser):
         return result
 
     def save(self):
-        with open(self.CONFIG_FILE, "w") as configfile:
+        with open(self.config_file, "w") as configfile:
             self.write(configfile)
 
     def section_dict(self, section, no_default_section=True):
