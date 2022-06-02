@@ -7,6 +7,7 @@ class AppConfigParser(configparser.ConfigParser):
     """An extension of the standard library's ConfigParser class for
     the project.
     """
+
     CONFIG_FILE = os.path.join(
         Path(os.path.abspath(__file__)).parent,
         ("config.ini" if os.name != "posix" else ".config.ini"),

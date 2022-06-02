@@ -63,3 +63,13 @@ taking process.
         fingerprint scanner is not working. 
             -there is also a chance that faceverification is unavailable.
     ========================================================================
+    Quiz and exam should only allow students that have registered for the course to partake in such events.
+    implement failed attempts in fingerprint verification for student verification.
+    implement jitter kwarg for face enrolment
+    
+    fingerprint should be the preferred mode of verification because spoofing is more common with face
+    	verification.
+    the initiator should be responsible for choosing the mode of verification and should be made aware of the
+	risks of using face verification.
+    the interface has to be designed in such a way that the system will prefer using fingerprint and use face as 
+    	fallback.  
