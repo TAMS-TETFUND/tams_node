@@ -73,3 +73,15 @@ taking process.
 	risks of using face verification.
     the interface has to be designed in such a way that the system will prefer using fingerprint and use face as 
     	fallback.  
+==============================================================================
+The device enroller could be the first thing called when the gui application is started.
+This will ensure the user is informed that the device needs to be initially setup with the
+server to function. There could also be a configuration that could be used if the device is to 
+be used as a standalone device.
+
+current implementation of the register_device method of the DeviceEnroller class is tightly coupled 
+with the server api view for node device registration. This may need to be revised as the projects goes 
+ahead.
+
+**an arbitrary value can also be allowed by the rest api for a node device to inform it to automatically
+generate name to be be given to it.
