@@ -25,7 +25,6 @@ class Camera:
 
     def __exit__(self, exc_type, exc_value, exc_traceback):
         self.stop()
-        self.cap.release()
 
     def start_thread(self):
         # start the thread to read frames from the video stream
