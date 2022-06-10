@@ -24,24 +24,24 @@ sudo apt-get install -y zip
 sudo apt-get -y clean
 
 sudo apt-get install -y  python3-picamera
-pip install --upgrade -y picamera[array]
-pip install -r ../requirements.txt
+sudo pip install --upgrade -y picamera[array]
+sudo pip install -r ../requirements.txt
 
 sudo touch /etc/dphys-swapfile
 
 sudo sed -i s'/CONF_SWAPSIZE=100/CONF_SWAPSIZE=1024/' /etc/dphys-swapfile
 
-pip install dlib
+sudo pip install dlib
 
 sudo sed -i s'/CONF_SWAPSIZE=1024/CONF_SWAPSIZE=100/' /etc/dphys-swapfile
 
-pip install numpy
-pip install scikit-image
+sudo pip install numpy
+sudo pip install scikit-image
 sudo apt-get install python3-scipy
 sudo apt-get install libatlas-base-dev
 sudo apt-get install libjasper-dev
 sudo apt-get install libqtgui4
 sudo apt-get install python3-pyqt5
 sudo apt install libqt4-test
-pip install opencv-python==3.4.6.27
-pip install face_recognition 
+sudo pip install opencv-python==3.4.6.27
+sudo pip install face_recognition 
