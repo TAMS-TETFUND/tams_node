@@ -13,8 +13,6 @@ class Camera:
     def __init__(self):
         self.camera_ok()
         self.cap = cv2.VideoCapture(0)
-        # self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.FRAME_WIDTH)
-        # self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.FRAME_HEIGHT)
         (self.grabbed, self.frame) = self.cap.read()
 
         self.stopped = False
@@ -27,7 +25,7 @@ class Camera:
         self.stop()
 
     def start_thread(self):
-        # start the thread to read frames from the video stream
+        """Start the thread to read frames from the video stream"""
         Thread(target=self.update, args=()).start()
         return self
 
@@ -40,7 +38,7 @@ class Camera:
             (self.grabbed, self.frame) = self.cap.read()
 
     def camera_ok(self):
-        """method to check for camera presence. On posix systems"""
+        """Method to check for camera presence. On posix systems"""
         if os.path.exists("/dev/video0"):
             return True
         else:
@@ -52,7 +50,7 @@ class Camera:
         return self.frame
     
     def stop(self):
-        # indicate that the thread should be stopped
+        """indicate that the thread should be stopped"""
         self.stopped = True
 
     @staticmethod
