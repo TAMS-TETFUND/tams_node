@@ -6,6 +6,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db.utils import IntegrityError
 import app
 
+from app.camerafacerec import CamFaceRec
 from app.appconfigparser import AppConfigParser
 from app.basegui import BaseGUIWindow
 from app.fingerprint import FingerprintScanner
@@ -1265,7 +1266,7 @@ class CameraWindow(BaseGUIWindow):
 class FaceCameraWindow(CameraWindow):
     @classmethod
     def loop(cls, window, event, values):
-        with Camera() as cam:
+        with CamFaceRec() as cam_facerec:
             while True:
                 event, values = window.read(timeout=20)
 
@@ -1277,29 +1278,22 @@ class FaceCameraWindow(CameraWindow):
                     cls.open_fingerprint()
                     return True
 
-                img = cam.feed()
-                face_locations = FaceRecognition.face_locations(img)
-                face_count = len(face_locations)
-                if event in ("capture", "image_display"):
-                    if face_count > 1:
+                if event in ("capture", "image_display") and cam_facerec.deque_not_empty():
+                    cam_facerec.start_deque()
+                    if cam_facerec.face_count > 1:
                         cls.popup_auto_close_error(
                             "Multiple faces detected",
                         )
-                    elif face_count == 0:
+                    elif cam_facerec.face_count == 0:
                         cls.popup_auto_close_error("Camera did not find a face")
 
-                    if face_count == 1:
-                        captured_encodings = FaceRecognition.face_encodings(
-                            img, [face_locations[0]]
-                        )
+                    if cam_facerec.face_count == 1:
+                        captured_encodings = cam_facerec.face_encodings()
                         cls.process_image(captured_encodings, window)
                         return True
 
-                if face_count > 0:
-                    for face_location in face_locations:
-                        FaceRecognition.draw_bounding_box(face_location, img)
-
-                window["image_display"].update(data=cam.feed_to_bytes(img))
+                window["image_display"].update(data=Camera.feed_to_bytes(cam_facerec.img_bbox))
+                # cam_facerec.refresh()
         return True
 
     @classmethod
