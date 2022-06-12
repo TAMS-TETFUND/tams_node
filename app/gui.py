@@ -833,7 +833,8 @@ class NewEventSummaryWindow(BaseGUIWindow):
                 return True
 
             if event == "start_event":
-                window_dispatch.open_window(StaffBarcodeCameraWindow)
+                # window_dispatch.open_window(StaffBarcodeCameraWindow)
+                window_dispatch.open_window(StaffFaceVerificationWindow)
 
             if event == "schedule_event":
                 sg.popup(
@@ -1278,8 +1279,11 @@ class FaceCameraWindow(CameraWindow):
                     cls.open_fingerprint()
                     return True
 
-                if event in ("capture", "image_display") and cam_facerec.deque_not_empty():
-                    cam_facerec.start_deque()
+                if (
+                    event in ("capture", "image_display")
+                    and cam_facerec.deque_not_empty()
+                ):
+                    cam_facerec.load_facerec_attrs()
                     if cam_facerec.face_count > 1:
                         cls.popup_auto_close_error(
                             "Multiple faces detected",
@@ -1292,7 +1296,9 @@ class FaceCameraWindow(CameraWindow):
                         cls.process_image(captured_encodings, window)
                         return True
 
-                window["image_display"].update(data=Camera.feed_to_bytes(cam_facerec.img_bbox))
+                window["image_display"].update(
+                    data=Camera.feed_to_bytes(cam_facerec.img_bbox)
+                )
                 # cam_facerec.refresh()
         return True
 
