@@ -25,7 +25,7 @@ def dashboard(request):
 
 
 class AttendanceRecordView(ListView):
-    template_name = 'attendancesession_list.html'
+    template_name = "attendancesession_list.html"
     paginate_by: int = 20
     model = AttendanceSession
 
