@@ -7,8 +7,6 @@ from app.basegui import BaseGUIWindow as bgw
 
 
 class Camera:
-    FRAME_WIDTH = 1280
-    FRAME_HEIGHT = 720
 
     def __init__(self):
         self.camera_ok()
@@ -34,7 +32,7 @@ class Camera:
         while True:
             if self.stopped:
                 return
-            
+
             (self.grabbed, self.frame) = self.cap.read()
 
     def camera_ok(self):
@@ -48,7 +46,7 @@ class Camera:
         if not self.grabbed:
             raise RuntimeError("Problem reading from camera")
         return self.frame
-    
+
     def stop(self):
         """indicate that the thread should be stopped"""
         self.stopped = True
@@ -56,7 +54,6 @@ class Camera:
     @staticmethod
     def image_to_grayscale(img):
         return cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-
 
     @staticmethod
     def feed_to_bytes(img):
@@ -71,3 +68,9 @@ class Camera:
                 interpolation=cv2.INTER_AREA,
             ),
         )[1].tobytes()
+
+    @staticmethod
+    def reduce_framesize(img):
+        """Method to resize frame size for faster processing"""
+        return cv2.resize(img, (0,0), fx=0.25, fy=0.25)
+    
