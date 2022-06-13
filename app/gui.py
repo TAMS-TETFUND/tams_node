@@ -16,10 +16,8 @@ from app.facerec import FaceRecognition
 from app.windowdispatch import WindowDispatch
 from tams_node.settings import DEBUG
 
-try:
-    from app.camera import Camera
-except ModuleNotFoundError:
-    from app.camera2 import Camera
+
+from app.camera2 import Camera
 
 from db.models import (
     AttendanceRecord,
@@ -1067,7 +1065,7 @@ class AttendanceSessionLandingWindow(BaseGUIWindow):
             if confirm == "Yes":
                 att_session = AttendanceSession.objects.get(
                     session_id=app_config["current_attendance_session"][
-                        "sesson_id"
+                        "session_id"
                     ]
                 )
                 att_session.status = AttendanceSessionStatus.ENDED
