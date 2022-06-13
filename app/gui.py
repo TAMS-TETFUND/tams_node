@@ -833,8 +833,7 @@ class NewEventSummaryWindow(BaseGUIWindow):
                 return True
 
             if event == "start_event":
-                # window_dispatch.open_window(StaffBarcodeCameraWindow)
-                window_dispatch.open_window(StaffFaceVerificationWindow)
+                window_dispatch.open_window(StaffBarcodeCameraWindow)
 
             if event == "schedule_event":
                 sg.popup(
