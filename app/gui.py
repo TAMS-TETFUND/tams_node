@@ -1092,20 +1092,20 @@ class StaffNumberInputWindow(BaseGUIWindow):
                 sg.Button("1", s=INPUT_BUTTON_SIZE),
                 sg.Button("2", s=INPUT_BUTTON_SIZE),
                 sg.Button("3", s=INPUT_BUTTON_SIZE),
+                sg.Button("4", s=INPUT_BUTTON_SIZE),
             ],
             [
-                sg.Button("4", s=INPUT_BUTTON_SIZE),
+                
                 sg.Button("5", s=INPUT_BUTTON_SIZE),
                 sg.Button("6", s=INPUT_BUTTON_SIZE),
-            ],
-            [
                 sg.Button("7", s=INPUT_BUTTON_SIZE),
                 sg.Button("8", s=INPUT_BUTTON_SIZE),
-                sg.Button("9", s=INPUT_BUTTON_SIZE),
             ],
             [
-                sg.Button("Submit", key="submit", s=INPUT_BUTTON_SIZE),
+                
+                sg.Button("9", s=INPUT_BUTTON_SIZE),
                 sg.Button("0", s=INPUT_BUTTON_SIZE),
+                sg.Button("Submit", key="submit", s=INPUT_BUTTON_SIZE),                
                 sg.Button("Clear", key="clear", s=INPUT_BUTTON_SIZE),
             ],
         ]
@@ -1160,10 +1160,31 @@ class StaffNumberInputWindow(BaseGUIWindow):
                 return True
 
             keys_entered = values["staff_number_input"]
-            app_config["new_event"]["initiator_staff_num"] = (
-                "SS." + keys_entered
+            staff_number_entered = "SS." + keys_entered
+
+            staff = Staff.objects.filter(staff_number=staff_number_entered)
+
+            if not staff.exists():
+                cls.display_message(
+                    "No staff found with given staff ID. "
+                    "Ensure you have been duly registered on the system.",
+                    window
+                )
+                return True
+
+            app_config["tmp_staff"] = app_config.dict_vals_to_str(
+                staff.values(
+                    "id",
+                    "staff_number",
+                    "first_name",
+                    "last_name",
+                    "department__name",
+                    "department__faculty__name",
+                    "face_encodings",
+                    "fingerprint_template",
+                ).first()
             )
-            window_dispatch.open_window(VerifyAttendanceInitiatorWindow)
+            window_dispatch.open_window(StaffFaceVerificationWindow)
             return True
         window["staff_number_input"].update(keys_entered)
         return True
@@ -1220,8 +1241,7 @@ class CameraWindow(BaseGUIWindow):
                     image_data=cls.get_icon("keyboard", 0.5),
                     button_color=cls.ICON_BUTTON_COLOR,
                     key="keyboard",
-                    visible=True,
-                    disabled=True,
+                    visible=True
                 )
             )
         else:
@@ -1693,6 +1713,10 @@ class StaffBarcodeCameraWindow(BarcodeCameraWindow):
             ],
         ]
 
+    @classmethod
+    def launch_keypad(cls):
+        window_dispatch.open_window(StaffNumberInputWindow)
+        return
 
 # enrolment windows should not be available on all node devices;
 # should only be available on node devices that will be used for
