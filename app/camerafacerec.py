@@ -30,8 +30,8 @@ class CamFaceRec:
         return self
 
     def __exit__(self, exc_type, exc_value, exc_traceback):
-        self.cam.stop()
         self._stop_thread()
+
 
     def load_facerec_attrs(self):
         if self.deque_not_empty:
@@ -50,6 +50,7 @@ class CamFaceRec:
         self.img_bbox = self.cam.feed()
         while True:
             if self.stopped:
+                self.cam.stop()
                 return
             self._img = self._img_bbox = self.cam.feed()
             self._face_locations = self.face_rec.face_locations(self.cam.reduce_framesize(self._img))
