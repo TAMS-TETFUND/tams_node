@@ -1064,9 +1064,7 @@ class AttendanceSessionLandingWindow(BaseGUIWindow):
             )
             if confirm == "Yes":
                 att_session = AttendanceSession.objects.get(
-                    session_id=app_config["current_attendance_session"][
-                        "session_id"
-                    ]
+                    session_id=app_config.getint("current_attendance_session", "session_id")
                 )
                 att_session.status = AttendanceSessionStatus.ENDED
                 att_session.save()
@@ -1395,8 +1393,6 @@ class StudentRegNumKeypadWindow(BaseGUIWindow):
                 return True
 
         return True
-
-        
 
 
     @classmethod
