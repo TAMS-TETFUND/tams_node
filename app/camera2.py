@@ -11,9 +11,8 @@ class Camera:
     def __init__(self):
         self.camera_ok()
         self.cap = cv2.VideoCapture(0)
-        (self.grabbed, self.frame) = self.cap.read()
-
         self.stopped = False
+        (self.grabbed, self.frame) = self.cap.read()
 
     def __enter__(self):
         self.start_thread()
@@ -31,6 +30,7 @@ class Camera:
         # keep looping infinitely until the thread is stopped
         while True:
             if self.stopped:
+                self.cap.release()
                 return
 
             (self.grabbed, self.frame) = self.cap.read()
