@@ -80,7 +80,7 @@ def download_attendance(request, pk):
         )
         .prefetch_related("student")
         .values(
-            "student__first_name", "student__last_name", "student__reg_number"
+            "student__first_name", "student__last_name", "student__reg_number", "logged_by"
         )
     )
 
@@ -97,7 +97,7 @@ def download_attendance(request, pk):
         },
     )
 
-    field_names = ["S/N", "Name", "Reg. Number"]
+    field_names = ["S/N", "Name", "Reg. Number", "Sign In"]
     attendance_writer = csv.DictWriter(response, fieldnames=field_names)
     attendance_writer.writerow(
         {
@@ -111,6 +111,7 @@ def download_attendance(request, pk):
                 "S/N": idx,
                 "Name": f'{row["student__last_name"].capitalize()} {row["student__first_name"].capitalize()}',
                 "Reg. Number": row["student__reg_number"],
+                "Sign In": f'{datetime.strftime(row["logged_by"], "%H:%M")}'
             }
         )
 
