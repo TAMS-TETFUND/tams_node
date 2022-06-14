@@ -13,6 +13,11 @@ class CamFaceRec:
         self.stopped = False
         self.attr_deque = deque(maxlen=5)
 
+        self.img = None
+        self.face_locations = None
+        self.face_count = None
+        
+
     def _start_thread(self):
         Thread(target=self.face_read, args=()).start()
         return self
