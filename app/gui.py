@@ -1083,6 +1083,63 @@ class AttendanceSessionLandingWindow(BaseGUIWindow):
         ).count()
 
 
+class KeypadWindow(BaseGUIWindow):
+    @classmethod
+    def window(cls):
+        INPUT_BUTTON_SIZE = (10, 2)
+        column1 = [
+            [
+                sg.Button("1", s=INPUT_BUTTON_SIZE),
+                sg.Button("2", s=INPUT_BUTTON_SIZE),
+                sg.Button("3", s=INPUT_BUTTON_SIZE),
+                sg.Button("4", s=INPUT_BUTTON_SIZE),
+            ],
+            [
+                
+                sg.Button("5", s=INPUT_BUTTON_SIZE),
+                sg.Button("6", s=INPUT_BUTTON_SIZE),
+                sg.Button("7", s=INPUT_BUTTON_SIZE),
+                sg.Button("8", s=INPUT_BUTTON_SIZE),
+            ],
+            [
+                
+                sg.Button("9", s=INPUT_BUTTON_SIZE),
+                sg.Button("0", s=INPUT_BUTTON_SIZE),
+                sg.Button("/", s=INPUT_BUTTON_SIZE),
+                sg.Button("Clear", key="clear", s=INPUT_BUTTON_SIZE),
+            ],
+            [
+                sg.Button("Submit", key="submit", s=INPUT_BUTTON_SIZE),                
+            ]
+        ]
+
+        layout = [
+            [sg.Text("_" * 80)],
+            [sg.VPush()],
+            [cls.message_display_field()],
+            [
+                sg.Push(),
+                cls.field_name(),
+                sg.Input(
+                    size=(15, 1), justification="left", key="field_content"
+                ),
+                sg.Push(),
+            ],
+            [sg.Push(), sg.Column(column1), sg.Push()],
+            [sg.VPush()],
+            [sg.Push(), sg.Button("<< Back", key="back"), sg.Push()],
+        ]
+
+        window = sg.Window(
+            "Staff Number Input", layout, **cls.window_init_dict()
+        )
+        return window
+    
+    @classmethod
+    def field_name(cls):
+        raise NotImplementedError
+
+
 class StaffNumberInputWindow(BaseGUIWindow):
     @classmethod
     def window(cls):
@@ -1111,12 +1168,6 @@ class StaffNumberInputWindow(BaseGUIWindow):
         ]
 
         layout = [
-            [
-                sg.Text(
-                    "Only registered staff can initiate attendance taking.",
-                    justification="center",
-                )
-            ],
             [sg.Text("_" * 80)],
             [sg.VPush()],
             [cls.message_display_field()],
@@ -1149,18 +1200,23 @@ class StaffNumberInputWindow(BaseGUIWindow):
             )
             return True
 
-        keys_entered = None
+        keys_pressed = None
         if event in "0123456789":
-            keys_entered = values["staff_number_input"]
-            keys_entered += event
+            keys_pressed = values["staff_number_input"]
+            keys_pressed += event
+            window["staff_number_input"].update(keys_pressed)
+            return True
+ 
         elif event == "clear":
-            keys_entered = ""
+            window["staff_number_input"].update("")
+            return True
+        
         elif event == "submit":
             if cls.validate(values, window) is not None:
                 return True
 
-            keys_entered = values["staff_number_input"]
-            staff_number_entered = "SS." + keys_entered
+            keys_pressed = values["staff_number_input"]
+            staff_number_entered = "SS." + keys_pressed
 
             staff = Staff.objects.filter(staff_number=staff_number_entered)
 
@@ -1184,10 +1240,21 @@ class StaffNumberInputWindow(BaseGUIWindow):
                     "fingerprint_template",
                 ).first()
             )
-            window_dispatch.open_window(StaffFaceVerificationWindow)
-            return True
-        window["staff_number_input"].update(keys_entered)
+
+            tmp_staff = app_config["tmp_staff"]
+            if tmp_staff["face_encodings"] in (None, ""):
+                if tmp_staff["fingerprint_template"] in (None, ""):
+                    cls.popup_auto_close_error("No biometric data found for student")
+                    return True
+                else:
+                    window_dispatch.open_window(StaffFingerprintVerificationWindow)
+                    return True
+            else:
+                window_dispatch.open_window(StaffFaceVerificationWindow)
+                return True
+
         return True
+        
 
     @classmethod
     def validate(cls, values, window):
@@ -1202,6 +1269,148 @@ class StaffNumberInputWindow(BaseGUIWindow):
                 return True
         return None
 
+
+class StudentRegNumKeypadWindow(BaseGUIWindow):
+    """Window provides an interface for students to enter their registration
+    numbers by button clicks."""
+    @classmethod
+    def window(cls):
+        INPUT_BUTTON_SIZE = (10, 2)
+        column1 = [
+            [
+                sg.Button("1", s=INPUT_BUTTON_SIZE),
+                sg.Button("2", s=INPUT_BUTTON_SIZE),
+                sg.Button("3", s=INPUT_BUTTON_SIZE),
+                sg.Button("4", s=INPUT_BUTTON_SIZE),
+            ],
+            [
+                
+                sg.Button("5", s=INPUT_BUTTON_SIZE),
+                sg.Button("6", s=INPUT_BUTTON_SIZE),
+                sg.Button("7", s=INPUT_BUTTON_SIZE),
+                sg.Button("8", s=INPUT_BUTTON_SIZE),
+            ],
+            [
+                
+                sg.Button("9", s=INPUT_BUTTON_SIZE),
+                sg.Button("0", s=INPUT_BUTTON_SIZE),
+                sg.Button("/", s=INPUT_BUTTON_SIZE),
+                sg.Button("Clear", key="clear", s=INPUT_BUTTON_SIZE),
+            ],
+            [
+                sg.Button("Submit", key="submit", s=INPUT_BUTTON_SIZE),                
+            ]
+        ]
+
+        layout = [
+            [sg.Text("_" * 80)],
+            [sg.VPush()],
+            [cls.message_display_field()],
+            [
+                sg.Push(),
+                sg.Text("Registration Number:  "),
+                sg.Input(
+                    size=(15, 1), justification="left", key="reg_num_input"
+                ),
+                sg.Push(),
+            ],
+            [sg.Push(), sg.Column(column1), sg.Push()],
+            [sg.VPush()],
+            [sg.Push(), sg.Button("<< Back", key="back"), sg.Push()],
+        ]
+
+        window = sg.Window(
+            "Reg Number Input", layout, **cls.window_init_dict()
+        )
+        return window
+
+    @classmethod
+    def loop(cls, window, event, values):
+        if event == "back":
+            window_dispatch.open_window(AttendanceSessionLandingWindow)
+            return True
+
+        keys_pressed = None
+        if event in "0123456789/":
+            keys_pressed = values["reg_num_input"]
+            keys_pressed += event
+            window["reg_num_input"].update(keys_pressed)
+            return True
+
+        elif event == "clear":
+            window["reg_num_input"].update("")
+            return True
+
+        elif event == "submit":
+            if cls.validate(values, window) is not None:
+                return True
+
+            reg_number_entered = values["reg_num_input"]
+        
+            student = Student.objects.filter(reg_number=reg_number_entered)
+            if not student.exists():
+                cls.display_message(
+                    "No student found with given registration number.",
+                    window
+                )#here here
+                return True
+
+            app_config["tmp_student"] = app_config.dict_vals_to_str(
+                student.values(
+                    "id",
+                    "reg_number",
+                    "first_name",
+                    "last_name",
+                    "level_of_study",
+                    "department__name",
+                    "department__faculty__name",
+                    "face_encodings",
+                    "fingerprint_template",
+                ).first()
+            )
+
+            tmp_student = app_config["tmp_student"]
+            if AttendanceRecord.objects.filter(
+                attendance_session_id=app_config.getint(
+                    "current_attendance_session", "session_id"
+                ),
+                student_id=tmp_student["id"],
+            ).exists():
+                cls.display_message(
+                    f"{tmp_student['first_name']} {tmp_student['last_name']} "
+                    f"({tmp_student['reg_number']}) already checked in",
+                    window
+                )
+                return True
+            
+            if tmp_student["face_encodings"] in (None, ""):
+                if tmp_student["fingerprint_template"] in (None, ""):
+                    cls.display_message("No biometric data found for student", window)
+                    return True
+                else:
+                    window_dispatch.open_window(StudentFingerprintVerificationWindow)
+                    return True
+            else:
+                window_dispatch.open_window(StudentFaceVerificationWindow)
+                return True
+
+        return True
+
+        
+
+
+    @classmethod
+    def validate(cls, values, window):
+        for val_check in (
+            cls.validate_required_field(
+                (values["reg_num_input"], "registration number")
+            ),
+            cls.validate_student_reg_number(values["reg_num_input"]),
+        ):
+            if val_check is not None:
+                cls.display_message(val_check, window)
+                return True
+        return None
 
 class CameraWindow(BaseGUIWindow):
     @classmethod
@@ -1350,6 +1559,12 @@ class StudentFaceVerificationWindow(FaceCameraWindow):
             cls.popup_auto_close_error("Eror. Image must have exactly one face")
             return
         tmp_student = app_config["tmp_student"]
+
+        if tmp_student["face_encodings"] in ("", None):
+            cls.popup_auto_close_error("Student's Facial biometric data not found")
+            window_dispatch.open_window(StudentBarcodeCameraWindow)
+            return
+
         if FaceRecognition.face_match(
             known_face_encodings=[
                 str_to_face_enc(tmp_student["face_encodings"])
@@ -1634,8 +1849,17 @@ class StudentBarcodeCameraWindow(BarcodeCameraWindow):
                 f"({tmp_student['reg_number']}) already checked in"
             )
             return
-        window_dispatch.open_window(StudentFaceVerificationWindow)
-        return
+
+        if tmp_student["face_encodings"] in (None, ""):
+            if tmp_student["fingerprint_template"] in (None, ""):
+                cls.popup_auto_close_error("No biometric data found for student")
+                return
+            else:
+                window_dispatch.open_window(StudentFingerprintVerificationWindow)
+                return
+        else:
+            window_dispatch.open_window(StudentFaceVerificationWindow)
+            return
 
     @staticmethod
     def cancel_camera():
@@ -1659,6 +1883,10 @@ class StudentBarcodeCameraWindow(BarcodeCameraWindow):
             ],
         ]
 
+    @classmethod
+    def launch_keypad(cls):
+        window_dispatch.open_window(StudentRegNumKeypadWindow)
+        return
 
 class StaffBarcodeCameraWindow(BarcodeCameraWindow):
     @classmethod
@@ -1689,8 +1917,19 @@ class StaffBarcodeCameraWindow(BarcodeCameraWindow):
                 "fingerprint_template",
             ).first()
         )
-        window_dispatch.open_window(StaffFaceVerificationWindow)
-        return
+
+        tmp_staff = app_config["tmp_staff"]
+        if tmp_staff["face_encodings"] in (None, ""):
+            if tmp_staff["fingerprint_template"] in (None, ""):
+                cls.popup_auto_close_error("No biometric data found for student")
+                return
+            else:
+                window_dispatch.open_window(StaffFingerprintVerificationWindow)
+                return
+        else:
+            window_dispatch.open_window(StaffFaceVerificationWindow)
+            return
+
 
     @classmethod
     def window_title(cls):
