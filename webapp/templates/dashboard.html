@@ -2,11 +2,12 @@
 {% load static %}
 {% block title %}Dashboard{% endblock %}
 {% block content %}
-<section class="p-5">
+<section>
     <div class="d-sm-flex align-items-center justify-content-between pt-5">
         <div>
-            <h1>View Attendance Records</h1>
-            <button class="btn btn-success btn-lg">Click Here</button>
+            <h1>Get Attendance Records</h1>
+            <p class="lead">Download attendance for concluded events immediately.</p>
+            <a class="btn btn-success btn-lg" href="{%  url 'attendance' %}">Click Here</a>
         </div>
         <div>
             <img class="img-fluid w-50 d-none d-sm-block" src="{% static 'img/sheet.svg' %}" alt="">
