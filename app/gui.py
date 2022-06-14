@@ -1064,7 +1064,7 @@ class AttendanceSessionLandingWindow(BaseGUIWindow):
             )
             if confirm == "Yes":
                 att_session = AttendanceSession.objects.get(
-                    session_id=app_config.getint("current_attendance_session", "session_id")
+                    id=app_config.getint("current_attendance_session", "session_id")
                 )
                 att_session.status = AttendanceSessionStatus.ENDED
                 att_session.save()
@@ -1917,7 +1917,7 @@ class StaffBarcodeCameraWindow(BarcodeCameraWindow):
         tmp_staff = app_config["tmp_staff"]
         if tmp_staff["face_encodings"] in (None, ""):
             if tmp_staff["fingerprint_template"] in (None, ""):
-                cls.popup_auto_close_error("No biometric data found for student")
+                cls.popup_auto_close_error("No biometric data found for staff")
                 return
             else:
                 window_dispatch.open_window(StaffFingerprintVerificationWindow)
