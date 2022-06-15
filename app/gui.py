@@ -491,7 +491,7 @@ class NewAcademicSessionWindow(BaseGUIWindow):
             try:
                 session_start_int = int(values["session_start"])
             except ValueError:
-                cls.display_message("Enter numeric values for Academic Session")
+                cls.display_message("Enter numeric values for Academic Session", window)
                 return True
             else:
                 if session_start_int > 0:
@@ -504,7 +504,7 @@ class NewAcademicSessionWindow(BaseGUIWindow):
             try:
                 session_end_int = int(values["session_end"])
             except ValueError:
-                cls.display_message("Enter numeric values for Academic Session")
+                cls.display_message("Enter numeric values for Academic Session", window)
                 return True
             else:
                 if session_end_int > 0:
@@ -2569,7 +2569,8 @@ class StudentFingerprintVerificationWindow(FingerprintGenericWindow):
         if len(fp_template) <= 1:
             cls.display_message(
                 "Did not find valid fingerprint data from "
-                "student registration"
+                "student registration",
+                window
             )
             return True
 
@@ -2586,7 +2587,7 @@ class StudentFingerprintVerificationWindow(FingerprintGenericWindow):
             return True
 
         if not fp_scanner.verify(fp_template):
-            cls.display_message("Fingerprint did not match registration data")
+            cls.display_message("Fingerprint did not match registration data", window)
             return True
 
         cls.popup_auto_close_success(
@@ -2604,7 +2605,8 @@ class StaffFingerprintVerificationWindow(FingerprintGenericWindow):
         fp_template = tmp_staff.get("fingerprint_template")
         if len(fp_template) <= 1:
             cls.display_message(
-                "Did not find valid fingerprint data from " "staff registraton"
+                "Did not find valid fingerprint data from " "staff registraton",
+                window
             )
             return True
         try:
@@ -2632,7 +2634,7 @@ class StaffFingerprintVerificationWindow(FingerprintGenericWindow):
             return True
 
         if not fp_scanner.verify(fp_template):
-            cls.display_message("Fingerprint did not match registration data")
+            cls.display_message("Fingerprint did not match registration data", window)
             return True
 
         cls.popup_auto_close_success(
@@ -2665,14 +2667,14 @@ class FingerprintEnrolmentWindow(FingerprintGenericWindow):
                 cls.display_message("Place same finger again...", window)
 
             if fp_scanner.capture_fingerprint_image(fingerimg):
-                cls.display_message("Templated")
+                cls.display_message("Templated", window)
             else:
-                cls.display_message(fp_scanner.error)
+                cls.display_message(fp_scanner.error, window)
                 return True
             i = fp_scanner.image_2_tz(fingerimg)
 
             if fingerimg == 1:
-                cls.display_message("Remove finger")
+                cls.display_message("Remove finger", window)
                 time.sleep(1)
                 while not fp_scanner.finger_detected(fingerimg):
                     i = fp_scanner.get_image()
@@ -2683,7 +2685,8 @@ class FingerprintEnrolmentWindow(FingerprintGenericWindow):
                 return True
 
             cls.display_message(
-                "Place finger on fingerprint sensor one more time"
+                "Place finger on fingerprint sensor one more time",
+                window
             )
             fp_scanner.fp_capture()
             cls.process_fingerprint(fp_scanner)
