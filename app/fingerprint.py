@@ -6,6 +6,31 @@ import adafruit_fingerprint
 from PIL import Image
 
 
+"""
+for bash script:
+add the following lines to /boot/config.txt
+
+#disable bluetooth
+dtoverlay=disable-bt
+
+
+then disavle related services
+sudo systemctl disable bluetooth.service
+
+then reboot
+sudo reboot
+
+There may be need to enable serial interface (even if it seems to be enabled)
+sudo raspi-config>interfaces>serial interface>enable
+then reboot again
+
+for the particular fprint scanner used in testing:
+    red wire > 3.3V
+    black wire > gnd
+    blue wire > pin 8
+    yellow wire > pin 10
+"""
+
 class FingerprintScanner:
     SERIAL_PATH = "/dev/ttyAMA0"
     BAUD_RATE = 57600
