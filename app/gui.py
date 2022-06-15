@@ -1240,8 +1240,8 @@ class StaffNumberInputWindow(BaseGUIWindow):
             )
 
             tmp_staff = app_config["tmp_staff"]
-            if tmp_staff["face_encodings"] in (None, ""):
-                if tmp_staff["fingerprint_template"] in (None, ""):
+            if tmp_staff["face_encodings"] in (None, "None", ""):
+                if tmp_staff["fingerprint_template"] in (None, "None", ""):
                     cls.popup_auto_close_error("No biometric data found for student")
                     return True
                 else:
@@ -1279,24 +1279,26 @@ class StudentRegNumKeypadWindow(BaseGUIWindow):
                 sg.Button("1", s=INPUT_BUTTON_SIZE),
                 sg.Button("2", s=INPUT_BUTTON_SIZE),
                 sg.Button("3", s=INPUT_BUTTON_SIZE),
-                sg.Button("4", s=INPUT_BUTTON_SIZE),
+                sg.Button("0", s=INPUT_BUTTON_SIZE),
             ],
             [
                 
+                sg.Button("4", s=INPUT_BUTTON_SIZE),
                 sg.Button("5", s=INPUT_BUTTON_SIZE),
                 sg.Button("6", s=INPUT_BUTTON_SIZE),
-                sg.Button("7", s=INPUT_BUTTON_SIZE),
-                sg.Button("8", s=INPUT_BUTTON_SIZE),
+                sg.Button("/", s=INPUT_BUTTON_SIZE),
             ],
             [
                 
+                sg.Button("7", s=INPUT_BUTTON_SIZE),
+                sg.Button("8", s=INPUT_BUTTON_SIZE),
                 sg.Button("9", s=INPUT_BUTTON_SIZE),
-                sg.Button("0", s=INPUT_BUTTON_SIZE),
-                sg.Button("/", s=INPUT_BUTTON_SIZE),
                 sg.Button("Clear", key="clear", s=INPUT_BUTTON_SIZE),
             ],
             [
+                sg.Push(),
                 sg.Button("Submit", key="submit", s=INPUT_BUTTON_SIZE),                
+                sg.Push()
             ]
         ]
 
@@ -1308,7 +1310,7 @@ class StudentRegNumKeypadWindow(BaseGUIWindow):
                 sg.Push(),
                 sg.Text("Registration Number:  "),
                 sg.Input(
-                    size=(15, 1), justification="left", key="reg_num_input"
+                    size=(25, 1), justification="left", key="reg_num_input"
                 ),
                 sg.Push(),
             ],
@@ -1381,8 +1383,8 @@ class StudentRegNumKeypadWindow(BaseGUIWindow):
                 )
                 return True
             
-            if tmp_student["face_encodings"] in (None, ""):
-                if tmp_student["fingerprint_template"] in (None, ""):
+            if tmp_student["face_encodings"] in (None, "None", ""):
+                if tmp_student["fingerprint_template"] in (None, "None", ""):
                     cls.display_message("No biometric data found for student", window)
                     return True
                 else:
@@ -1846,8 +1848,8 @@ class StudentBarcodeCameraWindow(BarcodeCameraWindow):
             )
             return
 
-        if tmp_student["face_encodings"] in (None, ""):
-            if tmp_student["fingerprint_template"] in (None, ""):
+        if tmp_student["face_encodings"] in (None, "None", ""):
+            if tmp_student["fingerprint_template"] in (None, "None", ""):
                 cls.popup_auto_close_error("No biometric data found for student")
                 return
             else:
@@ -1915,8 +1917,8 @@ class StaffBarcodeCameraWindow(BarcodeCameraWindow):
         )
 
         tmp_staff = app_config["tmp_staff"]
-        if tmp_staff["face_encodings"] in (None, ""):
-            if tmp_staff["fingerprint_template"] in (None, ""):
+        if tmp_staff["face_encodings"] in (None, "None", ""):
+            if tmp_staff["fingerprint_template"] in (None, "None", ""):
                 cls.popup_auto_close_error("No biometric data found for staff")
                 return
             else:
