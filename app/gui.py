@@ -2512,12 +2512,15 @@ class FingerprintGenericWindow(BaseGUIWindow):
     @classmethod
     def window(cls):
         layout = [
+            [sg.Push(), sg.Text(cls.window_title()), sg.Push()],
             [sg.Push(), cls.message_display_field(), sg.Push()],
+            [sg.VPush()],
             [
                 sg.Push(),
-                sg.Image(cls.get_icon("fingerprint", 2)),
+                sg.Image(cls.get_icon("fingerprint", 1.3)),
                 sg.Push(),
             ],
+            [sg.VPush()],
             [
                 sg.Push(),
                 cls.get_camera_button(),
@@ -2554,7 +2557,11 @@ class FingerprintGenericWindow(BaseGUIWindow):
                 )
             )
 
+    @classmethod
+    def window_title(cls):
+        return "Place your left thumb on the fingerprint scanner"
 
+  
 class StudentFingerprintVerificationWindow(FingerprintGenericWindow):
     @classmethod
     def loop(cls, window, event, values):
