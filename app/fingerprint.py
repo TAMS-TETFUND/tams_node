@@ -1,6 +1,5 @@
 import os
 import time
-
 import serial
 import adafruit_fingerprint
 from PIL import Image
@@ -77,14 +76,13 @@ class FingerprintScanner:
         if self.finger.read_templates() != adafruit_fingerprint.OK:
             self.error = "Failed to read templates"
             return False
-        elif self.finger.count_templates() != adafruit_fingerprint.OK:
+        if self.finger.count_templates() != adafruit_fingerprint.OK:
             self.error = "Failed to read templates"
             return False
-        elif self.finger.read_sysparam() != adafruit_fingerprint.OK:
+        if self.finger.read_sysparam() != adafruit_fingerprint.OK:
             self.error = "Failed to get system parameters"
             return False
-        else:
-            return True
+        return True
 
     def verify_match(self):
 
