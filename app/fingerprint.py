@@ -150,11 +150,11 @@ class FingerprintScanner:
 
     def get_fpdata(self, sensorbuffer="char", scanner_slot=1):
         if sensorbuffer == "char":
-            return self.get_fpdata(sensorbuffer, scanner_slot)
+            return self.finger.get_fpdata(sensorbuffer, scanner_slot)
         else:
-            return self.get_fpdata(sensorbuffer)
+            return self.finger.get_fpdata(sensorbuffer)
 
-    def image_2_tz(self, scanner_slot):
+    def image_2_tz(self, scanner_slot=1):
         i = self.finger.image_2_tz(scanner_slot)
 
         if i == adafruit_fingerprint.OK:
