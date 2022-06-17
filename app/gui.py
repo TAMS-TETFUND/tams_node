@@ -1585,7 +1585,7 @@ class StudentFaceVerificationWindow(FaceCameraWindow):
                 cls.popup_auto_close_success(
                     f"{tmp_student['reg_number']} checked in"
                 )
-                app_config.remove_section("tmp_status")
+                app_config.remove_section("tmp_student")
             window_dispatch.open_window(StudentBarcodeCameraWindow)
             return
         else:
@@ -2570,15 +2570,19 @@ class StudentFingerprintVerificationWindow(FingerprintGenericWindow):
             return True
         if event == "camera":
             window_dispatch.open_window(StudentFaceVerificationWindow)
+            return True
 
         tmp_student = app_config["tmp_student"]
-        fp_template = tmp_student.get("fingerprint_template")
-        if len(fp_template) <= 1:
-            cls.display_message(
-                "Did not find valid fingerprint data from "
-                "student registration",
-                window
-            )
+        try:
+            fp_template = eval(tmp_student.get("fingerprint_template"))
+        except Exception as e:
+            cls.popup_auto_close_error("Invalid fingerprint data from student registration", duration=5)
+            window_dispatch.open_window(StudentBarcodeCameraWindow)
+            return True
+
+        if fp_template in (None, ''):
+            cls.popup_auto_close_error("No valid fingerprint data from student registration", duration=5)
+            window_dispatch.open_window(StudentBarcodeCameraWindow)
             return True
 
         try:
@@ -2589,19 +2593,28 @@ class StudentFingerprintVerificationWindow(FingerprintGenericWindow):
             return True
 
         cls.display_message("Waiting for finger print...", window)
-        if not fp_scanner.capture_fingerprint_image():
-            cls.display_message(fp_scanner.error, window)
-            return True
 
-        if not fp_scanner.verify(fp_template):
+        fp_scanner.fp_capture()
+
+        if not fp_scanner.image_2_tz():
+            cls.display_message(fp_scanner.error, window)
+
+        if not fp_scanner.send_fpdata(fp_template, slot=2):
+            cls.popup_auto_close_error("Error processing registration data. Contact admin", duration=5)
+            window_dispatch.open_window(StudentBarcodeCameraWindow)
+            return True
+        
+        if fp_scanner.verify_match():
+            cls.popup_auto_close_success(
+                f"{tmp_student['last_name']} {tmp_student['first_name'][0]}."
+                f"({tmp_student['reg_number']}) checked in"
+            )
+            window_dispatch.open_window(StudentBarcodeCameraWindow)
+            return True
+        else:
             cls.display_message("Fingerprint did not match registration data", window)
             return True
 
-        cls.popup_auto_close_success(
-            f"{tmp_student['last_name']} {tmp_student['first_name'][0]}."
-            f"({tmp_student['reg_number']}) checked in"
-        )
-        window_dispatch.open_window(StudentBarcodeCameraWindow)
         return True
 
 
@@ -2636,11 +2649,9 @@ class StaffFingerprintVerificationWindow(FingerprintGenericWindow):
             return True
 
         cls.display_message("Waiting for fingerprint...", window)
-        if not fp_scanner.capture_fingerprint_image():
-            cls.display_message(fp_scanner.error, window)
-            return True
+        fp_scanner.fp_capture()
 
-        if not fp_scanner.verify(fp_template):
+        if not fp_scanner.verify_match():
             cls.display_message("Fingerprint did not match registration data", window)
             return True
 
@@ -2652,8 +2663,25 @@ class StaffFingerprintVerificationWindow(FingerprintGenericWindow):
 
 
 class FingerprintEnrolmentWindow(FingerprintGenericWindow):
+    """The algorithm to be implemented should be:
+        The fingerprint being enrolled needs to be captured multiple 
+            times to ensure the quality of the image being saved is
+            qualitative.
+        One approach could be: use the standard enrolment process to 
+            create fingerprint model and save to a location in the
+            flash memory of the fingerprint sensor. Then load the fingerprint
+            from that memory location to the buffer/slot of the fingerprint
+            sensor and save to the db from there.
+
+
+            - capture fingerprint image and save to the two slots of the 
+                fingerprint sensor
+            -compare the content of the 2 slots. If they match, then use 
+                the content of any of the two slots to populate the database
+    """
     @classmethod
     def loop(cls, window, event, values):
+
         if event == "cancel":
             cls.cancel_fp_enrolment()
 
@@ -2668,39 +2696,36 @@ class FingerprintEnrolmentWindow(FingerprintGenericWindow):
         for fingerimg in range(1, 3):
             if fingerimg == 1:
                 cls.display_message(
-                    "Place finger on fingerprint sensor...", window
+                    "Place your right thumb on fingerprint sensor...", window
                 )
             else:
                 cls.display_message("Place same finger again...", window)
 
-            if fp_scanner.capture_fingerprint_image(fingerimg):
-                cls.display_message("Templated", window)
-            else:
-                cls.display_message(fp_scanner.error, window)
+            fp_scanner.fp_capture()
+
+            # i = fp_scanner.image_2_tz(fingerimg)
+
+            if not fp_scanner.image_2_tz(fingerimg):
+                cls.popup_auto_close_error(fp_scanner.error, duration=5)
                 return True
-            i = fp_scanner.image_2_tz(fingerimg)
 
             if fingerimg == 1:
                 cls.display_message("Remove finger", window)
                 time.sleep(1)
-                while not fp_scanner.finger_detected(fingerimg):
-                    i = fp_scanner.get_image()
+                while i != fp_scanner.NOFINGER:
+                    i  = fp_scanner.get_image()
 
-            cls.display_message("Creating model", window)
-            if not fp_scanner.create_model():
-                cls.popup_auto_close_error(fp_scanner.error)
-                return True
+        cls.display_message("Creating model...", window)
+        if not fp_scanner.create_model():
+            cls.popup_auto_close_error(fp_scanner.error)
+            return True
 
-            cls.display_message(
-                "Place finger on fingerprint sensor one more time",
-                window
-            )
-            fp_scanner.fp_capture()
-            cls.process_fingerprint(fp_scanner)
+        fingerprint_data = fp_scanner.get_fpdata(scanner_slot=1)
+        cls.process_fingerprint(fingerprint_data)
         return True
 
     @classmethod
-    def process_fingerprint(cls, fp_scanner: FingerprintScanner):
+    def process_fingerprint(cls, fingerprint_data):
         raise NotImplementedError
 
     @staticmethod
@@ -2714,7 +2739,7 @@ class FingerprintEnrolmentWindow(FingerprintGenericWindow):
 
 class StudentFingerprintEnrolmentWindow(FingerprintEnrolmentWindow):
     @classmethod
-    def process_fingerprint(cls, fp_scanner):
+    def process_fingerprint(cls, fingerprint_data):
         new_student = app_config["new_student"]
 
         try:
@@ -2722,7 +2747,7 @@ class StudentFingerprintEnrolmentWindow(FingerprintEnrolmentWindow):
         except Exception as e:
             cls.popup_auto_close_error(e)
             return
-        student.fingerprint_template = str(fp_scanner.get_fpdata())
+        student.fingerprint_template = str(fingerprint_data)
         student.save()
         app_config.remove_section("new_student")
         cls.popup_auto_close_success("Student enrolment successful")
@@ -2748,7 +2773,7 @@ class StudentFingerprintEnrolmentWindow(FingerprintEnrolmentWindow):
 
 class StaffFingerprintEnrolmentWindow(FingerprintEnrolmentWindow):
     @classmethod
-    def process_fingerprint(cls, fp_scanner):
+    def process_fingerprint(cls, fingerprint_data):
         new_staff = app_config["new_staff"]
 
         try:
@@ -2757,7 +2782,7 @@ class StaffFingerprintEnrolmentWindow(FingerprintEnrolmentWindow):
             cls.popup_auto_close_error(e)
             return
 
-        staff.fingerprint_template = str(fp_scanner.get_fpdata())
+        staff.fingerprint_template = str(fingerprint_data)
         staff.save()
         app_config.remove_section("new_staff")
         cls.popup_auto_close_success("Staff enrolment successful")
