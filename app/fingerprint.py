@@ -29,11 +29,19 @@ for the particular fprint scanner used in testing:
     black wire > gnd
     blue wire > pin 8
     yellow wire > pin 10
+
+
+
+
+The fingerprint scanner appears to have one (1) image buffer slot,
+2 char buffer  slots. THe number of available memory locations is variable
+across different fingerprint scanners.
 """
 
 class FingerprintScanner:
     SERIAL_PATH = "/dev/ttyAMA0"
     BAUD_RATE = 57600
+    NOFINGER = adafruit_fingerprint.NOFINGER
 
     def __init__(self):
         self._error: str = None
@@ -78,32 +86,22 @@ class FingerprintScanner:
         else:
             return True
 
-    def verify(self, known_fingerprint_template):
-        if not self.capture_fingerprint_image():
-            return False
-        self.finger.send_fpdata(known_fingerprint_template, "char", 2)
+    def verify_match(self, known_fingerprint_template):
 
-        i = self.finger.compare_templates()
+        i = self.fp_match()
         if i == adafruit_fingerprint.OK:
             return True
         else:
             return False
+    
+    def send_fpdata(self, fingerprint_template, slot, buffer="char"):
+        return self.finger.send_fpdata(data=fingerprint_template, slot=slot, sensorbuffer = buffer)
 
-    def capture_fingerprint_image(self, scanner_slot=1):
-        self.fp_capture()
-        i = self.finger.image_2_tz(scanner_slot)
-        if i == adafruit_fingerprint.OK:
-            return True
-        else:
-            if i == adafruit_fingerprint.IMAGEMESS:
-                self.error = "Image too messy"
-            elif i == adafruit_fingerprint.FEATUREFAIL:
-                self.error = "Could not identify features"
-            elif i == adafruit_fingerprint.INVALIDIMAGE:
-                self.error = "Image invalid"
-            else:
-                self.error = "Other error"
-            return False
+    def fp_match(self):
+        return self.finger.compare_templates()
+
+    def fp_match_confidence(self):
+        return self.finger.confidence
 
     def create_model(self):
         i = self.finger.create_model()
@@ -117,8 +115,15 @@ class FingerprintScanner:
             return False
 
     def fp_capture(self):
-        while self.finger.get_image() != adafruit_fingerprint.OK:
-            pass
+        while True:
+            i = self.finger.get_image()
+            if i == adafruit_fingerprint.OK:
+                break
+            if i == adafruit_fingerprint.NOFINGER:
+                self.error = "Place finger on scanner"
+            if i == adafruit_fingerprint.IMAGEFAIL:
+                self.error = "Imaging error. Place finger again"
+            return
 
     def store_template_in_file(self, filename):
         img = Image.new("L", (256, 288), "white")
@@ -154,7 +159,20 @@ class FingerprintScanner:
             return self.get_fpdata(sensorbuffer)
 
     def image_2_tz(self, scanner_slot):
-        return self.finger.image_2_tz(scanner_slot)
+        i = self.finger.image_2_tz(scanner_slot)
+
+        if i == adafruit_fingerprint.OK:
+            return True
+        else:
+            if i == adafruit_fingerprint.IMAGEMESS:
+                self.error = "Image too messy"
+            elif i == adafruit_fingerprint.FEATUREFAIL:
+                self.error = "Could not identify features"
+            elif i == adafruit_fingerprint.INVALIDIMAGE:
+                self.error = "Image invalid"
+            else:
+                self.error = "Other error"
+            return False
 
     def finger_detected(self, scanner_slot):
         if (
