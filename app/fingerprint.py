@@ -86,7 +86,7 @@ class FingerprintScanner:
         else:
             return True
 
-    def verify_match(self, known_fingerprint_template):
+    def verify_match(self):
 
         i = self.fp_match()
         if i == adafruit_fingerprint.OK:
