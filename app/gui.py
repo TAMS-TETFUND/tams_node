@@ -2712,6 +2712,7 @@ class FingerprintEnrolmentWindow(FingerprintGenericWindow):
             if fingerimg == 1:
                 cls.display_message("Remove finger", window)
                 time.sleep(1)
+                i = fp_scanner.get_image()
                 while i != fp_scanner.NOFINGER:
                     i  = fp_scanner.get_image()
 
