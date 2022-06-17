@@ -50,9 +50,9 @@ class FingerprintScanner:
                 self.SERIAL_PATH, baudrate=self.BAUD_RATE, timeout=1
             )
             self.finger = adafruit_fingerprint.Adafruit_Fingerprint(self.uart)
-            if not self.scanner_functional():
-                self.finger = None
-                raise RuntimeError("Fingerprint Scanner is not functional")
+            # if not self.scanner_functional():
+            #     self.finger = None
+            #     raise RuntimeError("Fingerprint Scanner is not functional")
 
         else:
             self.finger = None
@@ -85,7 +85,6 @@ class FingerprintScanner:
         return True
 
     def verify_match(self):
-
         i = self.fp_match()
         if i == adafruit_fingerprint.OK:
             return True
@@ -121,8 +120,7 @@ class FingerprintScanner:
                 self.error = "Place finger on scanner"
             if i == adafruit_fingerprint.IMAGEFAIL:
                 self.error = "Imaging error. Place finger again"
-            return
-
+            
     def store_template_in_file(self, filename):
         img = Image.new("L", (256, 288), "white")
         pixel_data = img.load()
