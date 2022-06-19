@@ -2596,14 +2596,27 @@ class StudentFingerprintVerificationWindow(FingerprintGenericWindow):
 class StaffFingerprintVerificationWindow(FingerprintGenericWindow):
     @classmethod
     def loop(cls, window, event, values):
-        tmp_staff = app_config["tmp_staff"]
-        fp_template = tmp_staff.get("fingerprint_template")
-        if len(fp_template) <= 1:
-            cls.display_message(
-                "Did not find valid fingerprint data from " "staff registraton",
-                window
-            )
+        if event == "cancel":
+            window_dispatch.open_window(AttendanceSessionLandingWindow)
             return True
+        
+        if event == "camera":
+            window_dispatch.open_window(StaffFaceVerificationWindow)
+            return True
+
+        tmp_staff = app_config["tmp_staff"]
+        try:
+            fp_template = eval(tmp_staff.get("fingerprint_template"))
+        except Exception as e:
+            cls.popup_auto_close_error("Invalid fingerprint data from staff registration", duration=5)
+            window_dispatch.open_window(StaffBarcodeCameraWindow)
+            return True
+
+        if fp_template in (None, ''):
+            cls.popup_auto_close_error("No valid fingerprint data from staff registration", duration=5)
+            window_dispatch.open_window(StaffBarcodeCameraWindow)
+            return True
+
         try:
             fp_scanner = FingerprintScanner()
         except RuntimeError as e:
@@ -2626,8 +2639,35 @@ class StaffFingerprintVerificationWindow(FingerprintGenericWindow):
         cls.display_message("Waiting for fingerprint...", window)
         fp_scanner.fp_capture()
 
-        if not fp_scanner.verify_match():
-            cls.display_message("Fingerprint did not match registration data", window)
+        if not fp_scanner.image_2_tz():
+            cls.display_message(fp_scanner.error, window)
+            return True
+
+        if not fp_scanner.send_fpdata(fp_template, slot=2):
+            cls.popup_auto_close_error("Error processing registration data. Contact admin", duration=5)
+            window_dispatch.open_window(AttendanceSessionLandingWindow)
+            return True
+
+        if fp_scanner.verify_match():
+            att_session = AttendanceSession.objects.get(
+                id=app_config.getint("current_attendance_session", "session_id")
+            )
+            att_session.initiator_id = tmp_staff.getint("id")
+            att_session.save()
+            app_config["current_attendance_session"][
+                "initiator_id"
+            ] = tmp_staff["id"]
+            cls.popup_auto_close_success(
+                f"{tmp_staff['first_name'][0].upper()}. "
+                f"{tmp_staff['last_name'].capitalize()} "
+                f"authorized attendance-marking",
+            )
+
+            app_config.remove_section("tmp_staff")
+            window_dispatch.open_window(AttendanceSessionLandingWindow)
+            return True
+        elif not fp_scanner.verify_match():
+            cls.popup_auto_close_error("Fingerprint did not match registration data")
             return True
 
         cls.popup_auto_close_success(
