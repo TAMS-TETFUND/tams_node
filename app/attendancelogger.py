@@ -24,7 +24,7 @@ class AttendanceLogger:
             return True
     
     @classmethod
-    def log_failed_attempts(cls, app_config: AppConfigParser):
+    def log_failed_attempt(cls, app_config: AppConfigParser):
         """This method will block a student after they attempt to 
         log attendance 4 times unsuccessfully.
         """
