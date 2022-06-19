@@ -37,6 +37,7 @@ The fingerprint scanner appears to have one (1) image buffer slot,
 across different fingerprint scanners.
 """
 
+
 class FingerprintScanner:
     SERIAL_PATH = "/dev/ttyAMA0"
     BAUD_RATE = 57600
@@ -90,9 +91,11 @@ class FingerprintScanner:
             return True
         else:
             return False
-    
+
     def send_fpdata(self, fingerprint_template, slot, buffer="char"):
-        return self.finger.send_fpdata(data=fingerprint_template, slot=slot, sensorbuffer = buffer)
+        return self.finger.send_fpdata(
+            data=fingerprint_template, slot=slot, sensorbuffer=buffer
+        )
 
     def fp_match(self):
         return self.finger.compare_templates()
@@ -120,7 +123,7 @@ class FingerprintScanner:
                 self.error = "Place finger on scanner"
             if i == adafruit_fingerprint.IMAGEFAIL:
                 self.error = "Imaging error. Place finger again"
-            
+
     def store_template_in_file(self, filename):
         img = Image.new("L", (256, 288), "white")
         pixel_data = img.load()

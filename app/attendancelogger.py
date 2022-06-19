@@ -6,6 +6,7 @@ from db.models import AttendanceRecord
 
 class AttendanceLogger:
     message = ""
+
     @classmethod
     def log_attendance(cls, app_config: AppConfigParser):
         tmp_student = app_config["tmp_student"]
@@ -22,16 +23,16 @@ class AttendanceLogger:
         else:
             cls.message = f"{tmp_student['reg_number']} checked in"
             return True
-    
+
     @classmethod
     def log_failed_attempt(cls, app_config: AppConfigParser):
-        """This method will block a student after they attempt to 
+        """This method will block a student after they attempt to
         log attendance 4 times unsuccessfully.
         """
 
         if "failed_attempts" not in app_config:
             app_config["failed_attempts"] = {}
-        
+
         student_reg_number = app_config["tmp_student"]["reg_number"]
         failed_attempts = app_config["failed_attempts"]
 
@@ -47,10 +48,12 @@ class AttendanceLogger:
                 app_config["current_attendance_session"][
                     "blocked_reg_numbers"
                 ] = ""
-            app_config["current_attendance_session"][
-                "blocked_reg_numbers"
-            ] += ("," + student_reg_number)
+            app_config["current_attendance_session"]["blocked_reg_numbers"] += (
+                "," + student_reg_number
+            )
             app_config.save()
         else:
-            failed_attempts[student_reg_number] = str(failed_attempts.getint(student_reg_number) + 1)
+            failed_attempts[student_reg_number] = str(
+                failed_attempts.getint(student_reg_number) + 1
+            )
             app_config.save()

@@ -491,7 +491,9 @@ class NewAcademicSessionWindow(BaseGUIWindow):
             try:
                 session_start_int = int(values["session_start"])
             except ValueError:
-                cls.display_message("Enter numeric values for Academic Session", window)
+                cls.display_message(
+                    "Enter numeric values for Academic Session", window
+                )
                 return True
             else:
                 if session_start_int > 0:
@@ -504,7 +506,9 @@ class NewAcademicSessionWindow(BaseGUIWindow):
             try:
                 session_end_int = int(values["session_end"])
             except ValueError:
-                cls.display_message("Enter numeric values for Academic Session", window)
+                cls.display_message(
+                    "Enter numeric values for Academic Session", window
+                )
                 return True
             else:
                 if session_end_int > 0:
@@ -1064,7 +1068,9 @@ class AttendanceSessionLandingWindow(BaseGUIWindow):
             )
             if confirm == "Yes":
                 att_session = AttendanceSession.objects.get(
-                    id=app_config.getint("current_attendance_session", "session_id")
+                    id=app_config.getint(
+                        "current_attendance_session", "session_id"
+                    )
                 )
                 att_session.status = AttendanceSessionStatus.ENDED
                 att_session.save()
@@ -1093,22 +1099,20 @@ class KeypadWindow(BaseGUIWindow):
                 sg.Button("4", s=INPUT_BUTTON_SIZE),
             ],
             [
-                
                 sg.Button("5", s=INPUT_BUTTON_SIZE),
                 sg.Button("6", s=INPUT_BUTTON_SIZE),
                 sg.Button("7", s=INPUT_BUTTON_SIZE),
                 sg.Button("8", s=INPUT_BUTTON_SIZE),
             ],
             [
-                
                 sg.Button("9", s=INPUT_BUTTON_SIZE),
                 sg.Button("0", s=INPUT_BUTTON_SIZE),
                 sg.Button("/", s=INPUT_BUTTON_SIZE),
                 sg.Button("Clear", key="clear", s=INPUT_BUTTON_SIZE),
             ],
             [
-                sg.Button("Submit", key="submit", s=INPUT_BUTTON_SIZE),                
-            ]
+                sg.Button("Submit", key="submit", s=INPUT_BUTTON_SIZE),
+            ],
         ]
 
         layout = [
@@ -1132,7 +1136,7 @@ class KeypadWindow(BaseGUIWindow):
             "Staff Number Input", layout, **cls.window_init_dict()
         )
         return window
-    
+
     @classmethod
     def field_name(cls):
         raise NotImplementedError
@@ -1150,17 +1154,15 @@ class StaffNumberInputWindow(BaseGUIWindow):
                 sg.Button("4", s=INPUT_BUTTON_SIZE),
             ],
             [
-                
                 sg.Button("5", s=INPUT_BUTTON_SIZE),
                 sg.Button("6", s=INPUT_BUTTON_SIZE),
                 sg.Button("7", s=INPUT_BUTTON_SIZE),
                 sg.Button("8", s=INPUT_BUTTON_SIZE),
             ],
             [
-                
                 sg.Button("9", s=INPUT_BUTTON_SIZE),
                 sg.Button("0", s=INPUT_BUTTON_SIZE),
-                sg.Button("Submit", key="submit", s=INPUT_BUTTON_SIZE),                
+                sg.Button("Submit", key="submit", s=INPUT_BUTTON_SIZE),
                 sg.Button("Clear", key="clear", s=INPUT_BUTTON_SIZE),
             ],
         ]
@@ -1204,11 +1206,11 @@ class StaffNumberInputWindow(BaseGUIWindow):
             keys_pressed += event
             window["staff_number_input"].update(keys_pressed)
             return True
- 
+
         elif event == "clear":
             window["staff_number_input"].update("")
             return True
-        
+
         elif event == "submit":
             if cls.validate(values, window) is not None:
                 return True
@@ -1222,7 +1224,7 @@ class StaffNumberInputWindow(BaseGUIWindow):
                 cls.display_message(
                     "No staff found with given staff ID. "
                     "Ensure you have been duly registered on the system.",
-                    window
+                    window,
                 )
                 return True
 
@@ -1242,17 +1244,20 @@ class StaffNumberInputWindow(BaseGUIWindow):
             tmp_staff = app_config["tmp_staff"]
             if tmp_staff["face_encodings"] in (None, "None", ""):
                 if tmp_staff["fingerprint_template"] in (None, "None", ""):
-                    cls.popup_auto_close_error("No biometric data found for student")
+                    cls.popup_auto_close_error(
+                        "No biometric data found for student"
+                    )
                     return True
                 else:
-                    window_dispatch.open_window(StaffFingerprintVerificationWindow)
+                    window_dispatch.open_window(
+                        StaffFingerprintVerificationWindow
+                    )
                     return True
             else:
                 window_dispatch.open_window(StaffFaceVerificationWindow)
                 return True
 
         return True
-        
 
     @classmethod
     def validate(cls, values, window):
@@ -1271,6 +1276,7 @@ class StaffNumberInputWindow(BaseGUIWindow):
 class StudentRegNumKeypadWindow(BaseGUIWindow):
     """Window provides an interface for students to enter their registration
     numbers by button clicks."""
+
     @classmethod
     def window(cls):
         INPUT_BUTTON_SIZE = (10, 2)
@@ -1282,14 +1288,12 @@ class StudentRegNumKeypadWindow(BaseGUIWindow):
                 sg.Button("0", s=INPUT_BUTTON_SIZE),
             ],
             [
-                
                 sg.Button("4", s=INPUT_BUTTON_SIZE),
                 sg.Button("5", s=INPUT_BUTTON_SIZE),
                 sg.Button("6", s=INPUT_BUTTON_SIZE),
                 sg.Button("/", s=INPUT_BUTTON_SIZE),
             ],
             [
-                
                 sg.Button("7", s=INPUT_BUTTON_SIZE),
                 sg.Button("8", s=INPUT_BUTTON_SIZE),
                 sg.Button("9", s=INPUT_BUTTON_SIZE),
@@ -1297,9 +1301,9 @@ class StudentRegNumKeypadWindow(BaseGUIWindow):
             ],
             [
                 sg.Push(),
-                sg.Button("Submit", key="submit", s=INPUT_BUTTON_SIZE),                
-                sg.Push()
-            ]
+                sg.Button("Submit", key="submit", s=INPUT_BUTTON_SIZE),
+                sg.Push(),
+            ],
         ]
 
         layout = [
@@ -1319,9 +1323,7 @@ class StudentRegNumKeypadWindow(BaseGUIWindow):
             [sg.Push(), sg.Button("<< Back", key="back"), sg.Push()],
         ]
 
-        window = sg.Window(
-            "Reg Number Input", layout, **cls.window_init_dict()
-        )
+        window = sg.Window("Reg Number Input", layout, **cls.window_init_dict())
         return window
 
     @classmethod
@@ -1346,13 +1348,12 @@ class StudentRegNumKeypadWindow(BaseGUIWindow):
                 return True
 
             reg_number_entered = values["reg_num_input"]
-        
+
             student = Student.objects.filter(reg_number=reg_number_entered)
             if not student.exists():
                 cls.display_message(
-                    "No student found with given registration number.",
-                    window
-                )#here here
+                    "No student found with given registration number.", window
+                )  # here here
                 return True
 
             app_config["tmp_student"] = app_config.dict_vals_to_str(
@@ -1379,23 +1380,26 @@ class StudentRegNumKeypadWindow(BaseGUIWindow):
                 cls.display_message(
                     f"{tmp_student['first_name']} {tmp_student['last_name']} "
                     f"({tmp_student['reg_number']}) already checked in",
-                    window
+                    window,
                 )
                 return True
-            
+
             if tmp_student["face_encodings"] in (None, "None", ""):
                 if tmp_student["fingerprint_template"] in (None, "None", ""):
-                    cls.display_message("No biometric data found for student", window)
+                    cls.display_message(
+                        "No biometric data found for student", window
+                    )
                     return True
                 else:
-                    window_dispatch.open_window(StudentFingerprintVerificationWindow)
+                    window_dispatch.open_window(
+                        StudentFingerprintVerificationWindow
+                    )
                     return True
             else:
                 window_dispatch.open_window(StudentFaceVerificationWindow)
                 return True
 
         return True
-
 
     @classmethod
     def validate(cls, values, window):
@@ -1409,6 +1413,7 @@ class StudentRegNumKeypadWindow(BaseGUIWindow):
                 cls.display_message(val_check, window)
                 return True
         return None
+
 
 class CameraWindow(BaseGUIWindow):
     @classmethod
@@ -1448,7 +1453,7 @@ class CameraWindow(BaseGUIWindow):
                     image_data=cls.get_icon("keyboard", 0.5),
                     button_color=cls.ICON_BUTTON_COLOR,
                     key="keyboard",
-                    visible=True
+                    visible=True,
                 )
             )
         else:
@@ -1559,7 +1564,9 @@ class StudentFaceVerificationWindow(FaceCameraWindow):
         tmp_student = app_config["tmp_student"]
 
         if tmp_student["face_encodings"] in ("", None):
-            cls.popup_auto_close_error("Student's Facial biometric data not found")
+            cls.popup_auto_close_error(
+                "Student's Facial biometric data not found"
+            )
             window_dispatch.open_window(StudentBarcodeCameraWindow)
             return
 
@@ -1817,10 +1824,14 @@ class StudentBarcodeCameraWindow(BarcodeCameraWindow):
 
         if tmp_student["face_encodings"] in (None, "None", ""):
             if tmp_student["fingerprint_template"] in (None, "None", ""):
-                cls.popup_auto_close_error("No biometric data found for student")
+                cls.popup_auto_close_error(
+                    "No biometric data found for student"
+                )
                 return
             else:
-                window_dispatch.open_window(StudentFingerprintVerificationWindow)
+                window_dispatch.open_window(
+                    StudentFingerprintVerificationWindow
+                )
                 return
         else:
             window_dispatch.open_window(StudentFaceVerificationWindow)
@@ -1852,6 +1863,7 @@ class StudentBarcodeCameraWindow(BarcodeCameraWindow):
     def launch_keypad(cls):
         window_dispatch.open_window(StudentRegNumKeypadWindow)
         return
+
 
 class StaffBarcodeCameraWindow(BarcodeCameraWindow):
     @classmethod
@@ -1895,7 +1907,6 @@ class StaffBarcodeCameraWindow(BarcodeCameraWindow):
             window_dispatch.open_window(StaffFaceVerificationWindow)
             return
 
-
     @classmethod
     def window_title(cls):
         course = app_config["current_attendance_session"]["course"].split(":")
@@ -1921,6 +1932,7 @@ class StaffBarcodeCameraWindow(BarcodeCameraWindow):
     def launch_keypad(cls):
         window_dispatch.open_window(StaffNumberInputWindow)
         return
+
 
 # enrolment windows should not be available on all node devices;
 # should only be available on node devices that will be used for
@@ -2528,7 +2540,7 @@ class FingerprintGenericWindow(BaseGUIWindow):
     def window_title(cls):
         return "Place your left thumb on the fingerprint scanner"
 
-  
+
 class StudentFingerprintVerificationWindow(FingerprintGenericWindow):
     @classmethod
     def loop(cls, window, event, values):
@@ -2543,12 +2555,17 @@ class StudentFingerprintVerificationWindow(FingerprintGenericWindow):
         try:
             fp_template = eval(tmp_student.get("fingerprint_template"))
         except Exception as e:
-            cls.popup_auto_close_error("Invalid fingerprint data from student registration", duration=5)
+            cls.popup_auto_close_error(
+                "Invalid fingerprint data from student registration", duration=5
+            )
             window_dispatch.open_window(StudentBarcodeCameraWindow)
             return True
 
-        if fp_template in (None, ''):
-            cls.popup_auto_close_error("No valid fingerprint data from student registration", duration=5)
+        if fp_template in (None, ""):
+            cls.popup_auto_close_error(
+                "No valid fingerprint data from student registration",
+                duration=5,
+            )
             window_dispatch.open_window(StudentBarcodeCameraWindow)
             return True
 
@@ -2567,10 +2584,12 @@ class StudentFingerprintVerificationWindow(FingerprintGenericWindow):
             return True
 
         if not fp_scanner.send_fpdata(fp_template, slot=2):
-            cls.popup_auto_close_error("Error processing registration data. Contact admin", duration=5)
+            cls.popup_auto_close_error(
+                "Error processing registration data. Contact admin", duration=5
+            )
             window_dispatch.open_window(StudentBarcodeCameraWindow)
             return True
-        
+
         if fp_scanner.verify_match():
             if AttendanceLogger.log_attendance(app_config):
                 cls.popup_auto_close_success(AttendanceLogger.message)
@@ -2578,7 +2597,7 @@ class StudentFingerprintVerificationWindow(FingerprintGenericWindow):
 
             else:
                 cls.popup_auto_close_error(AttendanceLogger.message)
-            
+
             window_dispatch.open_window(StudentBarcodeCameraWindow)
             return True
         elif not fp_scanner.verify_match():
@@ -2599,7 +2618,7 @@ class StaffFingerprintVerificationWindow(FingerprintGenericWindow):
         if event == "cancel":
             window_dispatch.open_window(AttendanceSessionLandingWindow)
             return True
-        
+
         if event == "camera":
             window_dispatch.open_window(StaffFaceVerificationWindow)
             return True
@@ -2608,12 +2627,16 @@ class StaffFingerprintVerificationWindow(FingerprintGenericWindow):
         try:
             fp_template = eval(tmp_staff.get("fingerprint_template"))
         except Exception as e:
-            cls.popup_auto_close_error("Invalid fingerprint data from staff registration", duration=5)
+            cls.popup_auto_close_error(
+                "Invalid fingerprint data from staff registration", duration=5
+            )
             window_dispatch.open_window(StaffBarcodeCameraWindow)
             return True
 
-        if fp_template in (None, ''):
-            cls.popup_auto_close_error("No valid fingerprint data from staff registration", duration=5)
+        if fp_template in (None, ""):
+            cls.popup_auto_close_error(
+                "No valid fingerprint data from staff registration", duration=5
+            )
             window_dispatch.open_window(StaffBarcodeCameraWindow)
             return True
 
@@ -2644,7 +2667,9 @@ class StaffFingerprintVerificationWindow(FingerprintGenericWindow):
             return True
 
         if not fp_scanner.send_fpdata(fp_template, slot=2):
-            cls.popup_auto_close_error("Error processing registration data. Contact admin", duration=5)
+            cls.popup_auto_close_error(
+                "Error processing registration data. Contact admin", duration=5
+            )
             window_dispatch.open_window(AttendanceSessionLandingWindow)
             return True
 
@@ -2667,7 +2692,9 @@ class StaffFingerprintVerificationWindow(FingerprintGenericWindow):
             window_dispatch.open_window(AttendanceSessionLandingWindow)
             return True
         elif not fp_scanner.verify_match():
-            cls.popup_auto_close_error("Fingerprint did not match registration data")
+            cls.popup_auto_close_error(
+                "Fingerprint did not match registration data"
+            )
             return True
 
         cls.popup_auto_close_success(
@@ -2679,21 +2706,22 @@ class StaffFingerprintVerificationWindow(FingerprintGenericWindow):
 
 class FingerprintEnrolmentWindow(FingerprintGenericWindow):
     """The algorithm to be implemented should be:
-        The fingerprint being enrolled needs to be captured multiple 
-            times to ensure the quality of the image being saved is
-            qualitative.
-        One approach could be: use the standard enrolment process to 
-            create fingerprint model and save to a location in the
-            flash memory of the fingerprint sensor. Then load the fingerprint
-            from that memory location to the buffer/slot of the fingerprint
-            sensor and save to the db from there.
+    The fingerprint being enrolled needs to be captured multiple
+        times to ensure the quality of the image being saved is
+        qualitative.
+    One approach could be: use the standard enrolment process to
+        create fingerprint model and save to a location in the
+        flash memory of the fingerprint sensor. Then load the fingerprint
+        from that memory location to the buffer/slot of the fingerprint
+        sensor and save to the db from there.
 
 
-            - capture fingerprint image and save to the two slots of the 
-                fingerprint sensor
-            -compare the content of the 2 slots. If they match, then use 
-                the content of any of the two slots to populate the database
+        - capture fingerprint image and save to the two slots of the
+            fingerprint sensor
+        -compare the content of the 2 slots. If they match, then use
+            the content of any of the two slots to populate the database
     """
+
     @classmethod
     def loop(cls, window, event, values):
 
@@ -2719,7 +2747,6 @@ class FingerprintEnrolmentWindow(FingerprintGenericWindow):
 
             fp_scanner.fp_capture()
 
-
             if not fp_scanner.image_2_tz(fingerimg):
                 cls.popup_auto_close_error(fp_scanner.error, duration=5)
                 return True
@@ -2729,7 +2756,7 @@ class FingerprintEnrolmentWindow(FingerprintGenericWindow):
                 time.sleep(1)
                 i = fp_scanner.get_image()
                 while i != fp_scanner.NOFINGER:
-                    i  = fp_scanner.get_image()
+                    i = fp_scanner.get_image()
 
         cls.display_message("Creating model...", window)
         if not fp_scanner.create_model():

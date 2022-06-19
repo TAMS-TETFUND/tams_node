@@ -16,7 +16,6 @@ class CamFaceRec:
         self.img = None
         self.face_locations = None
         self.face_count = None
-        
 
     def _start_thread(self):
         Thread(target=self.face_read, args=()).start()
@@ -31,7 +30,6 @@ class CamFaceRec:
 
     def __exit__(self, exc_type, exc_value, exc_traceback):
         self._stop_thread()
-
 
     def load_facerec_attrs(self):
         if self.deque_not_empty:
@@ -53,8 +51,12 @@ class CamFaceRec:
                 self.cam.stop()
                 return
             self._img = self._img_bbox = self.cam.feed()
-            self._face_locations = self.face_rec.face_locations(self.cam.reduce_framesize(self._img))
-            self._face_locations = self.scale_face_locations(self._face_locations)
+            self._face_locations = self.face_rec.face_locations(
+                self.cam.reduce_framesize(self._img)
+            )
+            self._face_locations = self.scale_face_locations(
+                self._face_locations
+            )
 
             if len(self._face_locations) > 0:
                 for face_loc in self._face_locations:
@@ -84,5 +86,5 @@ class CamFaceRec:
             left *= 4
 
             resized_face_locations.append(tuple([top, right, bottom, left]))
-        
+
         return resized_face_locations

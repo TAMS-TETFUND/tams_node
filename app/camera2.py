@@ -7,7 +7,6 @@ from app.basegui import BaseGUIWindow as bgw
 
 
 class Camera:
-
     def __init__(self):
         self.camera_ok()
         self.cap = cv2.VideoCapture(0)
@@ -72,5 +71,4 @@ class Camera:
     @staticmethod
     def reduce_framesize(img):
         """Method to resize frame size for faster processing"""
-        return cv2.resize(img, (0,0), fx=0.25, fy=0.25)
-    
+        return cv2.resize(img, (0, 0), fx=0.25, fy=0.25)
