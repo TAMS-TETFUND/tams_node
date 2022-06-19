@@ -28,7 +28,7 @@ class AttendanceLogger:
         """This method will block a student after they attempt to 
         log attendance 4 times unsuccessfully.
         """
-        
+
         if "failed_attempts" not in app_config:
             app_config["failed_attempts"] = {}
         
@@ -37,6 +37,7 @@ class AttendanceLogger:
 
         if student_reg_number not in failed_attempts:
             failed_attempts[student_reg_number] = str(1)
+            app_config.save()
 
         elif failed_attempts.getint(student_reg_number) >= 3:
             if (
@@ -49,6 +50,7 @@ class AttendanceLogger:
             app_config["current_attendance_session"][
                 "blocked_reg_numbers"
             ] += ("," + student_reg_number)
-        
+            app_config.save()
         else:
             failed_attempts[student_reg_number] = str(failed_attempts.getint(student_reg_number) + 1)
+            app_config.save()
