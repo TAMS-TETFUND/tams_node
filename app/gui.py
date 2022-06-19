@@ -10,7 +10,7 @@ from app.camerafacerec import CamFaceRec
 from app.appconfigparser import AppConfigParser
 from app.basegui import BaseGUIWindow
 from app.fingerprint import FingerprintScanner
-
+from app.attendancelogger import AttendanceLogger
 from app.barcode import Barcode
 from app.facerec import FaceRecognition
 from app.windowdispatch import WindowDispatch
@@ -2593,11 +2593,11 @@ class StudentFingerprintVerificationWindow(FingerprintGenericWindow):
             return True
 
         cls.display_message("Waiting for finger print...", window)
-
         fp_scanner.fp_capture()
 
         if not fp_scanner.image_2_tz():
             cls.display_message(fp_scanner.error, window)
+            return True
 
         if not fp_scanner.send_fpdata(fp_template, slot=2):
             cls.popup_auto_close_error("Error processing registration data. Contact admin", duration=5)
@@ -2605,14 +2605,21 @@ class StudentFingerprintVerificationWindow(FingerprintGenericWindow):
             return True
         
         if fp_scanner.verify_match():
-            cls.popup_auto_close_success(
-                f"{tmp_student['last_name']} {tmp_student['first_name'][0]}."
-                f"({tmp_student['reg_number']}) checked in"
-            )
+            if AttendanceLogger.log_attendance():
+                cls.popup_auto_close_success(AttendanceLogger.message)
+
+            else:
+                cls.popup_auto_close_error(AttendanceLogger.message)
+            
             window_dispatch.open_window(StudentBarcodeCameraWindow)
             return True
-        else:
-            cls.display_message("Fingerprint did not match registration data", window)
+        elif not fp_scanner.verify_match():
+            AttendanceLogger.log_failed_attempts()
+            cls.popup_auto_close_error(
+                f"Fingerprint did not match registration data.\n"
+                f"{app_config['tmp_student']['reg_number']}."
+                f"You have {4 - app_config.getint('failed_attempts', tmp_student['reg_number'])}"
+            )
             return True
 
         return True
@@ -2684,6 +2691,7 @@ class FingerprintEnrolmentWindow(FingerprintGenericWindow):
 
         if event == "cancel":
             cls.cancel_fp_enrolment()
+            return True
 
         try:
             fp_scanner = FingerprintScanner()
@@ -2703,7 +2711,6 @@ class FingerprintEnrolmentWindow(FingerprintGenericWindow):
 
             fp_scanner.fp_capture()
 
-            # i = fp_scanner.image_2_tz(fingerimg)
 
             if not fp_scanner.image_2_tz(fingerimg):
                 cls.popup_auto_close_error(fp_scanner.error, duration=5)
