@@ -1569,54 +1569,21 @@ class StudentFaceVerificationWindow(FaceCameraWindow):
             ],
             face_encoding_to_check=captured_face_encodings,
         ):
-            try:
-                AttendanceRecord.objects.create(
-                    attendance_session_id=app_config.getint(
-                        "current_attendance_session", "session_id"
-                    ),
-                    student_id=tmp_student.getint("id"),
-                )
-            except IntegrityError as e:
-                print(e)
-                cls.popup_auto_close_error(
-                    "Something went wrong. Please contact admin."
-                )
-            else:
-                cls.popup_auto_close_success(
-                    f"{tmp_student['reg_number']} checked in"
-                )
+            if AttendanceLogger.log_attendance(app_config):
+                cls.popup_auto_close_success(AttendanceLogger.message)
                 app_config.remove_section("tmp_student")
+
+            else:
+                cls.popup_auto_close_error(AttendanceLogger.message)
+
             window_dispatch.open_window(StudentBarcodeCameraWindow)
             return
         else:
-            if "failed_attempts" not in tmp_student:
-                tmp_student["failed_attempts"] = str(1)
-            elif tmp_student.getint("failed_attempts") >= 3:
-                if (
-                    "blocked_reg_numbers"
-                    not in app_config["current_attendance_session"]
-                ):
-                    app_config["current_attendance_session"][
-                        "blocked_reg_numbers"
-                    ] = ""
-                app_config["current_attendance_session"][
-                    "blocked_reg_numbers"
-                ] += ("," + tmp_student["reg_number"])
-
-                cls.popup_auto_close_error(
-                    f"{tmp_student['reg_number']} number of allowed retries exceeded",
-                    title="Allowed Retries Exceeded",
-                )
-                window_dispatch.open_window(StudentBarcodeCameraWindow)
-                return
-            else:
-                tmp_student["failed_attempts"] = str(
-                    tmp_student.getint("failed_attempts") + 1
-                )
+            AttendanceLogger.log_failed_attempt(app_config)
             cls.popup_auto_close_error(
                 f"Error. Face did not match "
                 f"({app_config['tmp_student']['reg_number']})\n"
-                f"You have {4 - tmp_student.getint('failed_attempts')} attempts left",
+                f"You have {4 - app_config.getint('failed_attempts', tmp_student['reg_number'])} attempts left",
                 title="No Face",
             )
             return
@@ -2607,6 +2574,7 @@ class StudentFingerprintVerificationWindow(FingerprintGenericWindow):
         if fp_scanner.verify_match():
             if AttendanceLogger.log_attendance(app_config):
                 cls.popup_auto_close_success(AttendanceLogger.message)
+                app_config.remove_section("tmp_student")
 
             else:
                 cls.popup_auto_close_error(AttendanceLogger.message)
@@ -2614,7 +2582,7 @@ class StudentFingerprintVerificationWindow(FingerprintGenericWindow):
             window_dispatch.open_window(StudentBarcodeCameraWindow)
             return True
         elif not fp_scanner.verify_match():
-            AttendanceLogger.log_failed_attempts(app_config)
+            AttendanceLogger.log_failed_attempt(app_config)
             cls.popup_auto_close_error(
                 f"Fingerprint did not match registration data.\n"
                 f"{app_config['tmp_student']['reg_number']}."
