@@ -4,26 +4,23 @@ from app.appconfigparser import AppConfigParser
 from db.models import AttendanceRecord
 
 
-# initializing the configparser object
-
-
 class AttendanceLogger:
-    tmp_student = app_config["tmp_student"]
     message = ""
     @classmethod
     def log_attendance(cls, app_config: AppConfigParser):
+        tmp_student = app_config["tmp_student"]
         try:
             AttendanceRecord.objects.create(
                 attendance_session_id=app_config.getint(
                     "current_attendance_session", "session_id"
                 ),
-                student_id=cls.tmp_student.getint("id"),
+                student_id=tmp_student.getint("id"),
             )
         except IntegrityError:
             cls.message = "Something went wrong. Please contact admin."
             return False
         else:
-            cls.message = f"{cls.tmp_student['reg_number']} checked in"
+            cls.message = f"{tmp_student['reg_number']} checked in"
             return True
     
     @classmethod
@@ -31,10 +28,11 @@ class AttendanceLogger:
         """This method will block a student after they attempt to 
         log attendance 4 times unsuccessfully.
         """
+        
         if "failed_attempts" not in app_config:
             app_config["failed_attempts"] = {}
         
-        student_reg_number = cls.tmp_student["reg_number"]
+        student_reg_number = app_config["tmp_student"]["reg_number"]
         failed_attempts = app_config["failed_attempts"]
 
         if student_reg_number not in failed_attempts:
