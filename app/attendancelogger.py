@@ -5,14 +5,13 @@ from db.models import AttendanceRecord
 
 
 # initializing the configparser object
-app_config = AppConfigParser()
 
 
 class AttendanceLogger:
     tmp_student = app_config["tmp_student"]
     message = ""
     @classmethod
-    def log_attendance(cls):
+    def log_attendance(cls, app_config: AppConfigParser):
         try:
             AttendanceRecord.objects.create(
                 attendance_session_id=app_config.getint(
@@ -28,7 +27,7 @@ class AttendanceLogger:
             return True
     
     @classmethod
-    def log_failed_attempts(cls):
+    def log_failed_attempts(cls, app_config: AppConfigParser):
         """This method will block a student after they attempt to 
         log attendance 4 times unsuccessfully.
         """

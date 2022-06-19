@@ -2605,7 +2605,7 @@ class StudentFingerprintVerificationWindow(FingerprintGenericWindow):
             return True
         
         if fp_scanner.verify_match():
-            if AttendanceLogger.log_attendance():
+            if AttendanceLogger.log_attendance(app_config):
                 cls.popup_auto_close_success(AttendanceLogger.message)
 
             else:
@@ -2614,7 +2614,7 @@ class StudentFingerprintVerificationWindow(FingerprintGenericWindow):
             window_dispatch.open_window(StudentBarcodeCameraWindow)
             return True
         elif not fp_scanner.verify_match():
-            AttendanceLogger.log_failed_attempts()
+            AttendanceLogger.log_failed_attempts(app_config)
             cls.popup_auto_close_error(
                 f"Fingerprint did not match registration data.\n"
                 f"{app_config['tmp_student']['reg_number']}."
