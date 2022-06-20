@@ -44,6 +44,8 @@ window_dispatch = WindowDispatch()
 
 
 class HomeWindow(BaseGUIWindow):
+    """GUI Home Window for node devices."""
+
     @classmethod
     def window(cls):
         column1 = [
@@ -183,6 +185,11 @@ class HomeWindow(BaseGUIWindow):
 
 
 class EventMenuWindow(BaseGUIWindow):
+    """
+    A window which presents options for the user to choose the
+    event type for the attendance session.
+    """
+
     @classmethod
     def window(cls):
         column1 = [
@@ -283,6 +290,9 @@ class EventMenuWindow(BaseGUIWindow):
 
 
 class AcademicSessionDetailsWindow(BaseGUIWindow):
+    """Window to choose the academic session and academic semester for
+    new attendance event."""
+
     @classmethod
     def window(cls):
         layout = [
@@ -384,6 +394,8 @@ class AcademicSessionDetailsWindow(BaseGUIWindow):
 
 
 class NewAcademicSessionWindow(BaseGUIWindow):
+    """Window to create a new academic session."""
+
     @classmethod
     def window(cls):
         current_year = datetime.now().year
@@ -520,6 +532,9 @@ class NewAcademicSessionWindow(BaseGUIWindow):
 
 
 class EventDetailWindow(BaseGUIWindow):
+    """Window to for user to specify event deatils like: course,
+    start date, and event duration"""
+
     @classmethod
     def window(cls):
         section1 = [
@@ -751,6 +766,9 @@ class EventDetailWindow(BaseGUIWindow):
 
 
 class NewEventSummaryWindow(BaseGUIWindow):
+    """This window presents details selected by the user in the new
+    attendance session about to be initiated."""
+
     @classmethod
     def window(cls):
         new_event_dict = app_config["new_event"]
@@ -852,6 +870,9 @@ class NewEventSummaryWindow(BaseGUIWindow):
 
 
 class ActiveEventSummaryWindow(BaseGUIWindow):
+    """This window presents the details of an attendance session that
+    has been initiated."""
+
     @classmethod
     def window(cls):
         event_dict = app_config["current_attendance_session"]
@@ -941,71 +962,9 @@ class ActiveEventSummaryWindow(BaseGUIWindow):
         return True
 
 
-class VerifyAttendanceInitiatorWindow(BaseGUIWindow):
-    @classmethod
-    def window(cls):
-        column1 = [
-            [
-                sg.Push(),
-                sg.Button(
-                    image_data=cls.get_icon("face_scanner"),
-                    button_color=cls.ICON_BUTTON_COLOR,
-                    key="facial_verification",
-                ),
-                sg.Push(),
-            ],
-            [sg.Push(), sg.Text("Face ID"), sg.Push()],
-        ]
-
-        column2 = [
-            [
-                sg.Push(),
-                sg.Button(
-                    image_data=cls.get_icon("fingerprint"),
-                    button_color=cls.ICON_BUTTON_COLOR,
-                    key="fingerprint_verification",
-                ),
-                sg.Push(),
-            ],
-            [sg.Push(), sg.Text("Fingerprint"), sg.Push()],
-        ]
-
-        layout = [
-            [
-                sg.Text(
-                    "Only registered staff can initiate attendance taking."
-                ),
-                sg.Push(),
-            ],
-            [sg.Text("Verify identity via:"), sg.Push()],
-            [sg.Text("_" * 80)],
-            [sg.VPush()],
-            [sg.Push(), sg.Column(column1), sg.Column(column2), sg.Push()],
-            [sg.VPush()],
-            [sg.Text("_" * 80)],
-            [sg.Push(), sg.Button("<< Back", key="back"), sg.Push()],
-        ]
-
-        window = sg.Window(
-            "Verify Attendance Initiator", layout, **cls.window_init_dict()
-        )
-        return window
-
-    @classmethod
-    def loop(cls, window, event, values):
-        if event in (sg.WIN_CLOSED, "back"):
-            window_dispatch.open_window(HomeWindow)
-            sg.popup(
-                "Event has been saved as a scheduled event",
-                title="Event saved",
-                keep_on_top=True,
-            )
-        if event == "facial_verification":
-            window_dispatch.open_window(HomeWindow)
-        return True
-
-
 class AttendanceSessionLandingWindow(BaseGUIWindow):
+    """This is the landing window for the active attendance session."""
+
     @classmethod
     def window(cls):
         event_dict = dict(app_config["current_attendance_session"])
@@ -1087,62 +1046,10 @@ class AttendanceSessionLandingWindow(BaseGUIWindow):
         ).count()
 
 
-class KeypadWindow(BaseGUIWindow):
-    @classmethod
-    def window(cls):
-        INPUT_BUTTON_SIZE = (10, 2)
-        column1 = [
-            [
-                sg.Button("1", s=INPUT_BUTTON_SIZE),
-                sg.Button("2", s=INPUT_BUTTON_SIZE),
-                sg.Button("3", s=INPUT_BUTTON_SIZE),
-                sg.Button("4", s=INPUT_BUTTON_SIZE),
-            ],
-            [
-                sg.Button("5", s=INPUT_BUTTON_SIZE),
-                sg.Button("6", s=INPUT_BUTTON_SIZE),
-                sg.Button("7", s=INPUT_BUTTON_SIZE),
-                sg.Button("8", s=INPUT_BUTTON_SIZE),
-            ],
-            [
-                sg.Button("9", s=INPUT_BUTTON_SIZE),
-                sg.Button("0", s=INPUT_BUTTON_SIZE),
-                sg.Button("/", s=INPUT_BUTTON_SIZE),
-                sg.Button("Clear", key="clear", s=INPUT_BUTTON_SIZE),
-            ],
-            [
-                sg.Button("Submit", key="submit", s=INPUT_BUTTON_SIZE),
-            ],
-        ]
-
-        layout = [
-            [sg.Text("_" * 80)],
-            [sg.VPush()],
-            [cls.message_display_field()],
-            [
-                sg.Push(),
-                cls.field_name(),
-                sg.Input(
-                    size=(15, 1), justification="left", key="field_content"
-                ),
-                sg.Push(),
-            ],
-            [sg.Push(), sg.Column(column1), sg.Push()],
-            [sg.VPush()],
-            [sg.Push(), sg.Button("<< Back", key="back"), sg.Push()],
-        ]
-
-        window = sg.Window(
-            "Staff Number Input", layout, **cls.window_init_dict()
-        )
-        return window
-
-    @classmethod
-    def field_name(cls):
-        raise NotImplementedError
-
-
 class StaffNumberInputWindow(BaseGUIWindow):
+    """This window will provide an on-screen keypad for staff to enter
+    their staff id/number by button clicks."""
+
     @classmethod
     def window(cls):
         INPUT_BUTTON_SIZE = (10, 2)
@@ -1416,6 +1323,9 @@ class StudentRegNumKeypadWindow(BaseGUIWindow):
 
 
 class CameraWindow(BaseGUIWindow):
+    """A base class. This window provides the general camera window
+    layout."""
+
     @classmethod
     def window(cls):
         layout = [
@@ -1494,6 +1404,8 @@ class CameraWindow(BaseGUIWindow):
 
 
 class FaceCameraWindow(CameraWindow):
+    """This is a base class. Implements facial recognition with camera."""
+
     @classmethod
     def loop(cls, window, event, values):
         with CamFaceRec() as cam_facerec:
@@ -1556,6 +1468,9 @@ class FaceCameraWindow(CameraWindow):
 
 
 class StudentFaceVerificationWindow(FaceCameraWindow):
+    """This class carries out student face verification and logs
+    student attendance."""
+
     @classmethod
     def process_image(cls, captured_face_encodings, window):
         if captured_face_encodings is None:
@@ -1630,6 +1545,8 @@ class StudentFaceVerificationWindow(FaceCameraWindow):
 
 
 class StaffFaceVerificationWindow(FaceCameraWindow):
+    """This class is responsible for staff face verification and initiates attendance session."""
+
     @classmethod
     def process_image(cls, captured_face_encodings, window):
         if captured_face_encodings is None:
@@ -1706,6 +1623,8 @@ class StaffFaceVerificationWindow(FaceCameraWindow):
 
 
 class BarcodeCameraWindow(CameraWindow):
+    """Base class. This implements Barcode decoding with camera."""
+
     @classmethod
     def loop(cls, window, event, values):
         with Camera() as cam:
@@ -1765,7 +1684,7 @@ class BarcodeCameraWindow(CameraWindow):
 
 class StudentBarcodeCameraWindow(BarcodeCameraWindow):
     """window responsible for processing student registration number
-    during attendance marking"""
+    from qr code during attendance marking"""
 
     @classmethod
     def process_barcode(cls, identification_num, window):
@@ -1866,6 +1785,9 @@ class StudentBarcodeCameraWindow(BarcodeCameraWindow):
 
 
 class StaffBarcodeCameraWindow(BarcodeCameraWindow):
+    """window responsible for processing staff number
+    from qr code during attendance session initiation"""
+
     @classmethod
     def process_barcode(cls, identification_num, window):
         val_check = cls.validate_staff_number(identification_num)
@@ -1938,6 +1860,8 @@ class StaffBarcodeCameraWindow(BarcodeCameraWindow):
 # should only be available on node devices that will be used for
 # enrolment
 class EnrolmentMenuWindow(BaseGUIWindow):
+    """This window provides links to student and staff enrolment."""
+
     @classmethod
     def window(cls):
         layout = [
@@ -2133,6 +2057,9 @@ class StaffEnrolmentWindow(BaseGUIWindow):
 
 
 class StaffPasswordSettingWindow(BaseGUIWindow):
+    """This window is used for setting password for the new staff being
+    enrolled."""
+
     @classmethod
     def window(cls):
         layout = [
@@ -2217,6 +2144,9 @@ class StaffPasswordSettingWindow(BaseGUIWindow):
 
 
 class StaffFaceEnrolmentWindow(FaceCameraWindow):
+    """This window is used to capture face encodings for a new staff
+    being enrolled."""
+
     @classmethod
     def process_image(cls, captured_face_encodings, window):
         if captured_face_encodings is None:
@@ -2252,6 +2182,8 @@ class StaffFaceEnrolmentWindow(FaceCameraWindow):
 
 
 class StudentEnrolmentWindow(BaseGUIWindow):
+    """The GUI window for enrolment of student biodata."""
+
     @classmethod
     def window(cls):
         column1 = [
@@ -2454,6 +2386,9 @@ class StudentEnrolmentWindow(BaseGUIWindow):
 
 
 class StudentFaceEnrolmentWindow(FaceCameraWindow):
+    """This window is used to capture face encodings for a new student
+    being enrolled."""
+
     @classmethod
     def process_image(cls, captured_face_encodings, window):
         if captured_face_encodings is None:
@@ -2488,6 +2423,9 @@ class StudentFaceEnrolmentWindow(FaceCameraWindow):
 
 
 class FingerprintGenericWindow(BaseGUIWindow):
+    """Base window. Provides the layout for the fingerprint capture
+    window for the application."""
+
     @classmethod
     def window(cls):
         layout = [
@@ -2542,6 +2480,9 @@ class FingerprintGenericWindow(BaseGUIWindow):
 
 
 class StudentFingerprintVerificationWindow(FingerprintGenericWindow):
+    """This window provides an interface for verifying student fingerprint
+    during attendance logging."""
+
     @classmethod
     def loop(cls, window, event, values):
         if event == "cancel":
@@ -2613,6 +2554,9 @@ class StudentFingerprintVerificationWindow(FingerprintGenericWindow):
 
 
 class StaffFingerprintVerificationWindow(FingerprintGenericWindow):
+    """This window provides an interface for verifying staff
+    fingerprint during attendance initiation."""
+
     @classmethod
     def loop(cls, window, event, values):
         if event == "cancel":
@@ -2705,21 +2649,9 @@ class StaffFingerprintVerificationWindow(FingerprintGenericWindow):
 
 
 class FingerprintEnrolmentWindow(FingerprintGenericWindow):
-    """The algorithm to be implemented should be:
-    The fingerprint being enrolled needs to be captured multiple
-        times to ensure the quality of the image being saved is
-        qualitative.
-    One approach could be: use the standard enrolment process to
-        create fingerprint model and save to a location in the
-        flash memory of the fingerprint sensor. Then load the fingerprint
-        from that memory location to the buffer/slot of the fingerprint
-        sensor and save to the db from there.
-
-
-        - capture fingerprint image and save to the two slots of the
-            fingerprint sensor
-        -compare the content of the 2 slots. If they match, then use
-            the content of any of the two slots to populate the database
+    """
+    This class provides the loop method for capturing the fingerprint
+    template for both staff and student enrolment.
     """
 
     @classmethod
@@ -2781,6 +2713,8 @@ class FingerprintEnrolmentWindow(FingerprintGenericWindow):
 
 
 class StudentFingerprintEnrolmentWindow(FingerprintEnrolmentWindow):
+    """This class provides methods tailored to student fingerprint enrolment."""
+
     @classmethod
     def process_fingerprint(cls, fingerprint_data):
         new_student = app_config["new_student"]
@@ -2815,6 +2749,8 @@ class StudentFingerprintEnrolmentWindow(FingerprintEnrolmentWindow):
 
 
 class StaffFingerprintEnrolmentWindow(FingerprintEnrolmentWindow):
+    """This class provides methods tailored to staff fingerprint enrolement."""
+
     @classmethod
     def process_fingerprint(cls, fingerprint_data):
         new_staff = app_config["new_staff"]
