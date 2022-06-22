@@ -86,4 +86,12 @@ ahead.
 **an arbitrary value can also be allowed by the rest api for a node device to inform it to automatically
 generate name to be be given to it.
 
-=============================================================================================
+============================================================================================
+Attendance sign-out feature........................................................
+    -   Only students that signed in can sign out....
+    -   The sign-in feature will be permanently unavailable once signing out commences.
+    -   The sign-out interface is practically the same as the sign-in interface except for attendance
+         type being saved to the attendance record model
+    -   is there a need for biometric verification on sign-out events?
+=============================================================================================================
+should there be an attendance invalidation feature?
