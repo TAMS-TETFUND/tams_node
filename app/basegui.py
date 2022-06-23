@@ -100,7 +100,7 @@ class BaseGUIWindow:
             "size": cls.SCREEN_SIZE,
             "no_titlebar": True,
             "keep_on_top": True,
-            "grab_anywhere": True,
+            "grab_anywhere": False,
             "finalize": True,
             "use_custom_titlebar": False,
         }
