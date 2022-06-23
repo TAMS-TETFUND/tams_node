@@ -4,7 +4,6 @@ import time
 import PySimpleGUI as sg
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.utils import IntegrityError
-import app
 
 from app.camerafacerec import CamFaceRec
 from app.appconfigparser import AppConfigParser
@@ -14,7 +13,6 @@ from app.attendancelogger import AttendanceLogger
 from app.barcode import Barcode
 from app.facerec import FaceRecognition
 from app.windowdispatch import WindowDispatch
-from tams_node.settings import DEBUG
 
 
 from app.camera2 import Camera
