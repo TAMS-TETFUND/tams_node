@@ -95,3 +95,43 @@ Attendance sign-out feature.....................................................
     -   is there a need for biometric verification on sign-out events?
 =============================================================================================================
 should there be an attendance invalidation feature?
+===========================================================================================================
+Operational modes
+
+    -   The gui application needs to be refactored so that it can be possible to either set the attendance logging
+        to a single mode or make it possible for the device to function even when a biometric captuer device (camera or
+        fingerprint scanner) is unavailable.
+    -   The device could perform system checks to see which devices are currently available on startup.
+    -   The GUI should also provide a settings page where a particular mode can be selected.
+
+    The 3 operational modes of the system are:
+        - Face verification mode
+        - Fingerprint verification mode
+        - Bi-modal (where both modes are available)
+    
+    The user's selection will only be considered when the selected mode is feasible 
+    (all necessary devices are connected/functional)
+
+    ==================================
+    Face verification Flow:
+        - barcode scanner for staff number input
+        - attendance initiator face verification 
+        - start attenance
+        - barcode scanner for student reg number input
+        - student face verification
+
+    Fingerprint verification Flow:
+        - if camera is unavailable, present keypad for staff id input
+        - attendance initiator fingerprint verification 
+        - start attenance
+        - if camera is unavailable, present keypad for studnet reg number input
+        - student fingerprint verification
+    
+    Bimodal (Default to fingerprint):
+        - barcode scanner for staff number input
+        - attendance initiator fingerprint verification 
+        - start attendance
+        - barcode scanner for student reg number input
+        - student fingerprint verification
+
+====Default mode should be fingerprint because if proves to be more resilient to spoofing
