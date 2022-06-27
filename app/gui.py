@@ -1248,7 +1248,7 @@ class StudentRegNumInputWindow(StudentRegNumberInputRouterMixin, BaseGUIWindow):
             if not student.exists():
                 cls.display_message(
                     "No student found with given registration number.", window
-                )  # here here
+                )
                 return True
 
             app_config["tmp_student"] = app_config.dict_vals_to_str(
@@ -1279,7 +1279,7 @@ class StudentRegNumInputWindow(StudentRegNumberInputRouterMixin, BaseGUIWindow):
                 )
                 return True
 
-        cls.student_verification_window()
+        cls.student_reg_number_input_window()
         return True
 
     @classmethod
