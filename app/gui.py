@@ -872,7 +872,7 @@ class NewEventSummaryWindow(StaffIDInputRouterMixin, BaseGUIWindow):
         return True
 
 
-class ActiveEventSummaryWindow(BaseGUIWindow):
+class ActiveEventSummaryWindow(StaffBiometricVerificationRouterMixin, BaseGUIWindow):
     """This window presents the details of an attendance session that
     has been initiated."""
 
@@ -958,7 +958,8 @@ class ActiveEventSummaryWindow(BaseGUIWindow):
                     "fingerprint_template",
                 ).first()
             )
-            window_dispatch.open_window(StaffFaceVerificationWindow)
+            cls.staff_verification_window()
+            return True
 
         if event == "cancel":
             window_dispatch.open_window(HomeWindow)
