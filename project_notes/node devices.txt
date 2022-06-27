@@ -135,3 +135,7 @@ Operational modes
         - student fingerprint verification
 
 ====Default mode should be fingerprint because if proves to be more resilient to spoofing
+Should the operational mode be on a per-event basis as to give initiator control over 
+    verification modes that can be used for their events? - Yes
+===================================================
+add loading window for initial startup of the gui application
