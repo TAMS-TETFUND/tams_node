@@ -1086,7 +1086,7 @@ class StaffNumberInputWindow(StaffBiometricVerificationRouterMixin, BaseGUIWindo
                 sg.Push(),
                 sg.Text("Staff Number:    SS."),
                 sg.Input(
-                    size=(15, 1), justification="left", key="staff_number_input"
+                    size=(15, 1), justification="left", key="staff_number_input", focus=True,
                 ),
                 sg.Push(),
             ],
@@ -1209,7 +1209,7 @@ class StudentRegNumInputWindow(StudentBiometricVerificationRouterMixin, BaseGUIW
                 sg.Push(),
                 sg.Text("Registration Number:  "),
                 sg.Input(
-                    size=(25, 1), justification="left", key="reg_num_input"
+                    size=(25, 1), justification="left", key="reg_num_input", focus=True,
                 ),
                 sg.Push(),
             ],
@@ -1857,6 +1857,7 @@ class StaffEnrolmentWindow(BaseGUIWindow):
                     justification="left",
                     key="staff_number_input",
                     expand_x=True,
+                    focus=True,
                 ),
             ],
             [
@@ -2025,6 +2026,7 @@ class StaffPasswordSettingWindow(BaseGUIWindow):
                     expand_x=True,
                     enable_events=True,
                     password_char="*",
+                    focus=True,
                 ),
             ],
             [
@@ -2147,6 +2149,7 @@ class StudentEnrolmentWindow(BaseGUIWindow):
                     justification="left",
                     key="student_reg_number_input",
                     expand_x=True,
+                    focus=True,
                 ),
             ],
             [
@@ -2741,6 +2744,7 @@ class StaffFingerprintEnrolmentWindow(FingerprintEnrolmentWindow):
 def main():
     window_dispatch.open_window(HomeWindow)
     loop_exit_code = True
+
     while True:
         window = window_dispatch.current_window
         event, values = window.read(timeout=500)
