@@ -1168,7 +1168,7 @@ class StaffNumberInputWindow(StaffBiometricVerificationRouterMixin, BaseGUIWindo
         return None
 
 
-class StudentRegNumInputWindow(StudentRegNumberInputRouterMixin, BaseGUIWindow):
+class StudentRegNumInputWindow(StudentBiometricVerificationRouterMixin, BaseGUIWindow):
     """Window provides an interface for students to enter their registration
     numbers by button clicks."""
 
@@ -1278,7 +1278,7 @@ class StudentRegNumInputWindow(StudentRegNumberInputRouterMixin, BaseGUIWindow):
                     window,
                 )
                 return True
-            cls.student_reg_number_input_window()
+            cls.student_verification_window()
         return True
 
     @classmethod
