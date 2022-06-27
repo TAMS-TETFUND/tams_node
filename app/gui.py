@@ -5,6 +5,7 @@ import PySimpleGUI as sg
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.utils import IntegrityError
 
+from app.gui_utils import StaffBiometricVerificationRouterMixin, StaffIDInputRouterMixin, StudentRegNumberInputRouterMixin, StudentBiometricVerificationRouterMixin
 from app.camerafacerec import CamFaceRec
 from app.appconfigparser import AppConfigParser
 from app.basegui import BaseGUIWindow
@@ -13,7 +14,7 @@ from app.attendancelogger import AttendanceLogger
 from app.barcode import Barcode
 from app.facerec import FaceRecognition
 from app.windowdispatch import WindowDispatch
-
+from app.opmodes import OpModes, OperationalMode
 
 from app.camera2 import Camera
 
@@ -39,6 +40,10 @@ app_config = AppConfigParser()
 
 # initializing WindowDispatch object
 window_dispatch = WindowDispatch()
+
+# setting the operational mode of device
+app_config["tmp_settings"] = {}
+app_config["tmp_settings"]["op_mode"] = str(OperationalMode.check_all_modes())
 
 
 class HomeWindow(BaseGUIWindow):
@@ -763,7 +768,7 @@ class EventDetailWindow(BaseGUIWindow):
         return None
 
 
-class NewEventSummaryWindow(BaseGUIWindow):
+class NewEventSummaryWindow(StaffIDInputRouterMixin, BaseGUIWindow):
     """This window presents details selected by the user in the new
     attendance session about to be initiated."""
 
@@ -851,7 +856,7 @@ class NewEventSummaryWindow(BaseGUIWindow):
                 return True
 
             if event == "start_event":
-                window_dispatch.open_window(StaffBarcodeCameraWindow)
+                cls.staff_id_input_window()
 
             if event == "schedule_event":
                 sg.popup(
@@ -960,7 +965,7 @@ class ActiveEventSummaryWindow(BaseGUIWindow):
         return True
 
 
-class AttendanceSessionLandingWindow(BaseGUIWindow):
+class AttendanceSessionLandingWindow(StudentRegNumberInputRouterMixin, BaseGUIWindow):
     """This is the landing window for the active attendance session."""
 
     @classmethod
@@ -1014,7 +1019,7 @@ class AttendanceSessionLandingWindow(BaseGUIWindow):
             return True
 
         if event == "start_attendance":
-            window_dispatch.open_window(StudentBarcodeCameraWindow)
+            cls.student_reg_number_input_window()
 
         if event == "end_attendance":
             confirm = sg.popup_yes_no(
@@ -1044,7 +1049,7 @@ class AttendanceSessionLandingWindow(BaseGUIWindow):
         ).count()
 
 
-class StaffNumberInputWindow(BaseGUIWindow):
+class StaffNumberInputWindow(StaffBiometricVerificationRouterMixin, BaseGUIWindow):
     """This window will provide an on-screen keypad for staff to enter
     their staff id/number by button clicks."""
 
@@ -1145,23 +1150,7 @@ class StaffNumberInputWindow(BaseGUIWindow):
                     "fingerprint_template",
                 ).first()
             )
-
-            tmp_staff = app_config["tmp_staff"]
-            if tmp_staff["face_encodings"] in (None, "None", ""):
-                if tmp_staff["fingerprint_template"] in (None, "None", ""):
-                    cls.popup_auto_close_error(
-                        "No biometric data found for student"
-                    )
-                    return True
-                else:
-                    window_dispatch.open_window(
-                        StaffFingerprintVerificationWindow
-                    )
-                    return True
-            else:
-                window_dispatch.open_window(StaffFaceVerificationWindow)
-                return True
-
+            cls.staff_verification_window()
         return True
 
     @classmethod
@@ -1178,7 +1167,7 @@ class StaffNumberInputWindow(BaseGUIWindow):
         return None
 
 
-class StudentRegNumKeypadWindow(BaseGUIWindow):
+class StudentRegNumInputWindow(StudentRegNumberInputRouterMixin, BaseGUIWindow):
     """Window provides an interface for students to enter their registration
     numbers by button clicks."""
 
@@ -1289,21 +1278,7 @@ class StudentRegNumKeypadWindow(BaseGUIWindow):
                 )
                 return True
 
-            if tmp_student["face_encodings"] in (None, "None", ""):
-                if tmp_student["fingerprint_template"] in (None, "None", ""):
-                    cls.display_message(
-                        "No biometric data found for student", window
-                    )
-                    return True
-                else:
-                    window_dispatch.open_window(
-                        StudentFingerprintVerificationWindow
-                    )
-                    return True
-            else:
-                window_dispatch.open_window(StudentFaceVerificationWindow)
-                return True
-
+        cls.student_verification_window()
         return True
 
     @classmethod
@@ -1465,7 +1440,7 @@ class FaceCameraWindow(CameraWindow):
         ]
 
 
-class StudentFaceVerificationWindow(FaceCameraWindow):
+class StudentFaceVerificationWindow(StudentRegNumberInputRouterMixin, FaceCameraWindow):
     """This class carries out student face verification and logs
     student attendance."""
 
@@ -1480,7 +1455,7 @@ class StudentFaceVerificationWindow(FaceCameraWindow):
             cls.popup_auto_close_error(
                 "Student's Facial biometric data not found"
             )
-            window_dispatch.open_window(StudentBarcodeCameraWindow)
+            cls.student_reg_number_input_window()
             return
 
         if FaceRecognition.face_match(
@@ -1496,7 +1471,7 @@ class StudentFaceVerificationWindow(FaceCameraWindow):
             else:
                 cls.popup_auto_close_error(AttendanceLogger.message)
 
-            window_dispatch.open_window(StudentBarcodeCameraWindow)
+            cls.student_reg_number_input_window()
             return
         else:
             AttendanceLogger.log_failed_attempt(app_config)
@@ -1680,7 +1655,7 @@ class BarcodeCameraWindow(CameraWindow):
         ]
 
 
-class StudentBarcodeCameraWindow(BarcodeCameraWindow):
+class StudentBarcodeCameraWindow(StudentRegNumberInputRouterMixin, BarcodeCameraWindow):
     """window responsible for processing student registration number
     from qr code during attendance marking"""
 
@@ -1739,20 +1714,8 @@ class StudentBarcodeCameraWindow(BarcodeCameraWindow):
             )
             return
 
-        if tmp_student["face_encodings"] in (None, "None", ""):
-            if tmp_student["fingerprint_template"] in (None, "None", ""):
-                cls.popup_auto_close_error(
-                    "No biometric data found for student"
-                )
-                return
-            else:
-                window_dispatch.open_window(
-                    StudentFingerprintVerificationWindow
-                )
-                return
-        else:
-            window_dispatch.open_window(StudentFaceVerificationWindow)
-            return
+        cls.student_verification_window()
+        return
 
     @staticmethod
     def cancel_camera():
@@ -1778,11 +1741,11 @@ class StudentBarcodeCameraWindow(BarcodeCameraWindow):
 
     @classmethod
     def launch_keypad(cls):
-        window_dispatch.open_window(StudentRegNumKeypadWindow)
+        window_dispatch.open_window(StudentRegNumInputWindow)
         return
 
 
-class StaffBarcodeCameraWindow(BarcodeCameraWindow):
+class StaffBarcodeCameraWindow(StaffBiometricVerificationRouterMixin, BarcodeCameraWindow):
     """window responsible for processing staff number
     from qr code during attendance session initiation"""
 
@@ -1815,17 +1778,8 @@ class StaffBarcodeCameraWindow(BarcodeCameraWindow):
             ).first()
         )
 
-        tmp_staff = app_config["tmp_staff"]
-        if tmp_staff["face_encodings"] in (None, "None", ""):
-            if tmp_staff["fingerprint_template"] in (None, "None", ""):
-                cls.popup_auto_close_error("No biometric data found for staff")
-                return
-            else:
-                window_dispatch.open_window(StaffFingerprintVerificationWindow)
-                return
-        else:
-            window_dispatch.open_window(StaffFaceVerificationWindow)
-            return
+        cls.staff_verification_window()
+        return
 
     @classmethod
     def window_title(cls):
@@ -2477,7 +2431,7 @@ class FingerprintGenericWindow(BaseGUIWindow):
         return "Place your left thumb on the fingerprint scanner"
 
 
-class StudentFingerprintVerificationWindow(FingerprintGenericWindow):
+class StudentFingerprintVerificationWindow(StudentRegNumberInputRouterMixin, FingerprintGenericWindow):
     """This window provides an interface for verifying student fingerprint
     during attendance logging."""
 
@@ -2497,7 +2451,8 @@ class StudentFingerprintVerificationWindow(FingerprintGenericWindow):
             cls.popup_auto_close_error(
                 "Invalid fingerprint data from student registration", duration=5
             )
-            window_dispatch.open_window(StudentBarcodeCameraWindow)
+            cls.student_reg_number_input_window()
+
             return True
 
         if fp_template in (None, ""):
@@ -2505,14 +2460,14 @@ class StudentFingerprintVerificationWindow(FingerprintGenericWindow):
                 "No valid fingerprint data from student registration",
                 duration=5,
             )
-            window_dispatch.open_window(StudentBarcodeCameraWindow)
+            cls.student_reg_number_input_window()
             return True
 
         try:
             fp_scanner = FingerprintScanner()
         except RuntimeError as e:
             cls.popup_auto_close_error(e, duration=5)
-            window_dispatch.open_window(StudentBarcodeCameraWindow)
+            cls.student_reg_number_input_window()
             return True
 
         cls.display_message("Waiting for finger print...", window)
@@ -2526,7 +2481,7 @@ class StudentFingerprintVerificationWindow(FingerprintGenericWindow):
             cls.popup_auto_close_error(
                 "Error processing registration data. Contact admin", duration=5
             )
-            window_dispatch.open_window(StudentBarcodeCameraWindow)
+            cls.student_reg_number_input_window()
             return True
 
         if fp_scanner.verify_match():
@@ -2537,7 +2492,7 @@ class StudentFingerprintVerificationWindow(FingerprintGenericWindow):
             else:
                 cls.popup_auto_close_error(AttendanceLogger.message)
 
-            window_dispatch.open_window(StudentBarcodeCameraWindow)
+            cls.student_reg_number_input_window()
             return True
         elif not fp_scanner.verify_match():
             AttendanceLogger.log_failed_attempt(app_config)
@@ -2551,7 +2506,7 @@ class StudentFingerprintVerificationWindow(FingerprintGenericWindow):
         return True
 
 
-class StaffFingerprintVerificationWindow(FingerprintGenericWindow):
+class StaffFingerprintVerificationWindow(StaffIDInputRouterMixin, FingerprintGenericWindow):
     """This window provides an interface for verifying staff
     fingerprint during attendance initiation."""
 
@@ -2572,14 +2527,14 @@ class StaffFingerprintVerificationWindow(FingerprintGenericWindow):
             cls.popup_auto_close_error(
                 "Invalid fingerprint data from staff registration", duration=5
             )
-            window_dispatch.open_window(StaffBarcodeCameraWindow)
+            cls.staff_id_input_window()
             return True
 
         if fp_template in (None, ""):
             cls.popup_auto_close_error(
                 "No valid fingerprint data from staff registration", duration=5
             )
-            window_dispatch.open_window(StaffBarcodeCameraWindow)
+            cls.staff_id_input_window()
             return True
 
         try:
