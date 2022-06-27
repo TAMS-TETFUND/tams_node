@@ -5,6 +5,7 @@ import PySimpleGUI as sg
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.utils import IntegrityError
 
+import __main__
 from app.gui_utils import StaffBiometricVerificationRouterMixin, StaffIDInputRouterMixin, StudentRegNumberInputRouterMixin, StudentBiometricVerificationRouterMixin
 from app.camerafacerec import CamFaceRec
 from app.appconfigparser import AppConfigParser
@@ -39,8 +40,8 @@ from db.models import (
 app_config = AppConfigParser()
 
 # initializing WindowDispatch object
-window_dispatch = WindowDispatch()
-
+# window_dispatch = WindowDispatch()
+window_dispatch = __main__.window_dispatch
 # setting the operational mode of device
 app_config["tmp_settings"] = {}
 app_config["tmp_settings"]["op_mode"] = str(OperationalMode.check_all_modes())
