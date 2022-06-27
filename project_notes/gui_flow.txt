@@ -1,0 +1,6 @@
+For creating a new event
+HomeWindow -> New Event (button) -> EventMenuWindow -> AcademicSessionDetailsWindow -> EventDetailWindow -> NewEventSummaryWindow -> Start Event (button) -> StaffBarcodeCameraWindow -> StaffFaceVerificationWindow -> 
+                                                                                                                                  -> Schedule Event (button) -> HomeWindow
+                                                                                                                                                                                ->StaffNumberInputWindow -> StaffFaceVerificationWindow
+
+Can the windows be stateless? Would it be necessary for the windows to be stateless?
