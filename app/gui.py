@@ -1,3 +1,4 @@
+import sys
 from datetime import datetime, timedelta
 import time
 
@@ -6,7 +7,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db.utils import IntegrityError
 
 import __main__
-from app.gui_utils import StaffBiometricVerificationRouterMixin, StaffIDInputRouterMixin, StudentRegNumberInputRouterMixin, StudentBiometricVerificationRouterMixin
+from app.gui_utils import StaffBiometricVerificationRouterMixin, StaffIDInputRouterMixin, StudentRegNumberInputRouterMixin, StudentBiometricVerificationRouterMixin, ValidationMixin
 from app.camerafacerec import CamFaceRec
 from app.appconfigparser import AppConfigParser
 from app.basegui import BaseGUIWindow
@@ -14,8 +15,7 @@ from app.fingerprint import FingerprintScanner
 from app.attendancelogger import AttendanceLogger
 from app.barcode import Barcode
 from app.facerec import FaceRecognition
-from app.windowdispatch import WindowDispatch
-from app.opmodes import OpModes, OperationalMode
+from app.opmodes import OperationalMode
 
 from app.camera2 import Camera
 
@@ -44,7 +44,12 @@ app_config = AppConfigParser()
 window_dispatch = __main__.window_dispatch
 # setting the operational mode of device
 app_config["tmp_settings"] = {}
-app_config["tmp_settings"]["op_mode"] = str(OperationalMode.check_all_modes())
+try:
+    device_op_mode = OperationalMode.check_all_modes()
+except RuntimeError as e:
+    sg.popup(e, title="Error")
+    sys.exit()
+app_config["tmp_settings"]["op_mode"] = str(device_op_mode)
 
 
 class HomeWindow(BaseGUIWindow):
@@ -293,7 +298,7 @@ class EventMenuWindow(BaseGUIWindow):
         return True
 
 
-class AcademicSessionDetailsWindow(BaseGUIWindow):
+class AcademicSessionDetailsWindow(ValidationMixin, BaseGUIWindow):
     """Window to choose the academic session and academic semester for
     new attendance event."""
 
@@ -397,7 +402,7 @@ class AcademicSessionDetailsWindow(BaseGUIWindow):
         return None
 
 
-class NewAcademicSessionWindow(BaseGUIWindow):
+class NewAcademicSessionWindow(ValidationMixin, BaseGUIWindow):
     """Window to create a new academic session."""
 
     @classmethod
@@ -535,7 +540,7 @@ class NewAcademicSessionWindow(BaseGUIWindow):
         return True
 
 
-class EventDetailWindow(BaseGUIWindow):
+class EventDetailWindow(ValidationMixin, BaseGUIWindow):
     """Window to for user to specify event deatils like: course,
     start date, and event duration"""
 
@@ -1051,7 +1056,7 @@ class AttendanceSessionLandingWindow(StudentRegNumberInputRouterMixin, BaseGUIWi
         ).count()
 
 
-class StaffNumberInputWindow(StaffBiometricVerificationRouterMixin, BaseGUIWindow):
+class StaffNumberInputWindow(ValidationMixin, StaffBiometricVerificationRouterMixin, BaseGUIWindow):
     """This window will provide an on-screen keypad for staff to enter
     their staff id/number by button clicks."""
 
@@ -1169,7 +1174,7 @@ class StaffNumberInputWindow(StaffBiometricVerificationRouterMixin, BaseGUIWindo
         return None
 
 
-class StudentRegNumInputWindow(StudentBiometricVerificationRouterMixin, BaseGUIWindow):
+class StudentRegNumInputWindow(ValidationMixin, StudentBiometricVerificationRouterMixin, BaseGUIWindow):
     """Window provides an interface for students to enter their registration
     numbers by button clicks."""
 
@@ -1656,7 +1661,7 @@ class BarcodeCameraWindow(CameraWindow):
         ]
 
 
-class StudentBarcodeCameraWindow(StudentRegNumberInputRouterMixin, BarcodeCameraWindow):
+class StudentBarcodeCameraWindow(ValidationMixin, StudentRegNumberInputRouterMixin, BarcodeCameraWindow):
     """window responsible for processing student registration number
     from qr code during attendance marking"""
 
@@ -1746,7 +1751,7 @@ class StudentBarcodeCameraWindow(StudentRegNumberInputRouterMixin, BarcodeCamera
         return
 
 
-class StaffBarcodeCameraWindow(StaffBiometricVerificationRouterMixin, BarcodeCameraWindow):
+class StaffBarcodeCameraWindow(ValidationMixin, StaffBiometricVerificationRouterMixin, BarcodeCameraWindow):
     """window responsible for processing staff number
     from qr code during attendance session initiation"""
 
@@ -1842,7 +1847,7 @@ class EnrolmentMenuWindow(BaseGUIWindow):
         return True
 
 
-class StaffEnrolmentWindow(BaseGUIWindow):
+class StaffEnrolmentWindow(ValidationMixin, BaseGUIWindow):
     """The GUI window for enrolment of staff biodata"""
 
     @classmethod
@@ -2136,7 +2141,7 @@ class StaffFaceEnrolmentWindow(FaceCameraWindow):
         return
 
 
-class StudentEnrolmentWindow(BaseGUIWindow):
+class StudentEnrolmentWindow(ValidationMixin, BaseGUIWindow):
     """The GUI window for enrolment of student biodata."""
 
     @classmethod
