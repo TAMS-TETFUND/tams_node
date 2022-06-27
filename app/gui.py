@@ -1278,8 +1278,7 @@ class StudentRegNumInputWindow(StudentRegNumberInputRouterMixin, BaseGUIWindow):
                     window,
                 )
                 return True
-
-        cls.student_reg_number_input_window()
+            cls.student_reg_number_input_window()
         return True
 
     @classmethod
