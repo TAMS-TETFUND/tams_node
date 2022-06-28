@@ -6,19 +6,6 @@ import base64
 
 from PIL import Image
 import PySimpleGUI as sg
-from manage import django_setup
-
-django_setup()
-from db.models import (
-    AcademicSession,
-    Department,
-    Faculty,
-    Semester,
-    Sex,
-    Student,
-    Staff,
-)
-
 
 # set application-wide theme
 sg.theme("LightGreen6")
