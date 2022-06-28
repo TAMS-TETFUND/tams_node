@@ -2602,10 +2602,14 @@ class StaffFingerprintVerificationWindow(
         cls.display_message("Waiting for fingerprint...", window)
 
         try:
-            fp_scanner.fp_capture()
+            fp_response = fp_scanner.fp_capture()
         except RuntimeError as e:
             cls.popup_auto_close_error("Connection to fingerprint scanner lost")
             cls.staff_verification_window()
+            return True
+        
+        if not fp_response:
+            cls.display_message(fp_scanner.error, window)
             return True
 
         if not fp_scanner.image_2_tz():
@@ -2680,12 +2684,16 @@ class FingerprintEnrolmentWindow(FingerprintGenericWindow):
                 cls.display_message("Place same finger again...", window)
 
             try:
-                fp_scanner.fp_capture()
+                fp_response = fp_scanner.fp_capture()
             except RuntimeError as e:
                 cls.popup_auto_close_error(
                     "Connection to fingerprint scanner lost"
                 )
                 window_dispatch.open_window(HomeWindow)
+                return True
+
+            if not fp_response:
+                cls.display_message(fp_scanner.error, window)
                 return True
 
             if not fp_scanner.image_2_tz(fingerimg):
