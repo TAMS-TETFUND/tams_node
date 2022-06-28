@@ -1,4 +1,3 @@
-import sys
 from datetime import datetime, timedelta
 import time
 
@@ -13,7 +12,7 @@ from app.gui_utils import (
     StudentRegNumberInputRouterMixin,
     StudentBiometricVerificationRouterMixin,
     ValidationMixin,
-    update_device_op_mode
+    update_device_op_mode,
 )
 from app.camerafacerec import CamFaceRec
 from app.appconfigparser import AppConfigParser
@@ -52,6 +51,7 @@ window_dispatch = __main__.window_dispatch
 # setting the operational mode of device
 app_config["tmp_settings"] = {}
 update_device_op_mode()
+
 
 class HomeWindow(BaseGUIWindow):
     """GUI Home Window for node devices."""
@@ -157,6 +157,9 @@ class HomeWindow(BaseGUIWindow):
                         f"attendance session has expired"
                     )
                     app_config.remove_section("current_attendance_session")
+                    app_config.remove_section("failed_attempts")
+                    app_config.remove_section("tmp_student")
+                    app_config.remove_section("tmp_staff")
                     return True
 
                 if app_config.has_option(
@@ -1049,6 +1052,9 @@ class AttendanceSessionLandingWindow(
                 att_session.status = AttendanceSessionStatus.ENDED
                 att_session.save()
                 app_config.remove_section("current_attendance_session")
+                app_config.remove_section("failed_attempts")
+                app_config.remove_section("tmp_student")
+                app_config.remove_section("tmp_staff")
                 window_dispatch.open_window(HomeWindow)
         return True
 
@@ -2503,7 +2509,12 @@ class StudentFingerprintVerificationWindow(
             return True
 
         cls.display_message("Waiting for finger print...", window)
-        fp_scanner.fp_capture()
+        try:
+            fp_scanner.fp_capture()
+        except RuntimeError:
+            cls.popup_auto_close_error("Connection to fingerprint scanner lost")
+            cls.student_reg_number_input_window()
+            return True
 
         if not fp_scanner.image_2_tz():
             cls.display_message(fp_scanner.error, window)
@@ -2539,7 +2550,9 @@ class StudentFingerprintVerificationWindow(
 
 
 class StaffFingerprintVerificationWindow(
-    StaffIDInputRouterMixin, FingerprintGenericWindow
+    StaffIDInputRouterMixin,
+    StaffBiometricVerificationRouterMixin,
+    FingerprintGenericWindow,
 ):
     """This window provides an interface for verifying staff
     fingerprint during attendance initiation."""
@@ -2561,6 +2574,7 @@ class StaffFingerprintVerificationWindow(
             cls.popup_auto_close_error(
                 "Invalid fingerprint data from staff registration", duration=5
             )
+            app_config.remove_section("tmp_staff")
             cls.staff_id_input_window()
             return True
 
@@ -2574,29 +2588,21 @@ class StaffFingerprintVerificationWindow(
         try:
             fp_scanner = FingerprintScanner()
         except RuntimeError as e:
-            confirm = sg.popup_yes_no(
-                str(e) + ". Use Face verification instead?",
+            sg.popup(
+                e,
                 title="Error",
                 keep_on_top=True,
             )
-            if confirm == "Yes":
-                window_dispatch.open_window(StaffFaceVerificationWindow)
-            else:
-                if app_config.has_option(
-                    "current_attendance_session", "initiator_id"
-                ):
-                    window_dispatch.open_window(ActiveEventSummaryWindow)
-                else:
-                    window_dispatch.open_window(NewEventSummaryWindow)
+            cls.staff_verification_window()
             return True
 
         cls.display_message("Waiting for fingerprint...", window)
-        
+
         try:
             fp_scanner.fp_capture()
         except RuntimeError as e:
             cls.popup_auto_close_error("Connection to fingerprint scanner lost")
-            window_dispatch.open_window(AttendanceSessionLandingWindow)
+            cls.staff_verification_window()
             return True
 
         if not fp_scanner.image_2_tz():
@@ -2670,7 +2676,14 @@ class FingerprintEnrolmentWindow(FingerprintGenericWindow):
             else:
                 cls.display_message("Place same finger again...", window)
 
-            fp_scanner.fp_capture()
+            try:
+                fp_scanner.fp_capture()
+            except RuntimeError as e:
+                cls.popup_auto_close_error(
+                    "Connection to fingerprint scanner lost"
+                )
+                window_dispatch.open_window(HomeWindow)
+                return True
 
             if not fp_scanner.image_2_tz(fingerimg):
                 cls.popup_auto_close_error(fp_scanner.error, duration=5)
