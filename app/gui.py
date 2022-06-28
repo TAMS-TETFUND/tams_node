@@ -2591,7 +2591,13 @@ class StaffFingerprintVerificationWindow(
             return True
 
         cls.display_message("Waiting for fingerprint...", window)
-        fp_scanner.fp_capture()
+        
+        try:
+            fp_scanner.fp_capture()
+        except RuntimeError as e:
+            cls.popup_auto_close_error("Connection to fingerprint scanner lost")
+            window_dispatch.open_window(AttendanceSessionLandingWindow)
+            return True
 
         if not fp_scanner.image_2_tz():
             cls.display_message(fp_scanner.error, window)
