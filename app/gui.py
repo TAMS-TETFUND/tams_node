@@ -2510,10 +2510,13 @@ class StudentFingerprintVerificationWindow(
 
         cls.display_message("Waiting for finger print...", window)
         try:
-            fp_scanner.fp_capture()
+            fp_response = fp_scanner.fp_capture()
         except RuntimeError:
             cls.popup_auto_close_error("Connection to fingerprint scanner lost")
             cls.student_reg_number_input_window()
+            return True
+        if not fp_response:
+            cls.display_message(fp_scanner.error, window)
             return True
 
         if not fp_scanner.image_2_tz():
