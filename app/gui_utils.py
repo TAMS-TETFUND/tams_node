@@ -1,5 +1,10 @@
+import sys
+
+import PySimpleGUI as sg
+
 import app
-from app.opmodes import OpModes
+import app.gui as main_gui
+from app.opmodes import OperationalMode, OpModes
 
 from manage import django_setup
 
@@ -16,9 +21,26 @@ from db.models import (
 )
 
 
+def update_device_op_mode():
+    main_gui.app_config.remove_option("tmp_settings", "op_mode")
+    try:
+        device_op_mode = OperationalMode.check_all_modes()
+    except RuntimeError as e:
+        sg.popup(e, title="Error")
+        sys.exit()
+    else:
+        main_gui.app_config["tmp_settings"]["op_mode"] = str(device_op_mode)
+
+
 class StaffBiometricVerificationRouterMixin:
     @classmethod
     def staff_verification_window(cls):
+        """Mixin for routing staff verification task to appropriate window."""
+        update_device_op_mode()
+        if "op_mode" not in app.gui.app_config["tmp_settings"]:
+            app.gui.window_dispatch.open_window(app.gui.HomeWindow)
+            return
+        
         tmp_staff = app.gui.app_config["tmp_staff"]
         device_op_mode = app.gui.app_config.getint("tmp_settings", "op_mode")
         if device_op_mode == OpModes.FINGERPRINT.value:
@@ -64,6 +86,11 @@ class StaffIDInputRouterMixin:
 
     @staticmethod
     def staff_id_input_window():
+        update_device_op_mode()
+        if "op_mode" not in app.gui.app_config["tmp_settings"]:
+            app.gui.window_dispatch.open_window(app.gui.HomeWindow)
+            return
+
         if app.gui.app_config.getint("tmp_settings", "op_mode") in (
             OpModes.FACE.value,
             OpModes.BIMODAL.value,
@@ -77,10 +104,15 @@ class StaffIDInputRouterMixin:
 
 
 class StudentBiometricVerificationRouterMixin:
-    """Mixin for routing student verification to appropriate window."""
+    """Mixin for routing student verification task to appropriate window."""
 
     @classmethod
     def student_verification_window(cls):
+        update_device_op_mode()
+        if "op_mode" not in app.gui.app_config["tmp_settings"]:
+            app.gui.window_dispatch.open_window(app.gui.HomeWindow)
+            return
+        
         tmp_student = app.gui.app_config["tmp_student"]
         device_op_mode = app.gui.app_config.getint("tmp_settings", "op_mode")
         if device_op_mode == OpModes.FINGERPRINT.value:
@@ -126,6 +158,11 @@ class StudentRegNumberInputRouterMixin:
 
     @staticmethod
     def student_reg_number_input_window():
+        update_device_op_mode()
+        if "op_mode" not in app.gui.app_config["tmp_settings"]:
+            app.gui.window_dispatch.open_window(app.gui.HomeWindow)
+            return
+
         if app.gui.app_config.getint("tmp_settings", "op_mode") in (
             OpModes.FACE.value,
             OpModes.BIMODAL.value,
