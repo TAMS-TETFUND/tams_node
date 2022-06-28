@@ -1,5 +1,3 @@
-import sys
-
 import PySimpleGUI as sg
 
 import app
@@ -39,7 +37,7 @@ class StaffBiometricVerificationRouterMixin:
         if "op_mode" not in app.gui.app_config["tmp_settings"]:
             app.gui.window_dispatch.open_window(app.gui.HomeWindow)
             return
-        
+
         tmp_staff = app.gui.app_config["tmp_staff"]
         device_op_mode = app.gui.app_config.getint("tmp_settings", "op_mode")
         if device_op_mode == OpModes.FINGERPRINT.value:
@@ -111,7 +109,7 @@ class StudentBiometricVerificationRouterMixin:
         if "op_mode" not in app.gui.app_config["tmp_settings"]:
             app.gui.window_dispatch.open_window(app.gui.HomeWindow)
             return
-        
+
         tmp_student = app.gui.app_config["tmp_student"]
         device_op_mode = app.gui.app_config.getint("tmp_settings", "op_mode")
         if device_op_mode == OpModes.FINGERPRINT.value:
