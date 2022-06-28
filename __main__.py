@@ -15,7 +15,9 @@ class LoadingWindow(BaseGUIWindow):
             layout=[
                 [
                     sg.Image(
-                        data=cls.ring_lines, enable_events=True, key="loading_image"
+                        data=cls.ring_lines,
+                        enable_events=True,
+                        key="loading_image",
                     )
                 ],
                 [sg.Push(), sg.Text("Loading..."), sg.Push()],
