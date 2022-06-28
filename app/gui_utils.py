@@ -26,7 +26,7 @@ def update_device_op_mode():
     try:
         device_op_mode = OperationalMode.check_all_modes()
     except RuntimeError as e:
-        sg.popup(e, title="Error")
+        sg.popup(e, title="Error", keep_on_top=True)
     else:
         main_gui.app_config["tmp_settings"]["op_mode"] = str(device_op_mode)
 
