@@ -7,7 +7,13 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db.utils import IntegrityError
 
 import __main__
-from app.gui_utils import StaffBiometricVerificationRouterMixin, StaffIDInputRouterMixin, StudentRegNumberInputRouterMixin, StudentBiometricVerificationRouterMixin, ValidationMixin
+from app.gui_utils import (
+    StaffBiometricVerificationRouterMixin,
+    StaffIDInputRouterMixin,
+    StudentRegNumberInputRouterMixin,
+    StudentBiometricVerificationRouterMixin,
+    ValidationMixin,
+)
 from app.camerafacerec import CamFaceRec
 from app.appconfigparser import AppConfigParser
 from app.basegui import BaseGUIWindow
@@ -878,7 +884,9 @@ class NewEventSummaryWindow(StaffIDInputRouterMixin, BaseGUIWindow):
         return True
 
 
-class ActiveEventSummaryWindow(StaffBiometricVerificationRouterMixin, BaseGUIWindow):
+class ActiveEventSummaryWindow(
+    StaffBiometricVerificationRouterMixin, BaseGUIWindow
+):
     """This window presents the details of an attendance session that
     has been initiated."""
 
@@ -972,7 +980,9 @@ class ActiveEventSummaryWindow(StaffBiometricVerificationRouterMixin, BaseGUIWin
         return True
 
 
-class AttendanceSessionLandingWindow(StudentRegNumberInputRouterMixin, BaseGUIWindow):
+class AttendanceSessionLandingWindow(
+    StudentRegNumberInputRouterMixin, BaseGUIWindow
+):
     """This is the landing window for the active attendance session."""
 
     @classmethod
@@ -1056,7 +1066,9 @@ class AttendanceSessionLandingWindow(StudentRegNumberInputRouterMixin, BaseGUIWi
         ).count()
 
 
-class StaffNumberInputWindow(ValidationMixin, StaffBiometricVerificationRouterMixin, BaseGUIWindow):
+class StaffNumberInputWindow(
+    ValidationMixin, StaffBiometricVerificationRouterMixin, BaseGUIWindow
+):
     """This window will provide an on-screen keypad for staff to enter
     their staff id/number by button clicks."""
 
@@ -1092,7 +1104,10 @@ class StaffNumberInputWindow(ValidationMixin, StaffBiometricVerificationRouterMi
                 sg.Push(),
                 sg.Text("Staff Number:    SS."),
                 sg.Input(
-                    size=(15, 1), justification="left", key="staff_number_input", focus=True,
+                    size=(15, 1),
+                    justification="left",
+                    key="staff_number_input",
+                    focus=True,
                 ),
                 sg.Push(),
             ],
@@ -1174,7 +1189,9 @@ class StaffNumberInputWindow(ValidationMixin, StaffBiometricVerificationRouterMi
         return None
 
 
-class StudentRegNumInputWindow(ValidationMixin, StudentBiometricVerificationRouterMixin, BaseGUIWindow):
+class StudentRegNumInputWindow(
+    ValidationMixin, StudentBiometricVerificationRouterMixin, BaseGUIWindow
+):
     """Window provides an interface for students to enter their registration
     numbers by button clicks."""
 
@@ -1215,7 +1232,10 @@ class StudentRegNumInputWindow(ValidationMixin, StudentBiometricVerificationRout
                 sg.Push(),
                 sg.Text("Registration Number:  "),
                 sg.Input(
-                    size=(25, 1), justification="left", key="reg_num_input", focus=True,
+                    size=(25, 1),
+                    justification="left",
+                    key="reg_num_input",
+                    focus=True,
                 ),
                 sg.Push(),
             ],
@@ -1446,7 +1466,9 @@ class FaceCameraWindow(CameraWindow):
         ]
 
 
-class StudentFaceVerificationWindow(StudentRegNumberInputRouterMixin, FaceCameraWindow):
+class StudentFaceVerificationWindow(
+    StudentRegNumberInputRouterMixin, FaceCameraWindow
+):
     """This class carries out student face verification and logs
     student attendance."""
 
@@ -1661,7 +1683,9 @@ class BarcodeCameraWindow(CameraWindow):
         ]
 
 
-class StudentBarcodeCameraWindow(ValidationMixin, StudentRegNumberInputRouterMixin, BarcodeCameraWindow):
+class StudentBarcodeCameraWindow(
+    ValidationMixin, StudentRegNumberInputRouterMixin, BarcodeCameraWindow
+):
     """window responsible for processing student registration number
     from qr code during attendance marking"""
 
@@ -1751,7 +1775,9 @@ class StudentBarcodeCameraWindow(ValidationMixin, StudentRegNumberInputRouterMix
         return
 
 
-class StaffBarcodeCameraWindow(ValidationMixin, StaffBiometricVerificationRouterMixin, BarcodeCameraWindow):
+class StaffBarcodeCameraWindow(
+    ValidationMixin, StaffBiometricVerificationRouterMixin, BarcodeCameraWindow
+):
     """window responsible for processing staff number
     from qr code during attendance session initiation"""
 
@@ -2440,7 +2466,9 @@ class FingerprintGenericWindow(BaseGUIWindow):
         return "Place your left thumb on the fingerprint scanner"
 
 
-class StudentFingerprintVerificationWindow(StudentRegNumberInputRouterMixin, FingerprintGenericWindow):
+class StudentFingerprintVerificationWindow(
+    StudentRegNumberInputRouterMixin, FingerprintGenericWindow
+):
     """This window provides an interface for verifying student fingerprint
     during attendance logging."""
 
@@ -2515,7 +2543,9 @@ class StudentFingerprintVerificationWindow(StudentRegNumberInputRouterMixin, Fin
         return True
 
 
-class StaffFingerprintVerificationWindow(StaffIDInputRouterMixin, FingerprintGenericWindow):
+class StaffFingerprintVerificationWindow(
+    StaffIDInputRouterMixin, FingerprintGenericWindow
+):
     """This window provides an interface for verifying staff
     fingerprint during attendance initiation."""
 

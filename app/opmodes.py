@@ -9,9 +9,11 @@ class OpModes(Enum):
     FACE = 2
     BIMODAL = 100
 
+
 class OperationalMode:
-    """"A helper class to set the available biometric 
+    """ "A helper class to set the available biometric
     verification modes in the application configparser file."""
+
     @classmethod
     def check_all_modes(cls):
         cam_present = cls.check_camera()
@@ -49,7 +51,7 @@ class OperationalMode:
         """
         try:
             cam = Camera()
-        
+
         except Exception:
             return False
 
