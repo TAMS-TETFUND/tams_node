@@ -13,6 +13,7 @@ from app.gui_utils import (
     StudentRegNumberInputRouterMixin,
     StudentBiometricVerificationRouterMixin,
     ValidationMixin,
+    update_device_op_mode
 )
 from app.camerafacerec import CamFaceRec
 from app.appconfigparser import AppConfigParser
@@ -21,7 +22,6 @@ from app.fingerprint import FingerprintScanner
 from app.attendancelogger import AttendanceLogger
 from app.barcode import Barcode
 from app.facerec import FaceRecognition
-from app.opmodes import OperationalMode
 
 from app.camera2 import Camera
 
@@ -50,12 +50,13 @@ app_config = AppConfigParser()
 window_dispatch = __main__.window_dispatch
 # setting the operational mode of device
 app_config["tmp_settings"] = {}
-try:
-    device_op_mode = OperationalMode.check_all_modes()
-except RuntimeError as e:
-    sg.popup(e, title="Error")
-    sys.exit()
-app_config["tmp_settings"]["op_mode"] = str(device_op_mode)
+update_device_op_mode()
+# try:
+#     device_op_mode = OperationalMode.check_all_modes()
+# except RuntimeError as e:
+#     sg.popup(e, title="Error")
+#     sys.exit()
+# app_config["tmp_settings"]["op_mode"] = str(device_op_mode)
 
 
 class HomeWindow(BaseGUIWindow):
