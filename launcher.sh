@@ -4,4 +4,4 @@
 
 cd /
 cd home/pie/tams_node
-sudo python __main__.py
+sudo python __main__.py &
