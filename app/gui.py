@@ -21,7 +21,7 @@ from app.fingerprint import FingerprintScanner
 from app.attendancelogger import AttendanceLogger
 from app.barcode import Barcode
 from app.facerec import FaceRecognition
-
+from app.opmodes import OperationalMode
 from app.camera2 import Camera
 
 from db.models import (
@@ -1440,8 +1440,6 @@ class FaceCameraWindow(CameraWindow):
                 window["image_display"].update(
                     data=Camera.feed_to_bytes(cam_facerec.img_bbox)
                 )
-                # cam_facerec.refresh()
-        return True
 
     @classmethod
     def process_image(cls, captured_face_encodings, window):
@@ -2113,7 +2111,18 @@ class StaffPasswordSettingWindow(BaseGUIWindow):
                         return True
                 staff.set_password(values["staff_password"])
                 staff.save()
-                window_dispatch.open_window(StaffFaceEnrolmentWindow)
+
+                if not OperationalMode.check_camera():
+                    cls.popup_auto_close_warn("Camera not connected.")
+                    time.sleep(2)
+                    if not OperationalMode.check_fingerprint():
+                        cls.popup_auto_close_warn("Fingerprint scanner not connected")
+                        window_dispatch.open_window(HomeWindow)
+                    else:
+                        window_dispatch.open_window(StaffFingerprintEnrolmentWindow)
+                else:
+                    window_dispatch.open_window(StaffFaceEnrolmentWindow)
+                return True
 
             if event == "cancel":
                 confirm = sg.popup_yes_no(
@@ -2563,7 +2572,11 @@ class StaffFingerprintVerificationWindow(
     @classmethod
     def loop(cls, window, event, values):
         if event == "cancel":
-            window_dispatch.open_window(AttendanceSessionLandingWindow)
+            if app_config.has_option("current_attendance_session", "initiator_id"):
+                window_dispatch.open_window(ActiveEventSummaryWindow)
+            else:
+                app_config["new_event"] = app_config["current_attendance_session"]
+                window_dispatch.open_window(NewEventSummaryWindow)
             return True
 
         if event == "camera":
@@ -2800,6 +2813,7 @@ class StaffFingerprintEnrolmentWindow(FingerprintEnrolmentWindow):
     def remove_enrolment_config():
         app_config.remove_section("new_staff")
         return
+
 
 
 def main():
