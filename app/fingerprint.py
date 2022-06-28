@@ -115,10 +115,12 @@ class FingerprintScanner:
             return False
 
     def fp_capture(self):
-        # while True:
-        i = self.finger.get_image()
-        if i == adafruit_fingerprint.OK:
-            return True
+        fp_scan_end_time = time.time() + 1
+        while time.time() < fp_scan_end_time:
+            i = self.finger.get_image()
+            if i == adafruit_fingerprint.OK:
+                return True
+
         if i == adafruit_fingerprint.NOFINGER:
             self.error = "Place finger on scanner"
             return False
