@@ -48,16 +48,10 @@ app_config = AppConfigParser()
 # initializing WindowDispatch object
 # window_dispatch = WindowDispatch()
 window_dispatch = __main__.window_dispatch
+
 # setting the operational mode of device
 app_config["tmp_settings"] = {}
 update_device_op_mode()
-# try:
-#     device_op_mode = OperationalMode.check_all_modes()
-# except RuntimeError as e:
-#     sg.popup(e, title="Error")
-#     sys.exit()
-# app_config["tmp_settings"]["op_mode"] = str(device_op_mode)
-
 
 class HomeWindow(BaseGUIWindow):
     """GUI Home Window for node devices."""
