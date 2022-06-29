@@ -2725,12 +2725,12 @@ class FingerprintEnrolmentWindow(FingerprintGenericWindow):
 
         for fingerimg in range(1, 3):
             if fingerimg == 1:
-                cls.popup_auto_close_success(
+                cls.popup_auto_close_warn(
                     "Place your right thumb on fingerprint sensor...",
                     title="Info",
                 )
             else:
-                cls.popup_auto_close_success(
+                cls.popup_auto_close_warn(
                     "Place same finger again...", title="Info"
                 )
 
@@ -2750,7 +2750,7 @@ class FingerprintEnrolmentWindow(FingerprintGenericWindow):
                 return True
 
             if fingerimg == 1:
-                cls.display_message("Remove finger...", title="Info")
+                cls.popup_auto_close_warn("Remove finger...", title="Info")
                 time.sleep(2)
                 i = fp_scanner.get_image()
                 while i != fp_scanner.NOFINGER:
