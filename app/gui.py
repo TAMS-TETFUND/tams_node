@@ -2468,6 +2468,7 @@ class FingerprintGenericWindow(BaseGUIWindow):
                     button_color=cls.ICON_BUTTON_COLOR,
                     key="cancel",
                 ),
+                sg.Push(),
             ],
         ]
         window = sg.Window(
