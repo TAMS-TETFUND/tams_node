@@ -105,6 +105,13 @@ class BaseGUIWindow:
             sg.Text("", enable_events=True, k="message_display", visible=False)
         )
 
+    @classmethod
+    def cancel_button_kwargs(cls):
+        kwargs_dict = {
+            "button_color": ("#ffffff", cls.UI_COLORS["red"])
+        }
+        return kwargs_dict
+
     @staticmethod
     def display_message(message, window):
         window["message_display"].update(value=message, visible=True)
