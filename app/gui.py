@@ -69,7 +69,7 @@ class HomeWindow(BaseGUIWindow):
                 ),
                 sg.Push(),
             ],
-            [sg.Push(), sg.Text("New Event"), sg.Push()],
+            [sg.Push(), sg.Text("New Event", key="new_event_txt", enable_events=True), sg.Push()],
         ]
         column2 = [
             [
@@ -82,7 +82,8 @@ class HomeWindow(BaseGUIWindow):
                 ),
                 sg.Push(),
             ],
-            [sg.Push(), sg.Text("Continue Attendance"), sg.Push()],
+            [sg.Push(), sg.Text("Continue", key="continue_attendance_txt", enable_events=True), sg.Push()],
+            [sg.Push(), sg.Text("Attendance", key="continue_attendance_txt_2", enable_events=True), sg.Push()],
         ]
         column3 = [
             [
@@ -95,7 +96,8 @@ class HomeWindow(BaseGUIWindow):
                 ),
                 sg.Push(),
             ],
-            [sg.Push(), sg.Text("Scheduled/Recurring Events"), sg.Push()],
+            [sg.Push(), sg.Text("Scheduled &", key="schedule_txt", enable_events=True), sg.Push()],
+            [sg.Push(), sg.Text("Recurring Events", key="schedule_txt_2", enable_events=True), sg.Push()],
         ]
         layout = [
             [
@@ -131,9 +133,9 @@ class HomeWindow(BaseGUIWindow):
 
     @classmethod
     def loop(cls, window, event, values):
-        if event == "new_event":
+        if event in ("new_event", "new_event_txt"):
             window_dispatch.open_window(EventMenuWindow)
-        if event == "continue_attendance":
+        if event in ("continue_attendance", "continue_attendance_txt", "continue_attendance_txt_2"):
             if app_config.has_section("current_attendance_session"):
                 current_att_session = app_config["current_attendance_session"]
                 session_strt_time = datetime.strptime(
@@ -221,7 +223,7 @@ class EventMenuWindow(BaseGUIWindow):
                 ),
                 sg.Push(),
             ],
-            [sg.Push(), sg.Text("Lecture"), sg.Push()],
+            [sg.Push(), sg.Text("Lecture", key="lecture_txt", enable_events=True), sg.Push()],
         ]
 
         column2 = [
@@ -235,7 +237,7 @@ class EventMenuWindow(BaseGUIWindow):
                 ),
                 sg.Push(),
             ],
-            [sg.Push(), sg.Text("Lab"), sg.Push()],
+            [sg.Push(), sg.Text("Lab", key="lab_txt", enable_events=True), sg.Push()],
         ]
 
         column3 = [
@@ -249,7 +251,7 @@ class EventMenuWindow(BaseGUIWindow):
                 ),
                 sg.Push(),
             ],
-            [sg.Push(), sg.Text("Quiz"), sg.Push()],
+            [sg.Push(), sg.Text("Quiz", key="quiz_txt", enable_events=True), sg.Push()],
         ]
 
         column4 = [
@@ -263,7 +265,7 @@ class EventMenuWindow(BaseGUIWindow):
                 ),
                 sg.Push(),
             ],
-            [sg.Push(), sg.Text("Examination"), sg.Push()],
+            [sg.Push(), sg.Text("Examination", key="examination_txt", enable_events=True), sg.Push()],
         ]
 
         layout = [
@@ -294,7 +296,8 @@ class EventMenuWindow(BaseGUIWindow):
     def loop(cls, window, event, values):
         if event in (sg.WIN_CLOSED, "back"):
             window_dispatch.open_window(HomeWindow)
-        if event in ("lecture", "examination", "lab", "quiz"):
+        if event in ("lecture", "examination", "lab", "quiz", "lecture_txt", "examination_txt", "lab_txt", "quiz_txt"):
+            event = event.split("_")[0]
             app_config["new_event"] = {}
             app_config["new_event"]["type"] = event
             app_config["new_event"]["recurring"] = "False"
