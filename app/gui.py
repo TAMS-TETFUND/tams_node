@@ -1450,7 +1450,7 @@ class FaceCameraWindow(CameraWindow):
                             "Multiple faces detected",
                         )
                     elif cam_facerec.face_count == 0:
-                        cls.popup_auto_close_error("Camera did not find a face")
+                        cls.popup_auto_close_error("Bring face closer to camera")
 
                     if cam_facerec.face_count == 1:
                         captured_encodings = cam_facerec.face_encodings()
