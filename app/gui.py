@@ -2517,7 +2517,7 @@ class FingerprintGenericWindow(BaseGUIWindow):
 
     @classmethod
     def window_title(cls):
-        return "Place your left thumb on the fingerprint scanner"
+        return "Fingerprint Scan"
 
 
 class StudentFingerprintVerificationWindow(
@@ -2606,6 +2606,10 @@ class StudentFingerprintVerificationWindow(
             return True
 
         return True
+    
+    @classmethod
+    def window_title(cls):
+        return "Student Fingerprint Verification"
 
 
 class StaffFingerprintVerificationWindow(
@@ -2720,6 +2724,11 @@ class StaffFingerprintVerificationWindow(
         window_dispatch.open_window(AttendanceSessionLandingWindow)
         return True
 
+    @classmethod
+    def window_title(cls):
+        return "Staff Fingerprint Verification"
+
+
 
 class FingerprintEnrolmentWindow(FingerprintGenericWindow):
     """
@@ -2832,6 +2841,10 @@ class StudentFingerprintEnrolmentWindow(FingerprintEnrolmentWindow):
         app_config.remove_section("new_student")
         return
 
+    @classmethod
+    def window_title(cls):
+        return "Student Fingerprint Enrolment"
+
 
 class StaffFingerprintEnrolmentWindow(FingerprintEnrolmentWindow):
     """This class provides methods tailored to staff fingerprint enrolement."""
@@ -2868,6 +2881,10 @@ class StaffFingerprintEnrolmentWindow(FingerprintEnrolmentWindow):
     def remove_enrolment_config():
         app_config.remove_section("new_staff")
         return
+
+    @classmethod
+    def window_title(cls):
+        return "Student Fingerprint Verification"
 
 
 class StudentEnrolmentUpdateWindow(BaseGUIWindow):
