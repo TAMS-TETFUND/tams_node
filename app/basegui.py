@@ -8,7 +8,7 @@ from PIL import Image
 import PySimpleGUI as sg
 
 # set application-wide theme
-sg.theme("LightGreen6")
+sg.theme("DarkGrey")
 
 
 class BaseGUIWindow:
@@ -19,6 +19,12 @@ class BaseGUIWindow:
         sg.theme_background_color(),
         sg.theme_background_color(),
     )
+    UI_COLORS = {
+        "red": "#fc2323",
+        "yellow": "#fffb08",
+        "green": "#08ff14"
+
+    }
 
     @classmethod
     def window(cls):
