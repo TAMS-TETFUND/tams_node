@@ -269,7 +269,7 @@ class EventMenuWindow(BaseGUIWindow):
         layout = [
             [
                 sg.Push(),
-                sg.Text("Take Attendance for:", font="Any 20"),
+                sg.Text("Take Attendance for:", font="Helvetica 20"),
                 sg.Push(),
             ],
             [sg.Text("_" * 80)],
@@ -450,24 +450,24 @@ class NewAcademicSessionWindow(ValidationMixin, BaseGUIWindow):
                 sg.Button(
                     "<<Back",
                     k="back",
-                    font="Any 12",
+                    font="Helvetica 12",
                 ),
                 sg.Button(
                     "Create Academic Session",
                     k="create_session",
-                    font="Any 12",
+                    font="Helvetica 12",
                 ),
                 sg.Button(
                     "Home",
                     k="home",
-                    font="Any 12",
+                    font="Helvetica 12",
                 ),
             ],
         ]
         window = sg.Window(
             "New Academic Session",
             layout,
-            font="Any 14",
+            font="Helvetica 14",
             **cls.window_init_dict(),
         )
         return window
@@ -1479,7 +1479,7 @@ class FaceCameraWindow(CameraWindow):
             [
                 sg.Push(),
                 sg.Image(data=cls.get_icon("face_scanner", 0.4)),
-                sg.Text("Position Face", font=("Any", 14)),
+                sg.Text("Position Face", font=("Helvetica", 14)),
                 sg.Push(),
             ]
         ]
@@ -1696,7 +1696,7 @@ class BarcodeCameraWindow(CameraWindow):
             [
                 sg.Push(),
                 sg.Image(data=cls.get_icon("qr_code", 0.3)),
-                sg.Text("Present ID Card", font=("Any", 14)),
+                sg.Text("Present ID Card", font=("Helvetica", 14)),
                 sg.Push(),
             ],
         ]
@@ -1783,7 +1783,7 @@ class StudentBarcodeCameraWindow(
             [
                 sg.Push(),
                 sg.Image(data=cls.get_icon("qr_code", 0.3)),
-                sg.Text("Present Student ID Card (Barcode)", font=("Any", 13)),
+                sg.Text("Present Student ID Card (Barcode)", font=("Helvetica", 13)),
                 sg.Push(),
             ],
         ]
@@ -1847,7 +1847,7 @@ class StaffBarcodeCameraWindow(
                 sg.Image(data=cls.get_icon("qr_code", 0.3)),
                 sg.Text(
                     "Present Staff ID Card (Barcode) to authorize attendance-taking",
-                    font=("Any", 13),
+                    font=("Helvetica", 13),
                 ),
                 sg.Push(),
             ],
