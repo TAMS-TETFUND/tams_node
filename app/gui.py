@@ -65,6 +65,7 @@ class HomeWindow(BaseGUIWindow):
                     image_data=cls.get_icon("new"),
                     button_color=cls.ICON_BUTTON_COLOR,
                     key="new_event",
+                    use_ttk_buttons=True,
                 ),
                 sg.Push(),
             ],
@@ -77,6 +78,7 @@ class HomeWindow(BaseGUIWindow):
                     image_data=cls.get_icon("right_arrow"),
                     button_color=cls.ICON_BUTTON_COLOR,
                     key="continue_attendance",
+                    use_ttk_buttons=True,
                 ),
                 sg.Push(),
             ],
@@ -89,6 +91,7 @@ class HomeWindow(BaseGUIWindow):
                     image_data=cls.get_icon("schedule"),
                     button_color=cls.ICON_BUTTON_COLOR,
                     key="schedule",
+                    use_ttk_buttons=True,
                 ),
                 sg.Push(),
             ],
@@ -101,10 +104,12 @@ class HomeWindow(BaseGUIWindow):
                     image_data=cls.get_icon("settings", 0.5),
                     button_color=cls.ICON_BUTTON_COLOR,
                     key="settings",
+                    use_ttk_buttons=True,
                 ),
                 sg.Button(
                     image_data=cls.get_icon("power", 0.5),
                     button_color=cls.ICON_BUTTON_COLOR,
+                    use_ttk_buttons=True,
                     key="quit",
                 ),
             ],
@@ -212,6 +217,7 @@ class EventMenuWindow(BaseGUIWindow):
                     image_data=cls.get_icon("lecture"),
                     button_color=cls.ICON_BUTTON_COLOR,
                     key="lecture",
+                    use_ttk_buttons=True,
                 ),
                 sg.Push(),
             ],
@@ -225,6 +231,7 @@ class EventMenuWindow(BaseGUIWindow):
                     image_data=cls.get_icon("lab"),
                     button_color=cls.ICON_BUTTON_COLOR,
                     key="lab",
+                    use_ttk_buttons=True,
                 ),
                 sg.Push(),
             ],
@@ -238,6 +245,7 @@ class EventMenuWindow(BaseGUIWindow):
                     image_data=cls.get_icon("test_script"),
                     button_color=cls.ICON_BUTTON_COLOR,
                     key="quiz",
+                    use_ttk_buttons=True,
                 ),
                 sg.Push(),
             ],
@@ -251,6 +259,7 @@ class EventMenuWindow(BaseGUIWindow):
                     image_data=cls.get_icon("graduation_cap"),
                     button_color=cls.ICON_BUTTON_COLOR,
                     key="examination",
+                    use_ttk_buttons=True,
                 ),
                 sg.Push(),
             ],
@@ -348,7 +357,7 @@ class AcademicSessionDetailsWindow(ValidationMixin, BaseGUIWindow):
                 sg.Push(),
                 sg.Button("<< Back", key="back"),
                 sg.Button("Next >>", key="next"),
-                sg.Button("Cancel", key="cancel"),
+                sg.Button("Cancel", key="cancel", **cls.cancel_button_kwargs()),
                 sg.Push(),
             ],
         ]
@@ -650,7 +659,7 @@ class EventDetailWindow(ValidationMixin, BaseGUIWindow):
             [
                 sg.Push(),
                 sg.Button("Next", k="next"),
-                sg.Button("Cancel", k="cancel"),
+                sg.Button("Cancel", k="cancel", **cls.cancel_button_kwargs()),
                 sg.Push(),
             ],
             [sg.VPush()],
@@ -816,7 +825,7 @@ class NewEventSummaryWindow(StaffIDInputRouterMixin, BaseGUIWindow):
                 sg.Button("Start Event", k="start_event"),
                 sg.Button("Schedule Event", k="schedule_event"),
                 sg.Button("Edit Details", k="edit"),
-                sg.Button("Cancel", k="cancel"),
+                sg.Button("Cancel", k="cancel", **cls.cancel_button_kwargs()),
             ],
         ]
         window = sg.Window(
@@ -932,7 +941,7 @@ class ActiveEventSummaryWindow(
             [sg.Text("_" * 80)],
             [
                 sg.Button("Continue Event", k="continue_event"),
-                sg.Button("Cancel", k="cancel"),
+                sg.Button("Cancel", k="cancel", **cls.cancel_button_kwargs()),
             ],
         ]
         window = sg.Window(
@@ -1010,8 +1019,8 @@ class AttendanceSessionLandingWindow(
             [sg.Text("_" * 80)],
             [
                 sg.Button("Take Attendance", k="start_attendance"),
-                sg.Button("End Attendance", k="end_attendance"),
                 sg.Button("Go back home", k="home"),
+                sg.Button("End Attendance", k="end_attendance", **cls.cancel_button_kwargs()),
             ],
         ]
 
@@ -1338,17 +1347,19 @@ class CameraWindow(BaseGUIWindow):
             [
                 sg.Push(),
                 sg.Button(
-                    image_data=cls.get_icon("camera", 0.5),
+                    image_data=cls.get_icon("camera", 0.6),
                     button_color=cls.ICON_BUTTON_COLOR,
                     key="capture",
-                ),
-                sg.Button(
-                    image_data=cls.get_icon("cancel", 0.5),
-                    button_color=cls.ICON_BUTTON_COLOR,
-                    key="cancel",
+                    use_ttk_buttons=True,
                 ),
                 cls.get_fingerprint_button(),
                 cls.get_keyboard_button(),
+                sg.Button(
+                    image_data=cls.get_icon("cancel", 0.6),
+                    button_color=cls.ICON_BUTTON_COLOR,
+                    key="cancel",
+                    use_ttk_buttons=True,
+                ),
                 sg.Push(),
             ],
         ]
@@ -1360,19 +1371,21 @@ class CameraWindow(BaseGUIWindow):
         if issubclass(cls, BarcodeCameraWindow):
             return sg.pin(
                 sg.Button(
-                    image_data=cls.get_icon("keyboard", 0.5),
+                    image_data=cls.get_icon("keyboard", 0.6),
                     button_color=cls.ICON_BUTTON_COLOR,
                     key="keyboard",
                     visible=True,
+                    use_ttk_buttons=True,
                 )
             )
         else:
             return sg.pin(
                 sg.Button(
-                    image_data=cls.get_icon("keyboard", 0.5),
+                    image_data=cls.get_icon("keyboard", 0.6),
                     button_color=cls.ICON_BUTTON_COLOR,
                     key="keyboard",
                     visible=False,
+                    use_ttk_buttons=True,
                 )
             )
 
@@ -1381,20 +1394,22 @@ class CameraWindow(BaseGUIWindow):
         if "verification" in cls.__name__.lower():
             return sg.pin(
                 sg.Button(
-                    image_data=cls.get_icon("fingerprint", 0.5),
+                    image_data=cls.get_icon("fingerprint", 0.6),
                     button_color=cls.ICON_BUTTON_COLOR,
                     key="fingerprint",
                     visible=True,
+                    use_ttk_buttons=True,
                 )
             )
         else:
             return sg.pin(
                 sg.Button(
-                    image_data=cls.get_icon("fingerprint", 0.5),
+                    image_data=cls.get_icon("fingerprint", 0.6),
                     button_color=cls.ICON_BUTTON_COLOR,
                     key="fingerprint",
                     visible=False,
                     disabled=True,
+                    use_ttk_buttons=True,
                 )
             )
 
@@ -1953,7 +1968,7 @@ class StaffEnrolmentWindow(ValidationMixin, BaseGUIWindow):
             ],
             [
                 sg.Button("Submit", key="submit"),
-                sg.Button("Cancel", key="cancel"),
+                sg.Button("Cancel", key="cancel", **cls.cancel_button_kwargs()),
             ],
             [sg.VPush()],
         ]
@@ -2075,7 +2090,7 @@ class StaffPasswordSettingWindow(BaseGUIWindow):
             ],
             [
                 sg.Button("Submit", key="submit"),
-                sg.Button("Cancel", key="cancel"),
+                sg.Button("Cancel", key="cancel", **cls.cancel_button_kwargs()),
             ],
         ]
         window = sg.Window(
@@ -2281,7 +2296,7 @@ class StudentEnrolmentWindow(ValidationMixin, BaseGUIWindow):
             ],
             [
                 sg.Button("Submit", key="submit"),
-                sg.Button("Cancel", key="cancel"),
+                sg.Button("Cancel", key="cancel", **cls.cancel_button_kwargs()),
             ],
             [sg.VPush()],
         ]
@@ -2464,9 +2479,10 @@ class FingerprintGenericWindow(BaseGUIWindow):
                 sg.Push(),
                 cls.get_camera_button(),
                 sg.Button(
-                    image_data=cls.get_icon("cancel", 0.5),
+                    image_data=cls.get_icon("cancel", 0.6),
                     button_color=cls.ICON_BUTTON_COLOR,
                     key="cancel",
+                    use_ttk_buttons=True,
                 ),
                 sg.Push(),
             ],
@@ -2481,19 +2497,21 @@ class FingerprintGenericWindow(BaseGUIWindow):
         if "verification" in cls.__name__.lower():
             return sg.pin(
                 sg.Button(
-                    image_data=cls.get_icon("camera", 0.5),
+                    image_data=cls.get_icon("camera", 0.6),
                     button_color=cls.ICON_BUTTON_COLOR,
                     key="camera",
                     visible=True,
+                    use_ttk_buttons=True,
                 )
             )
         else:
             return sg.pin(
                 sg.Button(
-                    image_data=cls.get_icon("camera", 0.5),
+                    image_data=cls.get_icon("camera", 0.6),
                     button_color=cls.ICON_BUTTON_COLOR,
                     key="camera",
                     visible=False,
+                    use_ttk_buttons=True,
                 )
             )
 
@@ -2932,7 +2950,7 @@ class StaffEnrolmentUpdateWindow(StaffEnrolmentWindow):
             ],
             [
                 sg.Button("Submit", key="submit"),
-                sg.Button("Cancel", key="cancel"),
+                sg.Button("Cancel", key="cancel", **cls.cancel_button_kwargs()),
             ],
             [sg.VPush()],
         ]
