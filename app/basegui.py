@@ -91,6 +91,7 @@ class BaseGUIWindow:
     def window_init_dict(cls):
         init_dict = {
             "size": cls.SCREEN_SIZE,
+            "font": "Helvetica 12",
             "no_titlebar": True,
             "keep_on_top": True,
             "grab_anywhere": False,
