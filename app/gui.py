@@ -1418,7 +1418,9 @@ class FaceCameraWindow(CameraWindow):
 
                 if event == "fingerprint":
                     if not OperationalMode.check_fingerprint():
-                        cls.popup_auto_close_error("Fingerprint scanner not connected")
+                        cls.popup_auto_close_error(
+                            "Fingerprint scanner not connected"
+                        )
                     else:
                         cls.open_fingerprint()
                     return True
@@ -2119,10 +2121,14 @@ class StaffPasswordSettingWindow(BaseGUIWindow):
                     cls.popup_auto_close_warn("Camera not connected.")
                     time.sleep(2)
                     if not OperationalMode.check_fingerprint():
-                        cls.popup_auto_close_warn("Fingerprint scanner not connected")
+                        cls.popup_auto_close_warn(
+                            "Fingerprint scanner not connected"
+                        )
                         window_dispatch.open_window(HomeWindow)
                     else:
-                        window_dispatch.open_window(StaffFingerprintEnrolmentWindow)
+                        window_dispatch.open_window(
+                            StaffFingerprintEnrolmentWindow
+                        )
                 else:
                     window_dispatch.open_window(StaffFaceEnrolmentWindow)
                 return True
@@ -2334,11 +2340,15 @@ class StudentEnrolmentWindow(ValidationMixin, BaseGUIWindow):
                 cls.popup_auto_close_error("Camera not connected")
                 time.sleep(1)
                 if not OperationalMode.check_fingerprint():
-                    cls.popup_auto_close_error("Fingerprit scanner not connected")
+                    cls.popup_auto_close_error(
+                        "Fingerprit scanner not connected"
+                    )
                     window_dispatch.open_window(HomeWindow)
                     return True
                 else:
-                    window_dispatch.open_window(StudentFingerprintEnrolmentWindow)
+                    window_dispatch.open_window(
+                        StudentFingerprintEnrolmentWindow
+                    )
                     return True
             else:
                 window_dispatch.open_window(StudentFaceEnrolmentWindow)
@@ -2590,10 +2600,14 @@ class StaffFingerprintVerificationWindow(
     @classmethod
     def loop(cls, window, event, values):
         if event == "cancel":
-            if app_config.has_option("current_attendance_session", "initiator_id"):
+            if app_config.has_option(
+                "current_attendance_session", "initiator_id"
+            ):
                 window_dispatch.open_window(ActiveEventSummaryWindow)
             else:
-                app_config["new_event"] = app_config["current_attendance_session"]
+                app_config["new_event"] = app_config[
+                    "current_attendance_session"
+                ]
                 window_dispatch.open_window(NewEventSummaryWindow)
             return True
 
@@ -2641,7 +2655,7 @@ class StaffFingerprintVerificationWindow(
             cls.popup_auto_close_error("Connection to fingerprint scanner lost")
             cls.staff_verification_window()
             return True
-        
+
         if not fp_response:
             cls.display_message(fp_scanner.error, window)
             return True
@@ -2711,14 +2725,19 @@ class FingerprintEnrolmentWindow(FingerprintGenericWindow):
 
         for fingerimg in range(1, 3):
             if fingerimg == 1:
-                cls.display_message(
-                    "Place your right thumb on fingerprint sensor...", window
+                cls.popup_auto_close_success(
+                    "Place your right thumb on fingerprint sensor...",
+                    title="Info",
                 )
             else:
-                cls.display_message("Place same finger again...", window)
+                cls.popup_auto_close_success(
+                    "Place same finger again...", title="Info"
+                )
+
+            time.sleep(1)
 
             try:
-                fp_response = fp_scanner.fp_capture()
+                fp_scanner.fp_continuous_capture()
             except RuntimeError as e:
                 cls.popup_auto_close_error(
                     "Connection to fingerprint scanner lost"
@@ -2726,17 +2745,13 @@ class FingerprintEnrolmentWindow(FingerprintGenericWindow):
                 window_dispatch.open_window(HomeWindow)
                 return True
 
-            if not fp_response:
-                cls.display_message(fp_scanner.error, window)
-                return True
-
             if not fp_scanner.image_2_tz(fingerimg):
                 cls.popup_auto_close_error(fp_scanner.error, duration=5)
                 return True
 
             if fingerimg == 1:
-                cls.display_message("Remove finger", window)
-                time.sleep(1)
+                cls.display_message("Remove finger...", title="Info")
+                time.sleep(2)
                 i = fp_scanner.get_image()
                 while i != fp_scanner.NOFINGER:
                     i = fp_scanner.get_image()
@@ -2842,6 +2857,7 @@ class StudentEnrolmentUpdateWindow(BaseGUIWindow):
 
 class StaffEnrolmentUpdateWindow(StaffEnrolmentWindow):
     """A window for updating biodata of existing staff."""
+
     @classmethod
     def window(cls):
         column1 = [
@@ -2921,6 +2937,7 @@ class StaffEnrolmentUpdateWindow(StaffEnrolmentWindow):
         ]
         window = sg.Window("Staff Enrolment", layout, **cls.window_init_dict())
         return window
+
 
 def main():
     window_dispatch.open_window(HomeWindow)
