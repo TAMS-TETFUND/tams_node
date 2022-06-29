@@ -1417,7 +1417,10 @@ class FaceCameraWindow(CameraWindow):
                     return True
 
                 if event == "fingerprint":
-                    cls.open_fingerprint()
+                    if not OperationalMode.check_fingerprint():
+                        cls.popup_auto_close_error("Fingerprint scanner not connected")
+                    else:
+                        cls.open_fingerprint()
                     return True
 
                 if (
@@ -2327,7 +2330,19 @@ class StudentEnrolmentWindow(ValidationMixin, BaseGUIWindow):
                     department=department, **new_student_dict
                 )
 
-            window_dispatch.open_window(StudentFaceEnrolmentWindow)
+            if not OperationalMode.check_camera():
+                cls.popup_auto_close_error("Camera not connected")
+                time.sleep(1)
+                if not OperationalMode.check_fingerprint():
+                    cls.popup_auto_close_error("Fingerprit scanner not connected")
+                    window_dispatch.open_window(HomeWindow)
+                    return True
+                else:
+                    window_dispatch.open_window(StudentFingerprintEnrolmentWindow)
+                    return True
+            else:
+                window_dispatch.open_window(StudentFaceEnrolmentWindow)
+                return True
         if event == "cancel":
             window_dispatch.open_window(HomeWindow)
         return True
@@ -2488,7 +2503,10 @@ class StudentFingerprintVerificationWindow(
             window_dispatch.open_window(AttendanceSessionLandingWindow)
             return True
         if event == "camera":
-            window_dispatch.open_window(StudentFaceVerificationWindow)
+            if not OperationalMode.check_camera():
+                cls.popup_auto_close_error("Camera not connected")
+            else:
+                window_dispatch.open_window(StudentFaceVerificationWindow)
             return True
 
         tmp_student = app_config["tmp_student"]
@@ -2580,7 +2598,10 @@ class StaffFingerprintVerificationWindow(
             return True
 
         if event == "camera":
-            window_dispatch.open_window(StaffFaceVerificationWindow)
+            if not OperationalMode.check_camera():
+                cls.popup_auto_close_error("Camera not connected")
+            else:
+                window_dispatch.open_window(StaffFaceVerificationWindow)
             return True
 
         tmp_staff = app_config["tmp_staff"]
@@ -2815,6 +2836,91 @@ class StaffFingerprintEnrolmentWindow(FingerprintEnrolmentWindow):
         return
 
 
+class StudentEnrolmentUpdateWindow(BaseGUIWindow):
+    """A window for updating biodata of existing student."""
+
+
+class StaffEnrolmentUpdateWindow(StaffEnrolmentWindow):
+    """A window for updating biodata of existing staff."""
+    @classmethod
+    def window(cls):
+        column1 = [
+            [sg.Push(), sg.Text("Staff Enrolment"), sg.Push()],
+            [sg.Text("_" * 80)],
+            [cls.message_display_field()],
+            [
+                sg.Text("Staff Number:  "),
+                sg.Input(
+                    size=(15, 1),
+                    justification="left",
+                    key="staff_number_input",
+                    expand_x=True,
+                    focus=True,
+                ),
+            ],
+            [
+                sg.Text("First Name:     "),
+                sg.Input(
+                    expand_x=True, justification="left", key="staff_first_name"
+                ),
+            ],
+            [
+                sg.Text("Last Name:     "),
+                sg.Input(
+                    expand_x=True, justification="left", key="staff_last_name"
+                ),
+            ],
+            [
+                sg.Text("Other Names: "),
+                sg.Input(
+                    expand_x=True, justification="left", key="staff_other_names"
+                ),
+            ],
+            [
+                sg.Text("Sex:               "),
+                sg.Combo(
+                    values=Sex.labels,
+                    default_value=cls.COMBO_DEFAULT,
+                    key="staff_sex",
+                    expand_x=True,
+                ),
+            ],
+            [
+                sg.Text("Faculty:          "),
+                sg.Combo(
+                    values=Faculty.get_all_faculties(),
+                    default_value=cls.COMBO_DEFAULT,
+                    enable_events=True,
+                    expand_x=True,
+                    key="staff_faculty",
+                ),
+            ],
+            [
+                sg.Text("Department:    "),
+                sg.Combo(
+                    values=Department.get_departments(),
+                    default_value=cls.COMBO_DEFAULT,
+                    enable_events=True,
+                    expand_x=True,
+                    key="staff_department",
+                ),
+            ],
+        ]
+        layout = [
+            [sg.VPush()],
+            [
+                sg.Push(),
+                sg.Column(column1, vertical_scroll_only=True),
+                sg.Push(),
+            ],
+            [
+                sg.Button("Submit", key="submit"),
+                sg.Button("Cancel", key="cancel"),
+            ],
+            [sg.VPush()],
+        ]
+        window = sg.Window("Staff Enrolment", layout, **cls.window_init_dict())
+        return window
 
 def main():
     window_dispatch.open_window(HomeWindow)
