@@ -69,7 +69,8 @@ class HomeWindow(BaseGUIWindow):
                 ),
                 sg.Push(),
             ],
-            [sg.Push(), sg.Text("New Event", key="new_event_txt", enable_events=True), sg.Push()],
+            [sg.Push(), sg.Text("New", key="new_event_txt", enable_events=True), sg.Push()],
+            [sg.Push(), sg.Text("Event", key="new_event_txt", enable_events=True), sg.Push()],
         ]
         column2 = [
             [
@@ -286,7 +287,7 @@ class EventMenuWindow(BaseGUIWindow):
             ],
             [sg.VPush()],
             [sg.Text("_" * 80)],
-            [sg.Push(), sg.Button("<< Back", key="back"), sg.Push()],
+            [sg.Button("<< Back", key="back")],
         ]
 
         window = sg.Window("Event Menu", layout, **cls.window_init_dict())
