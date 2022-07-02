@@ -2196,12 +2196,13 @@ class StaffPasswordSettingWindow(BaseGUIWindow):
 
     @classmethod
     def window(cls):
+        field_label_props={"size":25}
         layout = [
             [sg.Text("Set Password")],
             [sg.HorizontalSeparator()],
             [cls.message_display_field()],
             [
-                sg.Text("Password:              "),
+                sg.Text("Password:", **field_label_props),
                 sg.Input(
                     key="staff_password",
                     expand_x=True,
@@ -2211,7 +2212,7 @@ class StaffPasswordSettingWindow(BaseGUIWindow):
                 ),
             ],
             [
-                sg.Text("Confirm Password:  "),
+                sg.Text("Confirm Password:", **field_label_props),
                 sg.Input(
                     key="staff_password_confirm",
                     expand_x=True,
@@ -2222,6 +2223,7 @@ class StaffPasswordSettingWindow(BaseGUIWindow):
                 sg.Button("Submit", key="submit"),
                 sg.Button("Cancel", key="cancel", **cls.cancel_button_kwargs()),
             ],
+            cls.navigation_pane(next_icon="next_disabled", back_icon="back_disabled")
         ]
         window = sg.Window(
             "Staff Password Setup", layout, **cls.window_init_dict()
@@ -2278,7 +2280,7 @@ class StaffPasswordSettingWindow(BaseGUIWindow):
                     window_dispatch.open_window(StaffFaceEnrolmentWindow)
                 return True
 
-            if event == "cancel":
+            if event in ("cancel", "home"):
                 confirm = sg.popup_yes_no(
                     "Cancel Staff registration?",
                     title="Cancel Registration",
