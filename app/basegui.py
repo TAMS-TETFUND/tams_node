@@ -19,11 +19,13 @@ class BaseGUIWindow:
         sg.theme_background_color(),
         sg.theme_background_color(),
     )
+    BUTTON_COLOR = ("#004f00", "#004f00")
     UI_COLORS = {
         "red": "#fc2323",
         "yellow": "#fffb08",
-        "green": "#08ff14"
-
+        "green": "#08ff14",
+        "light_grey": "#505050",
+        "lighter_grey": "#bbbbbb"
     }
 
     @classmethod
@@ -45,7 +47,11 @@ class BaseGUIWindow:
         return imgbytes
 
     @classmethod
-    def get_icon(cls, icon_name, size_ratio=1):
+    def get_icon(cls, icon_name, size_ratio=1, image_dimension=None):
+        image_height, image_width = image_dimension or [
+            cls.ICON_SIZE["h"],
+            cls.ICON_SIZE["w"],
+        ]
         icons_path = os.path.join(
             Path(os.path.abspath(__file__)).parent, "icons.json"
         )
@@ -54,7 +60,7 @@ class BaseGUIWindow:
         icon = icon_dict[icon_name]
         return cls._image_file_to_bytes(
             icon,
-            (cls.ICON_SIZE["h"] * size_ratio, cls.ICON_SIZE["w"] * size_ratio),
+            (image_height * size_ratio, image_width * size_ratio),
         )
 
     @classmethod
@@ -108,9 +114,7 @@ class BaseGUIWindow:
 
     @classmethod
     def cancel_button_kwargs(cls):
-        kwargs_dict = {
-            "button_color": ("#ffffff", cls.UI_COLORS["red"])
-        }
+        kwargs_dict = {"button_color": ("#ffffff", cls.UI_COLORS["red"])}
         return kwargs_dict
 
     @staticmethod
@@ -120,3 +124,35 @@ class BaseGUIWindow:
     @staticmethod
     def hide_message_display_field(window):
         window["message_display"].update(value="", visible=False)
+
+    @classmethod
+    def navigation_pane(cls, *, next_icon="next_grey", back_icon="back_grey"):
+        return [
+            sg.Column(
+                [
+                    [
+                        sg.Button(
+                            image_data=cls.get_icon(back_icon, 0.4),
+                            button_color=cls.ICON_BUTTON_COLOR,
+                            key="back",
+                            use_ttk_buttons=True,
+                        ),
+                        sg.Button(
+                            image_data=cls.get_icon(next_icon, 0.4),
+                            button_color=cls.ICON_BUTTON_COLOR,
+                            key="next",
+                            use_ttk_buttons=True,
+                        ),
+                        sg.Push(),
+                        sg.Button(
+                            image_data=cls.get_icon("home_grey", 0.4),
+                            button_color=cls.ICON_BUTTON_COLOR,
+                            key="home",
+                            use_ttk_buttons=True,
+                        ),
+                    ]
+                ],
+                expand_x=True,
+                pad=(0,0),
+            )
+        ]
