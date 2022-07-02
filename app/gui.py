@@ -1300,6 +1300,7 @@ class StaffNumberInputWindow(
         cls.staff_verification_window()
         return
 
+
 class StudentRegNumInputWindow(
     ValidationMixin, StudentBiometricVerificationRouterMixin, BaseGUIWindow
 ):
@@ -2005,9 +2006,13 @@ class EnrolmentMenuWindow(BaseGUIWindow):
             [sg.Button("Staff Enrolment", key="staff_enrolment")],
             [sg.Button("Student Enrolment", key="student_enrolment")],
             [sg.Button("Staff Enrolment Update", key="staff_enrolment_update")],
-            [sg.Button("Student Enrolment Update", key="student_enrolment_update")],
+            [
+                sg.Button(
+                    "Student Enrolment Update", key="student_enrolment_update"
+                )
+            ],
             [sg.VPush()],
-            cls.navigation_pane(next_icon="next_disabled")
+            cls.navigation_pane(next_icon="next_disabled"),
         ]
         window = sg.Window("Enrolment Window", layout, **cls.window_init_dict())
         return window
@@ -2216,6 +2221,7 @@ class StaffEnrolmentWindow(ValidationMixin, BaseGUIWindow):
     @classmethod
     def next_window(cls):
         window_dispatch.open_window(StaffPasswordSettingWindow)
+
 
 class StaffPasswordSettingWindow(BaseGUIWindow):
     """This window is used for setting password for the new staff being
@@ -3070,10 +3076,11 @@ class StaffFingerprintEnrolmentWindow(FingerprintEnrolmentWindow):
 
 class StudentEnrolmentUpdateWindow(StudentEnrolmentWindow):
     """A window for updating biodata of existing student."""
+
     @classmethod
     def window(cls):
         student = app_config["edit_student"]
-        
+
         try:
             student_sex = Sex(int(student["sex"])).label
         except Exception:
@@ -3148,7 +3155,6 @@ class StudentEnrolmentUpdateWindow(StudentEnrolmentWindow):
                     key="student_possible_grad_yr",
                     **input_props,
                     default_text=student["possible_grad_yr"],
-
                 ),
             ],
             [
@@ -3290,25 +3296,35 @@ class StaffEnrolmentUpdateWindow(StaffEnrolmentWindow):
                     key="staff_number_input",
                     disabled=True,
                     **input_props,
-                    default_text=staff["staff_number"]
+                    default_text=staff["staff_number"],
                 ),
             ],
             [
                 sg.Text("First Name:", **field_label_props),
                 sg.Input(
-                    justification="left", focus=True, key="staff_first_name", **input_props, default_text=staff["first_name"]
+                    justification="left",
+                    focus=True,
+                    key="staff_first_name",
+                    **input_props,
+                    default_text=staff["first_name"],
                 ),
             ],
             [
                 sg.Text("Last Name:", **field_label_props),
                 sg.Input(
-                    justification="left", key="staff_last_name", **input_props, default_text=staff["last_name"]
+                    justification="left",
+                    key="staff_last_name",
+                    **input_props,
+                    default_text=staff["last_name"],
                 ),
             ],
             [
                 sg.Text("Other Names:", **field_label_props),
                 sg.Input(
-                    justification="left", key="staff_other_names", **input_props, default_text=staff["other_names"]
+                    justification="left",
+                    key="staff_other_names",
+                    **input_props,
+                    default_text=staff["other_names"],
                 ),
             ],
             [
@@ -3371,25 +3387,21 @@ class StaffEnrolmentUpdateWindow(StaffEnrolmentWindow):
             "Staff Enrolment", scrolled_layout, **cls.window_init_dict()
         )
         return window
-    
+
     @classmethod
     def loop(cls, window, event, values):
         return super().loop(window, event, values)
-    
+
     @classmethod
     def next_window(cls):
         if not OperationalMode.check_camera():
             cls.popup_auto_close_warn("Camera not connected.")
             time.sleep(2)
             if not OperationalMode.check_fingerprint():
-                cls.popup_auto_close_warn(
-                    "Fingerprint scanner not connected"
-                )
+                cls.popup_auto_close_warn("Fingerprint scanner not connected")
                 window_dispatch.open_window(HomeWindow)
             else:
-                window_dispatch.open_window(
-                    StaffFingerprintEnrolmentWindow
-                )
+                window_dispatch.open_window(StaffFingerprintEnrolmentWindow)
         else:
             window_dispatch.open_window(StaffFaceEnrolmentWindow)
 
