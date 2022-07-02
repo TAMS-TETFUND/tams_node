@@ -1262,20 +1262,7 @@ class StaffNumberInputWindow(
                 )
                 cls.resize_column(window)
                 return True
-
-            app_config["tmp_staff"] = app_config.dict_vals_to_str(
-                staff.values(
-                    "id",
-                    "staff_number",
-                    "first_name",
-                    "last_name",
-                    "department__name",
-                    "department__faculty__name",
-                    "face_encodings",
-                    "fingerprint_template",
-                ).first()
-            )
-            cls.staff_verification_window()
+            cls.process_staff(staff)
         return True
 
     @classmethod
@@ -1296,6 +1283,22 @@ class StaffNumberInputWindow(
         window.refresh()
         window["main_column"].contents_changed()
 
+    @classmethod
+    def process_staff(cls, staff):
+        app_config["tmp_staff"] = app_config.dict_vals_to_str(
+            staff.values(
+                "id",
+                "staff_number",
+                "first_name",
+                "last_name",
+                "department__name",
+                "department__faculty__name",
+                "face_encodings",
+                "fingerprint_template",
+            ).first()
+        )
+        cls.staff_verification_window()
+        return
 
 class StudentRegNumInputWindow(
     ValidationMixin, StudentBiometricVerificationRouterMixin, BaseGUIWindow
@@ -1403,37 +1406,40 @@ class StudentRegNumInputWindow(
                 )
                 cls.resize_column(window)
                 return True
-
-            app_config["tmp_student"] = app_config.dict_vals_to_str(
-                student.values(
-                    "id",
-                    "reg_number",
-                    "first_name",
-                    "last_name",
-                    "level_of_study",
-                    "department__name",
-                    "department__faculty__name",
-                    "face_encodings",
-                    "fingerprint_template",
-                ).first()
-            )
-
-            tmp_student = app_config["tmp_student"]
-            if AttendanceRecord.objects.filter(
-                attendance_session_id=app_config.getint(
-                    "current_attendance_session", "session_id"
-                ),
-                student_id=tmp_student["id"],
-            ).exists():
-                cls.display_message(
-                    f"{tmp_student['first_name']} {tmp_student['last_name']} "
-                    f"({tmp_student['reg_number']}) already checked in",
-                    window,
-                )
-                cls.resize_column(window)
-                return True
-            cls.student_verification_window()
+            cls.process_student(student, window)
         return True
+
+    @classmethod
+    def process_student(cls, student, window):
+        app_config["tmp_student"] = app_config.dict_vals_to_str(
+            student.values(
+                "id",
+                "reg_number",
+                "first_name",
+                "last_name",
+                "level_of_study",
+                "department__name",
+                "department__faculty__name",
+                "face_encodings",
+                "fingerprint_template",
+            ).first()
+        )
+
+        tmp_student = app_config["tmp_student"]
+        if AttendanceRecord.objects.filter(
+            attendance_session_id=app_config.getint(
+                "current_attendance_session", "session_id"
+            ),
+            student_id=tmp_student["id"],
+        ).exists():
+            cls.display_message(
+                f"{tmp_student['first_name']} {tmp_student['last_name']} "
+                f"({tmp_student['reg_number']}) already checked in",
+                window,
+            )
+            cls.resize_column(window)
+            return True
+        cls.student_verification_window()
 
     @classmethod
     def validate(cls, values, window):
@@ -1996,26 +2002,28 @@ class EnrolmentMenuWindow(BaseGUIWindow):
     def window(cls):
         layout = [
             [sg.VPush()],
-            [
-                sg.Push(),
-                sg.Button("Staff Enrolment", key="staff_enrolment"),
-                sg.Button("Student Enrolment", key="student_enrolment"),
-                sg.Push(),
-            ],
+            [sg.Button("Staff Enrolment", key="staff_enrolment")],
+            [sg.Button("Student Enrolment", key="student_enrolment")],
+            [sg.Button("Staff Enrolment Update", key="staff_enrolment_update")],
+            [sg.Button("Student Enrolment Update", key="student_enrolment_update")],
             [sg.VPush()],
-            [sg.Button("<< Back", k="back")],
+            cls.navigation_pane(next_icon="next_disabled")
         ]
         window = sg.Window("Enrolment Window", layout, **cls.window_init_dict())
         return window
 
     @classmethod
     def loop(cls, window, event, values):
-        if event == "back":
+        if event in ("back", "home"):
             window_dispatch.open_window(HomeWindow)
         if event == "staff_enrolment":
             window_dispatch.open_window(StaffEnrolmentWindow)
         if event == "student_enrolment":
             window_dispatch.open_window(StudentEnrolmentWindow)
+        if event == "staff_enrolment_update":
+            window_dispatch.open_window(StaffEnrolmentUpdateIDSearch)
+        if event == "student_enrolment_update":
+            window_dispatch.open_window(StudentEnrolmentUpdateIDSearch)
         return True
 
 
@@ -2168,8 +2176,7 @@ class StaffEnrolmentWindow(ValidationMixin, BaseGUIWindow):
                     department=department, **new_staff_dict
                 )
 
-            window_dispatch.open_window(StaffPasswordSettingWindow)
-
+            cls.next_window()
         if event == "cancel":
             window_dispatch.open_window(HomeWindow)
 
@@ -2206,6 +2213,9 @@ class StaffEnrolmentWindow(ValidationMixin, BaseGUIWindow):
                 return True
         return None
 
+    @classmethod
+    def next_window(cls):
+        window_dispatch.open_window(StaffPasswordSettingWindow)
 
 class StaffPasswordSettingWindow(BaseGUIWindow):
     """This window is used for setting password for the new staff being
@@ -2582,15 +2592,15 @@ class StudentEnrolmentWindow(ValidationMixin, BaseGUIWindow):
                 cls.display_message(criteria, window)
                 return True
 
-        if Student.objects.filter(
-            reg_number=values["student_reg_number_input"]
-        ).exists():
-            cls.display_message(
-                f"Student with registration number "
-                f"{values['student_reg_number_input']} already exists",
-                window,
-            )
-            return True
+        # if Student.objects.filter(
+        #     reg_number=values["student_reg_number_input"]
+        # ).exists():
+        #     cls.display_message(
+        #         f"Student with registration number "
+        #         f"{values['student_reg_number_input']} already exists",
+        #         window,
+        #     )
+        #     return True
         return None
 
 
@@ -3058,82 +3068,116 @@ class StaffFingerprintEnrolmentWindow(FingerprintEnrolmentWindow):
         return "Student Fingerprint Verification"
 
 
-class StudentEnrolmentUpdateWindow(BaseGUIWindow):
+class StudentEnrolmentUpdateWindow(StudentEnrolmentWindow):
     """A window for updating biodata of existing student."""
-
-
-class StaffEnrolmentUpdateWindow(StaffEnrolmentWindow):
-    """A window for updating biodata of existing staff."""
-
     @classmethod
     def window(cls):
+        student = app_config["edit_student"]
+        
+        try:
+            student_sex = Sex(int(student["sex"])).label
+        except Exception:
+            student_sex = None
+
+        field_label_props = {"size": 22}
+        combo_props = {"size": 22}
+        input_props = {"size": 23}
         column1 = [
-            [sg.Push(), sg.Text("Staff Enrolment"), sg.Push()],
-            [sg.HorizontalSeparator()],
+            [sg.Push(), sg.Text("Student Enrolment"), sg.Push()],
             [cls.message_display_field()],
             [
-                sg.Text("Staff Number:  "),
+                sg.Text("Registration Number:", **field_label_props),
                 sg.Input(
-                    size=(15, 1),
                     justification="left",
-                    key="staff_number_input",
-                    expand_x=True,
+                    key="student_reg_number_input",
+                    disabled=True,
+                    **input_props,
+                    default_text=student["reg_number"],
+                ),
+            ],
+            [
+                sg.Text("First Name:", **field_label_props),
+                sg.Input(
+                    justification="left",
+                    key="student_first_name",
                     focus=True,
+                    **input_props,
+                    default_text=student["first_name"],
                 ),
             ],
             [
-                sg.Text("First Name:     "),
+                sg.Text("Last Name:", **field_label_props),
                 sg.Input(
-                    expand_x=True, justification="left", key="staff_first_name"
+                    justification="left",
+                    key="student_last_name",
+                    **input_props,
+                    default_text=student["last_name"],
                 ),
             ],
             [
-                sg.Text("Last Name:     "),
+                sg.Text("Other Names:", **field_label_props),
                 sg.Input(
-                    expand_x=True, justification="left", key="staff_last_name"
+                    justification="left",
+                    key="student_other_names",
+                    **input_props,
+                    default_text=student["other_names"],
                 ),
             ],
             [
-                sg.Text("Other Names: "),
-                sg.Input(
-                    expand_x=True, justification="left", key="staff_other_names"
-                ),
-            ],
-            [
-                sg.Text("Sex:               "),
+                sg.Text("Sex:", **field_label_props),
                 sg.Combo(
                     values=Sex.labels,
-                    default_value=cls.COMBO_DEFAULT,
-                    key="staff_sex",
-                    expand_x=True,
+                    default_value=student_sex or cls.COMBO_DEFAULT,
+                    key="student_sex",
+                    **combo_props,
                 ),
             ],
             [
-                sg.Text("Faculty:          "),
+                sg.Text("Level of study:", **field_label_props),
+                sg.Input(
+                    justification="left",
+                    key="student_level_of_study",
+                    **input_props,
+                    default_text=student["level_of_study"],
+                ),
+            ],
+            [
+                sg.Text("Possible graduation year:", **field_label_props),
+                sg.Input(
+                    justification="left",
+                    key="student_possible_grad_yr",
+                    **input_props,
+                    default_text=student["possible_grad_yr"],
+
+                ),
+            ],
+            [
+                sg.Text("Faculty:", **field_label_props),
                 sg.Combo(
                     values=Faculty.get_all_faculties(),
-                    default_value=cls.COMBO_DEFAULT,
+                    default_value=student["department__faculty__name"],
                     enable_events=True,
-                    expand_x=True,
-                    key="staff_faculty",
+                    key="student_faculty",
+                    **combo_props,
                 ),
             ],
             [
-                sg.Text("Department:    "),
+                sg.Text("Department:", **field_label_props),
                 sg.Combo(
                     values=Department.get_departments(),
-                    default_value=cls.COMBO_DEFAULT,
+                    default_value=student["department__name"],
                     enable_events=True,
-                    expand_x=True,
-                    key="staff_department",
+                    key="student_department",
+                    **combo_props,
                 ),
             ],
         ]
+
         layout = [
             [sg.VPush()],
             [
                 sg.Push(),
-                sg.Column(column1, vertical_scroll_only=True),
+                sg.Column(column1),
                 sg.Push(),
             ],
             [
@@ -3142,8 +3186,212 @@ class StaffEnrolmentUpdateWindow(StaffEnrolmentWindow):
             ],
             [sg.VPush()],
         ]
-        window = sg.Window("Staff Enrolment", layout, **cls.window_init_dict())
+
+        scrolled_layout = [
+            [
+                sg.Column(
+                    layout,
+                    scrollable=True,
+                    vertical_scroll_only=True,
+                    expand_y=True,
+                    expand_x=True,
+                    pad=(0, 0),
+                    key="main_column",
+                )
+            ]
+        ]
+        window = sg.Window(
+            "Student Enrolment", scrolled_layout, **cls.window_init_dict()
+        )
         return window
+
+    @classmethod
+    def loop(cls, window, event, values):
+        return super().loop(window, event, values)
+
+
+class StudentEnrolmentUpdateIDSearch(StudentRegNumInputWindow):
+    @classmethod
+    def window(cls):
+        return super().window()
+
+    @classmethod
+    def loop(cls, window, event, values):
+        return super().loop(window, event, values)
+
+    @classmethod
+    def process_student(cls, student, window):
+        app_config["edit_student"] = app_config.dict_vals_to_str(
+            student.values(
+                "id",
+                "reg_number",
+                "first_name",
+                "last_name",
+                "other_names",
+                "level_of_study",
+                "possible_grad_yr",
+                "sex",
+                "department__name",
+                "department__faculty__name",
+                "face_encodings",
+                "fingerprint_template",
+            ).first()
+        )
+        window_dispatch.open_window(StudentEnrolmentUpdateWindow)
+        return
+
+
+class StaffEnrolmentUpdateIDSearch(StaffNumberInputWindow):
+    @classmethod
+    def window(cls):
+        return super().window()
+
+    @classmethod
+    def loop(cls, window, event, values):
+        return super().loop(window, event, values)
+
+    @classmethod
+    def process_staff(cls, staff):
+        app_config["edit_staff"] = app_config.dict_vals_to_str(
+            staff.values(
+                "id",
+                "staff_number",
+                "first_name",
+                "last_name",
+                "other_names",
+                "department__name",
+                "department__faculty__name",
+                "face_encodings",
+                "fingerprint_template",
+            ).first()
+        )
+        window_dispatch.open_window(StaffEnrolmentUpdateWindow)
+        return
+
+
+class StaffEnrolmentUpdateWindow(StaffEnrolmentWindow):
+    """A window for updating biodata of existing staff."""
+
+    @classmethod
+    def window(cls):
+        staff = app_config["edit_staff"]
+
+        field_label_props = {"size": 16}
+        combo_props = {"size": 28}
+        input_props = {"size": 29}
+        column1 = [
+            [sg.Push(), sg.Text("Staff Enrolment"), sg.Push()],
+            [sg.HorizontalSeparator()],
+            [cls.message_display_field()],
+            [
+                sg.Text("Staff Number:", **field_label_props),
+                sg.Input(
+                    justification="left",
+                    key="staff_number_input",
+                    disabled=True,
+                    **input_props,
+                    default_text=staff["staff_number"]
+                ),
+            ],
+            [
+                sg.Text("First Name:", **field_label_props),
+                sg.Input(
+                    justification="left", focus=True, key="staff_first_name", **input_props, default_text=staff["first_name"]
+                ),
+            ],
+            [
+                sg.Text("Last Name:", **field_label_props),
+                sg.Input(
+                    justification="left", key="staff_last_name", **input_props, default_text=staff["last_name"]
+                ),
+            ],
+            [
+                sg.Text("Other Names:", **field_label_props),
+                sg.Input(
+                    justification="left", key="staff_other_names", **input_props, default_text=staff["other_names"]
+                ),
+            ],
+            [
+                sg.Text("Sex:", **field_label_props),
+                sg.Combo(
+                    values=Sex.labels,
+                    key="staff_sex",
+                    **combo_props,
+                ),
+            ],
+            [
+                sg.Text("Faculty:", **field_label_props),
+                sg.Combo(
+                    values=Faculty.get_all_faculties(),
+                    default_value=staff["department__faculty__name"],
+                    enable_events=True,
+                    key="staff_faculty",
+                    **combo_props,
+                ),
+            ],
+            [
+                sg.Text("Department:", **field_label_props),
+                sg.Combo(
+                    values=Department.get_departments(),
+                    default_value=staff["department__name"],
+                    enable_events=True,
+                    key="staff_department",
+                    **combo_props,
+                ),
+            ],
+        ]
+        layout = [
+            [sg.VPush()],
+            [
+                sg.Push(),
+                sg.Column(column1),
+                sg.Push(),
+            ],
+            [
+                sg.Button("Submit", key="submit"),
+                sg.Button("Cancel", key="cancel", **cls.cancel_button_kwargs()),
+            ],
+            [sg.VPush()],
+        ]
+
+        scrolled_layout = [
+            [
+                sg.Column(
+                    layout,
+                    scrollable=True,
+                    vertical_scroll_only=True,
+                    expand_y=True,
+                    expand_x=True,
+                    pad=(0, 0),
+                    key="main_column",
+                )
+            ]
+        ]
+        window = sg.Window(
+            "Staff Enrolment", scrolled_layout, **cls.window_init_dict()
+        )
+        return window
+    
+    @classmethod
+    def loop(cls, window, event, values):
+        return super().loop(window, event, values)
+    
+    @classmethod
+    def next_window(cls):
+        if not OperationalMode.check_camera():
+            cls.popup_auto_close_warn("Camera not connected.")
+            time.sleep(2)
+            if not OperationalMode.check_fingerprint():
+                cls.popup_auto_close_warn(
+                    "Fingerprint scanner not connected"
+                )
+                window_dispatch.open_window(HomeWindow)
+            else:
+                window_dispatch.open_window(
+                    StaffFingerprintEnrolmentWindow
+                )
+        else:
+            window_dispatch.open_window(StaffFaceEnrolmentWindow)
 
 
 def main():
