@@ -27,7 +27,7 @@ class BaseGUIWindow:
         "blue": "#1111fc",
         "dull_yellow": "#f5ed71",
         "light_grey": "#505050",
-        "lighter_grey": "#bbbbbb"
+        "lighter_grey": "#bbbbbb",
     }
 
     @classmethod
@@ -155,6 +155,6 @@ class BaseGUIWindow:
                     ]
                 ],
                 expand_x=True,
-                pad=(0,0),
+                pad=(0, 0),
             )
         ]

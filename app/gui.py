@@ -622,9 +622,7 @@ class EventDetailWindow(ValidationMixin, BaseGUIWindow):
 
     @classmethod
     def window(cls):
-        field_label_props = {
-            "size": 18
-        }
+        field_label_props = {"size": 18}
         section1 = [
             [
                 sg.Text("Faculty:", **field_label_props),
@@ -673,7 +671,10 @@ class EventDetailWindow(ValidationMixin, BaseGUIWindow):
                     enable_events=True,
                 ),
                 sg.Text(
-                    "Filter Courses", enable_events=True, k="filter_courses", text_color=cls.UI_COLORS["dull_yellow"]
+                    "Filter Courses",
+                    enable_events=True,
+                    k="filter_courses",
+                    text_color=cls.UI_COLORS["dull_yellow"],
                 ),
             ],
             [
@@ -1006,7 +1007,9 @@ class ActiveEventSummaryWindow(
                 sg.Button("Continue Event", k="continue_event"),
             ],
             [sg.HorizontalSeparator()],
-            cls.navigation_pane(next_icon="next_disabled", back_icon="back_disabled")
+            cls.navigation_pane(
+                next_icon="next_disabled", back_icon="back_disabled"
+            ),
         ]
         window = sg.Window(
             "Active Event Summary", layout, **cls.window_init_dict()
@@ -2021,9 +2024,9 @@ class StaffEnrolmentWindow(ValidationMixin, BaseGUIWindow):
 
     @classmethod
     def window(cls):
-        field_label_props = {"size":16}
-        combo_props={"size":28}
-        input_props={"size":29}
+        field_label_props = {"size": 16}
+        combo_props = {"size": 28}
+        input_props = {"size": 29}
         column1 = [
             [sg.Push(), sg.Text("Staff Enrolment"), sg.Push()],
             [sg.HorizontalSeparator()],
@@ -2061,7 +2064,7 @@ class StaffEnrolmentWindow(ValidationMixin, BaseGUIWindow):
                     values=Sex.labels,
                     default_value=cls.COMBO_DEFAULT,
                     key="staff_sex",
-                    **combo_props
+                    **combo_props,
                 ),
             ],
             [
@@ -2071,7 +2074,7 @@ class StaffEnrolmentWindow(ValidationMixin, BaseGUIWindow):
                     default_value=cls.COMBO_DEFAULT,
                     enable_events=True,
                     key="staff_faculty",
-                    **combo_props
+                    **combo_props,
                 ),
             ],
             [
@@ -2081,7 +2084,7 @@ class StaffEnrolmentWindow(ValidationMixin, BaseGUIWindow):
                     default_value=cls.COMBO_DEFAULT,
                     enable_events=True,
                     key="staff_department",
-                    **combo_props
+                    **combo_props,
                 ),
             ],
         ]
@@ -2099,8 +2102,22 @@ class StaffEnrolmentWindow(ValidationMixin, BaseGUIWindow):
             [sg.VPush()],
         ]
 
-        scrolled_layout = [[sg.Column(layout, scrollable=True, vertical_scroll_only=True, expand_y=True, expand_x=True, pad=(0,0), key="main_column")]]
-        window = sg.Window("Staff Enrolment", scrolled_layout, **cls.window_init_dict())
+        scrolled_layout = [
+            [
+                sg.Column(
+                    layout,
+                    scrollable=True,
+                    vertical_scroll_only=True,
+                    expand_y=True,
+                    expand_x=True,
+                    pad=(0, 0),
+                    key="main_column",
+                )
+            ]
+        ]
+        window = sg.Window(
+            "Staff Enrolment", scrolled_layout, **cls.window_init_dict()
+        )
         return window
 
     @classmethod
@@ -2196,7 +2213,7 @@ class StaffPasswordSettingWindow(BaseGUIWindow):
 
     @classmethod
     def window(cls):
-        field_label_props={"size":25}
+        field_label_props = {"size": 25}
         layout = [
             [sg.Text("Set Password")],
             [sg.HorizontalSeparator()],
@@ -2223,7 +2240,9 @@ class StaffPasswordSettingWindow(BaseGUIWindow):
                 sg.Button("Submit", key="submit"),
                 sg.Button("Cancel", key="cancel", **cls.cancel_button_kwargs()),
             ],
-            cls.navigation_pane(next_icon="next_disabled", back_icon="back_disabled")
+            cls.navigation_pane(
+                next_icon="next_disabled", back_icon="back_disabled"
+            ),
         ]
         window = sg.Window(
             "Staff Password Setup", layout, **cls.window_init_dict()
@@ -2338,9 +2357,9 @@ class StudentEnrolmentWindow(ValidationMixin, BaseGUIWindow):
 
     @classmethod
     def window(cls):
-        field_label_props = {"size":22}
-        combo_props={"size":22}
-        input_props={"size":23}
+        field_label_props = {"size": 22}
+        combo_props = {"size": 22}
+        input_props = {"size": 23}
         column1 = [
             [sg.Push(), sg.Text("Student Enrolment"), sg.Push()],
             [cls.message_display_field()],
@@ -2364,7 +2383,9 @@ class StudentEnrolmentWindow(ValidationMixin, BaseGUIWindow):
             [
                 sg.Text("Last Name:", **field_label_props),
                 sg.Input(
-                    justification="left", key="student_last_name", **input_props,
+                    justification="left",
+                    key="student_last_name",
+                    **input_props,
                 ),
             ],
             [
@@ -2407,7 +2428,7 @@ class StudentEnrolmentWindow(ValidationMixin, BaseGUIWindow):
                     default_value=cls.COMBO_DEFAULT,
                     enable_events=True,
                     key="student_faculty",
-                    **combo_props
+                    **combo_props,
                 ),
             ],
             [
@@ -2436,7 +2457,19 @@ class StudentEnrolmentWindow(ValidationMixin, BaseGUIWindow):
             [sg.VPush()],
         ]
 
-        scrolled_layout = [[sg.Column(layout, scrollable=True, vertical_scroll_only=True, expand_y=True, expand_x=True, pad=(0,0), key="main_column")]]
+        scrolled_layout = [
+            [
+                sg.Column(
+                    layout,
+                    scrollable=True,
+                    vertical_scroll_only=True,
+                    expand_y=True,
+                    expand_x=True,
+                    pad=(0, 0),
+                    key="main_column",
+                )
+            ]
+        ]
         window = sg.Window(
             "Student Enrolment", scrolled_layout, **cls.window_init_dict()
         )
