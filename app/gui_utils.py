@@ -127,7 +127,7 @@ class StudentBiometricVerificationRouterMixin:
                 cls.popup_auto_close_error("No facial registration data found")
             else:
                 app.gui.window_dispatch.open_window(
-                    app.gui.StaffFaceVerificationWindow
+                    app.gui.StudentFaceVerificationWindow
                 )
             return
         if device_op_mode == OpModes.BIMODAL.value:
