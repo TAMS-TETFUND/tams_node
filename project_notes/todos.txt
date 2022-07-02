@@ -3,10 +3,10 @@
     = on-screen keypad  - done
     = fingerprint test : catch exception blocking the gui when fprint scanner is not connected -done
     = node device hotspot implementation to enable users download attendance immediately
+    = biodata update feature
     = keypad feature implementation
     = server frontend
     = project security & logging
     = communication layer implementation
     = data synching
     = attendance sign-out feature for events
-
