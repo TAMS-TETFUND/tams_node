@@ -62,15 +62,23 @@ class HomeWindow(BaseGUIWindow):
             [
                 sg.Push(),
                 sg.Button(
-                    image_data=cls.get_icon("new"),
+                    image_data=cls.get_icon("new", 0.9),
                     button_color=cls.ICON_BUTTON_COLOR,
                     key="new_event",
                     use_ttk_buttons=True,
                 ),
                 sg.Push(),
             ],
-            [sg.Push(), sg.Text("New", key="new_event_txt", enable_events=True), sg.Push()],
-            [sg.Push(), sg.Text("Event", key="new_event_txt", enable_events=True), sg.Push()],
+            [
+                sg.Push(),
+                sg.Text("New", key="new_event_txt", enable_events=True),
+                sg.Push(),
+            ],
+            [
+                sg.Push(),
+                sg.Text("Event", key="new_event_txt", enable_events=True),
+                sg.Push(),
+            ],
         ]
         column2 = [
             [
@@ -83,8 +91,24 @@ class HomeWindow(BaseGUIWindow):
                 ),
                 sg.Push(),
             ],
-            [sg.Push(), sg.Text("Continue", key="continue_attendance_txt", enable_events=True), sg.Push()],
-            [sg.Push(), sg.Text("Attendance", key="continue_attendance_txt_2", enable_events=True), sg.Push()],
+            [
+                sg.Push(),
+                sg.Text(
+                    "Continue",
+                    key="continue_attendance_txt",
+                    enable_events=True,
+                ),
+                sg.Push(),
+            ],
+            [
+                sg.Push(),
+                sg.Text(
+                    "Attendance",
+                    key="continue_attendance_txt_2",
+                    enable_events=True,
+                ),
+                sg.Push(),
+            ],
         ]
         column3 = [
             [
@@ -97,8 +121,18 @@ class HomeWindow(BaseGUIWindow):
                 ),
                 sg.Push(),
             ],
-            [sg.Push(), sg.Text("Scheduled &", key="schedule_txt", enable_events=True), sg.Push()],
-            [sg.Push(), sg.Text("Recurring Events", key="schedule_txt_2", enable_events=True), sg.Push()],
+            [
+                sg.Push(),
+                sg.Text("Scheduled &", key="schedule_txt", enable_events=True),
+                sg.Push(),
+            ],
+            [
+                sg.Push(),
+                sg.Text(
+                    "Recurring Events", key="schedule_txt_2", enable_events=True
+                ),
+                sg.Push(),
+            ],
         ]
         layout = [
             [
@@ -125,7 +159,7 @@ class HomeWindow(BaseGUIWindow):
                 sg.Push(),
             ],
             [sg.VPush()],
-            [sg.Text("_" * 80)],
+            [sg.HorizontalSeparator()],
             [sg.Push(), sg.Text("TAMS© 2022"), sg.Push()],
         ]
 
@@ -136,7 +170,11 @@ class HomeWindow(BaseGUIWindow):
     def loop(cls, window, event, values):
         if event in ("new_event", "new_event_txt"):
             window_dispatch.open_window(EventMenuWindow)
-        if event in ("continue_attendance", "continue_attendance_txt", "continue_attendance_txt_2"):
+        if event in (
+            "continue_attendance",
+            "continue_attendance_txt",
+            "continue_attendance_txt_2",
+        ):
             if app_config.has_section("current_attendance_session"):
                 current_att_session = app_config["current_attendance_session"]
                 session_strt_time = datetime.strptime(
@@ -224,7 +262,11 @@ class EventMenuWindow(BaseGUIWindow):
                 ),
                 sg.Push(),
             ],
-            [sg.Push(), sg.Text("Lecture", key="lecture_txt", enable_events=True), sg.Push()],
+            [
+                sg.Push(),
+                sg.Text("Lecture", key="lecture_txt", enable_events=True),
+                sg.Push(),
+            ],
         ]
 
         column2 = [
@@ -238,7 +280,11 @@ class EventMenuWindow(BaseGUIWindow):
                 ),
                 sg.Push(),
             ],
-            [sg.Push(), sg.Text("Lab", key="lab_txt", enable_events=True), sg.Push()],
+            [
+                sg.Push(),
+                sg.Text("Lab", key="lab_txt", enable_events=True),
+                sg.Push(),
+            ],
         ]
 
         column3 = [
@@ -252,7 +298,11 @@ class EventMenuWindow(BaseGUIWindow):
                 ),
                 sg.Push(),
             ],
-            [sg.Push(), sg.Text("Quiz", key="quiz_txt", enable_events=True), sg.Push()],
+            [
+                sg.Push(),
+                sg.Text("Quiz", key="quiz_txt", enable_events=True),
+                sg.Push(),
+            ],
         ]
 
         column4 = [
@@ -266,7 +316,13 @@ class EventMenuWindow(BaseGUIWindow):
                 ),
                 sg.Push(),
             ],
-            [sg.Push(), sg.Text("Examination", key="examination_txt", enable_events=True), sg.Push()],
+            [
+                sg.Push(),
+                sg.Text(
+                    "Examination", key="examination_txt", enable_events=True
+                ),
+                sg.Push(),
+            ],
         ]
 
         layout = [
@@ -275,7 +331,7 @@ class EventMenuWindow(BaseGUIWindow):
                 sg.Text("Take Attendance for:", font="Helvetica 20"),
                 sg.Push(),
             ],
-            [sg.Text("_" * 80)],
+            [sg.HorizontalSeparator()],
             [sg.VPush()],
             [
                 sg.Push(),
@@ -286,18 +342,26 @@ class EventMenuWindow(BaseGUIWindow):
                 sg.Push(),
             ],
             [sg.VPush()],
-            [sg.Text("_" * 80)],
-            [sg.Button("<< Back", key="back")],
+            [sg.HorizontalSeparator()],
+            cls.navigation_pane(next_icon="next_disabled"),
         ]
-
         window = sg.Window("Event Menu", layout, **cls.window_init_dict())
         return window
 
     @classmethod
     def loop(cls, window, event, values):
-        if event in (sg.WIN_CLOSED, "back"):
+        if event in (sg.WIN_CLOSED, "back", "cancel", "home"):
             window_dispatch.open_window(HomeWindow)
-        if event in ("lecture", "examination", "lab", "quiz", "lecture_txt", "examination_txt", "lab_txt", "quiz_txt"):
+        if event in (
+            "lecture",
+            "examination",
+            "lab",
+            "quiz",
+            "lecture_txt",
+            "examination_txt",
+            "lab_txt",
+            "quiz_txt",
+        ):
             event = event.split("_")[0]
             app_config["new_event"] = {}
             app_config["new_event"]["type"] = event
@@ -323,7 +387,7 @@ class AcademicSessionDetailsWindow(ValidationMixin, BaseGUIWindow):
     def window(cls):
         layout = [
             [sg.Push(), sg.Text("Academic Session Details"), sg.Push()],
-            [sg.Text("_" * 80)],
+            [sg.HorizontalSeparator()],
             [sg.VPush()],
             [
                 [cls.message_display_field()],
@@ -357,13 +421,14 @@ class AcademicSessionDetailsWindow(ValidationMixin, BaseGUIWindow):
                 ),
             ],
             [sg.VPush()],
-            [
-                sg.Push(),
-                sg.Button("<< Back", key="back"),
-                sg.Button("Next >>", key="next"),
-                sg.Button("Cancel", key="cancel", **cls.cancel_button_kwargs()),
-                sg.Push(),
-            ],
+            # [
+            #     sg.Push(),
+            #     sg.Button("<< Back", key="back"),
+            #     sg.Button("Next >>", key="next"),
+            #     sg.Button("Cancel", key="cancel", **cls.cancel_button_kwargs()),
+            #     sg.Push(),
+            # ],
+            cls.navigation_pane(),
         ]
 
         window = sg.Window(
@@ -382,7 +447,7 @@ class AcademicSessionDetailsWindow(ValidationMixin, BaseGUIWindow):
             window_dispatch.open_window(EventDetailWindow)
         elif event == "back":
             window_dispatch.open_window(EventMenuWindow)
-        elif event == "cancel":
+        elif event == "home":
             window_dispatch.open_window(HomeWindow)
         elif event == "new_session":
             window_dispatch.open_window(NewAcademicSessionWindow)
@@ -427,8 +492,9 @@ class NewAcademicSessionWindow(ValidationMixin, BaseGUIWindow):
         current_year = datetime.now().year
         allowed_yrs = [x for x in range(current_year, current_year + 4)]
         layout = [
-            [sg.Push(), sg.Text("New Academic Session"), sg.Push()],
-            [sg.Text("_" * 80)],
+            [sg.Push(), sg.Text("Add New Academic Session"), sg.Push()],
+            [sg.HorizontalSeparator()],
+            cls.message_display_field(),
             [sg.VPush()],
             [
                 sg.Text("Session:  "),
@@ -449,29 +515,20 @@ class NewAcademicSessionWindow(ValidationMixin, BaseGUIWindow):
                 ),
             ],
             [sg.Check("Is this the current session?", k="is_current_session")],
-            [sg.VPush()],
             [
+                sg.Push(),
                 sg.Button(
-                    "<<Back",
-                    k="back",
-                    font="Helvetica 12",
-                ),
-                sg.Button(
-                    "Create Academic Session",
+                    "Create",
                     k="create_session",
                     font="Helvetica 12",
                 ),
-                sg.Button(
-                    "Home",
-                    k="home",
-                    font="Helvetica 12",
-                ),
             ],
+            [sg.VPush()],
+            cls.navigation_pane(next_icon="next_disabled"),
         ]
         window = sg.Window(
             "New Academic Session",
             layout,
-            font="Helvetica 14",
             **cls.window_init_dict(),
         )
         return window
@@ -589,7 +646,7 @@ class EventDetailWindow(ValidationMixin, BaseGUIWindow):
         ]
         layout = [
             [sg.Push(), sg.Text("Event Details"), sg.Push()],
-            [sg.Text("_" * 80)],
+            [sg.HorizontalSeparator()],
             [sg.VPush()],
             [
                 [cls.message_display_field()],
@@ -611,7 +668,7 @@ class EventDetailWindow(ValidationMixin, BaseGUIWindow):
                     enable_events=True,
                 ),
                 sg.Text(
-                    "Filter Courses", enable_events=True, k="filter_courses"
+                    "Filter Courses", enable_events=True, k="filter_courses", text_color=cls.UI_COLORS["dull_yellow"]
                 ),
             ],
             [
@@ -619,7 +676,7 @@ class EventDetailWindow(ValidationMixin, BaseGUIWindow):
                     sg.Column(section1, k="sec1", visible=False, expand_y=True)
                 )
             ],
-            [sg.Text("_" * 80)],
+            [sg.HorizontalSeparator()],
             [
                 sg.Text("Start Time:     "),
                 sg.Spin(
@@ -660,13 +717,9 @@ class EventDetailWindow(ValidationMixin, BaseGUIWindow):
                 ),
                 sg.Text("Hour(s)"),
             ],
-            [
-                sg.Push(),
-                sg.Button("Next", k="next"),
-                sg.Button("Cancel", k="cancel", **cls.cancel_button_kwargs()),
-                sg.Push(),
-            ],
             [sg.VPush()],
+            [sg.Button("Submit", key="submit")],
+            cls.navigation_pane(back_icon="back_disabled"),
         ]
 
         window = sg.Window("Event Details", layout, **cls.window_init_dict())
@@ -721,7 +774,7 @@ class EventDetailWindow(ValidationMixin, BaseGUIWindow):
                     value=f"{event_date[1]}-{event_date[0]}-{event_date[2]}"
                 )
             window.force_focus()
-        if event == "next":
+        if event in ("next", "submit"):
             if cls.validate(values, window) is not None:
                 return True
 
@@ -732,7 +785,7 @@ class EventDetailWindow(ValidationMixin, BaseGUIWindow):
             app_config["new_event"]["start_date"] = values["start_date"]
             app_config["new_event"]["duration"] = values["duration"]
             window_dispatch.open_window(NewEventSummaryWindow)
-        if event == "cancel":
+        if event == "home":
             app_config.remove_section("new_event")
             window_dispatch.open_window(HomeWindow)
         return True
@@ -806,7 +859,7 @@ class NewEventSummaryWindow(StaffIDInputRouterMixin, BaseGUIWindow):
                 ),
                 sg.Push(),
             ],
-            [sg.Text("_" * 80)],
+            [sg.HorizontalSeparator()],
             [sg.VPush()],
             [cls.message_display_field()],
             [sg.Text(f"Course: {new_event_dict['course']}")],
@@ -824,13 +877,15 @@ class NewEventSummaryWindow(StaffIDInputRouterMixin, BaseGUIWindow):
             ],
             [sg.Text(f"Duration: {new_event_dict['duration']} Hours")],
             [sg.VPush()],
-            [sg.Text("_" * 80)],
             [
                 sg.Button("Start Event", k="start_event"),
                 sg.Button("Schedule Event", k="schedule_event"),
                 sg.Button("Edit Details", k="edit"),
-                sg.Button("Cancel", k="cancel", **cls.cancel_button_kwargs()),
             ],
+            [sg.HorizontalSeparator()],
+            cls.navigation_pane(
+                back_icon="back_disabled", next_icon="next_disabled"
+            ),
         ]
         window = sg.Window(
             "New Event Summary", layout, **cls.window_init_dict()
@@ -889,7 +944,7 @@ class NewEventSummaryWindow(StaffIDInputRouterMixin, BaseGUIWindow):
                 )
                 window_dispatch.open_window(HomeWindow)
 
-        if event == "cancel":
+        if event == "home":
             app_config.remove_section("new_event")
             window_dispatch.open_window(HomeWindow)
         return True
@@ -917,7 +972,7 @@ class ActiveEventSummaryWindow(
                 ),
                 sg.Push(),
             ],
-            [sg.Text("_" * 80)],
+            [sg.HorizontalSeparator()],
             [sg.VPush()],
             [cls.message_display_field()],
             [sg.Text(f"Course: {event_dict['course']}")],
@@ -942,11 +997,11 @@ class ActiveEventSummaryWindow(
                 )
             ],
             [sg.VPush()],
-            [sg.Text("_" * 80)],
             [
                 sg.Button("Continue Event", k="continue_event"),
-                sg.Button("Cancel", k="cancel", **cls.cancel_button_kwargs()),
             ],
+            [sg.HorizontalSeparator()],
+            cls.navigation_pane(next_icon="next_disabled", back_icon="back_disabled")
         ]
         window = sg.Window(
             "Active Event Summary", layout, **cls.window_init_dict()
@@ -986,7 +1041,7 @@ class ActiveEventSummaryWindow(
             cls.staff_verification_window()
             return True
 
-        if event == "cancel":
+        if event in ("cancel", "home"):
             window_dispatch.open_window(HomeWindow)
         return True
 
@@ -1000,8 +1055,9 @@ class AttendanceSessionLandingWindow(
     def window(cls):
         event_dict = dict(app_config["current_attendance_session"])
         layout = [
+            [sg.VPush()],
             [sg.Text("Attendance Session Details")],
-            [sg.Text("_" * 80)],
+            [sg.HorizontalSeparator()],
             [sg.Text(f"Course: {event_dict['course']}")],
             [
                 sg.Text(
@@ -1020,12 +1076,19 @@ class AttendanceSessionLandingWindow(
                     "{}".format(cls.valid_check_in_count()), k="valid_checks"
                 ),
             ],
-            [sg.Text("_" * 80)],
+            [sg.VPush()],
             [
                 sg.Button("Take Attendance", k="start_attendance"),
-                sg.Button("Go back home", k="home"),
-                sg.Button("End Attendance", k="end_attendance", **cls.cancel_button_kwargs()),
+                sg.Button(
+                    "End Attendance",
+                    k="end_attendance",
+                    **cls.cancel_button_kwargs(),
+                ),
             ],
+            [sg.HorizontalSeparator()],
+            cls.navigation_pane(
+                back_icon="back_disabled", next_icon="next_disabled"
+            ),
         ]
 
         window = sg.Window(
@@ -1037,8 +1100,7 @@ class AttendanceSessionLandingWindow(
     def loop(cls, window, event, values):
         if event == "home":
             confirm = sg.popup_yes_no(
-                "Leaving attendance-taking. System will verify staff again "
-                "to continue attendance-taking. Do you wish to continue?",
+                "Leaving attendance-taking. Do you wish to continue?",
                 title="Go back?",
                 keep_on_top=True,
             )
@@ -1088,30 +1150,34 @@ class StaffNumberInputWindow(
 
     @classmethod
     def window(cls):
-        INPUT_BUTTON_SIZE = (10, 2)
+        INPUT_BUTTON_SIZE = (8, 2)
         column1 = [
             [
                 sg.Button("1", s=INPUT_BUTTON_SIZE),
                 sg.Button("2", s=INPUT_BUTTON_SIZE),
                 sg.Button("3", s=INPUT_BUTTON_SIZE),
-                sg.Button("4", s=INPUT_BUTTON_SIZE),
+                sg.Button("0", s=INPUT_BUTTON_SIZE),
             ],
             [
+                sg.Button("4", s=INPUT_BUTTON_SIZE),
                 sg.Button("5", s=INPUT_BUTTON_SIZE),
                 sg.Button("6", s=INPUT_BUTTON_SIZE),
-                sg.Button("7", s=INPUT_BUTTON_SIZE),
-                sg.Button("8", s=INPUT_BUTTON_SIZE),
+                sg.Button("/", s=INPUT_BUTTON_SIZE),
             ],
             [
+                sg.Button("7", s=INPUT_BUTTON_SIZE),
+                sg.Button("8", s=INPUT_BUTTON_SIZE),
                 sg.Button("9", s=INPUT_BUTTON_SIZE),
-                sg.Button("0", s=INPUT_BUTTON_SIZE),
+                sg.Button("AC", key="clear", s=INPUT_BUTTON_SIZE),
+            ],
+            [
+                sg.Push(),
                 sg.Button("Submit", key="submit", s=INPUT_BUTTON_SIZE),
-                sg.Button("Clear", key="clear", s=INPUT_BUTTON_SIZE),
+                sg.Push(),
             ],
         ]
 
         layout = [
-            [sg.Text("_" * 80)],
             [sg.VPush()],
             [cls.message_display_field()],
             [
@@ -1127,17 +1193,28 @@ class StaffNumberInputWindow(
             ],
             [sg.Push(), sg.Column(column1), sg.Push()],
             [sg.VPush()],
-            [sg.Push(), sg.Button("<< Back", key="back"), sg.Push()],
+            cls.navigation_pane(),
+        ]
+        scrolled_layout = [
+            [
+                sg.Column(
+                    layout,
+                    scrollable=True,
+                    vertical_scroll_only=True,
+                    expand_y=True,
+                    key="main_column",
+                )
+            ]
         ]
 
         window = sg.Window(
-            "Staff Number Input", layout, **cls.window_init_dict()
+            "Staff Number Input", scrolled_layout, **cls.window_init_dict()
         )
         return window
 
     @classmethod
     def loop(cls, window, event, values):
-        if event == "back":
+        if event in ("back", "home"):
             window_dispatch.open_window(HomeWindow)
             sg.popup(
                 "Event has been saved as a scheduled event",
@@ -1155,10 +1232,13 @@ class StaffNumberInputWindow(
 
         elif event == "clear":
             window["staff_number_input"].update("")
+            cls.hide_message_display_field(window)
+            cls.resize_column(window)
             return True
 
-        elif event == "submit":
+        elif event in ("submit", "next"):
             if cls.validate(values, window) is not None:
+                cls.resize_column(window)
                 return True
 
             keys_pressed = values["staff_number_input"]
@@ -1169,9 +1249,10 @@ class StaffNumberInputWindow(
             if not staff.exists():
                 cls.display_message(
                     "No staff found with given staff ID. "
-                    "Ensure you have been duly registered on the system.",
+                    "\nEnsure you have been duly registered on the system.",
                     window,
                 )
+                cls.resize_column(window)
                 return True
 
             app_config["tmp_staff"] = app_config.dict_vals_to_str(
@@ -1202,6 +1283,11 @@ class StaffNumberInputWindow(
                 return True
         return None
 
+    @staticmethod
+    def resize_column(window):
+        window.refresh()
+        window["main_column"].contents_changed()
+
 
 class StudentRegNumInputWindow(
     ValidationMixin, StudentBiometricVerificationRouterMixin, BaseGUIWindow
@@ -1211,7 +1297,7 @@ class StudentRegNumInputWindow(
 
     @classmethod
     def window(cls):
-        INPUT_BUTTON_SIZE = (10, 2)
+        INPUT_BUTTON_SIZE = (8, 2)
         column1 = [
             [
                 sg.Button("1", s=INPUT_BUTTON_SIZE),
@@ -1229,7 +1315,7 @@ class StudentRegNumInputWindow(
                 sg.Button("7", s=INPUT_BUTTON_SIZE),
                 sg.Button("8", s=INPUT_BUTTON_SIZE),
                 sg.Button("9", s=INPUT_BUTTON_SIZE),
-                sg.Button("Clear", key="clear", s=INPUT_BUTTON_SIZE),
+                sg.Button("AC", key="clear", s=INPUT_BUTTON_SIZE),
             ],
             [
                 sg.Push(),
@@ -1239,7 +1325,6 @@ class StudentRegNumInputWindow(
         ]
 
         layout = [
-            [sg.Text("_" * 80)],
             [sg.VPush()],
             [cls.message_display_field()],
             [
@@ -1255,16 +1340,32 @@ class StudentRegNumInputWindow(
             ],
             [sg.Push(), sg.Column(column1), sg.Push()],
             [sg.VPush()],
-            [sg.Push(), sg.Button("<< Back", key="back"), sg.Push()],
+            cls.navigation_pane(),
+        ]
+        scrolled_layout = [
+            [
+                sg.Column(
+                    layout,
+                    scrollable=True,
+                    vertical_scroll_only=True,
+                    key="main_column",
+                    expand_y=True,
+                )
+            ]
         ]
 
-        window = sg.Window("Reg Number Input", layout, **cls.window_init_dict())
+        window = sg.Window(
+            "Reg Number Input", scrolled_layout, **cls.window_init_dict()
+        )
         return window
 
     @classmethod
     def loop(cls, window, event, values):
         if event == "back":
             window_dispatch.open_window(AttendanceSessionLandingWindow)
+            return True
+        if event == "home":
+            window_dispatch.open_window(HomeWindow)
             return True
 
         keys_pressed = None
@@ -1276,10 +1377,13 @@ class StudentRegNumInputWindow(
 
         elif event == "clear":
             window["reg_num_input"].update("")
+            cls.hide_message_display_field()
+            cls.resize_column(window)
             return True
 
         elif event == "submit":
             if cls.validate(values, window) is not None:
+                cls.resize_column(window)
                 return True
 
             reg_number_entered = values["reg_num_input"]
@@ -1289,6 +1393,7 @@ class StudentRegNumInputWindow(
                 cls.display_message(
                     "No student found with given registration number.", window
                 )
+                cls.resize_column(window)
                 return True
 
             app_config["tmp_student"] = app_config.dict_vals_to_str(
@@ -1317,6 +1422,7 @@ class StudentRegNumInputWindow(
                     f"({tmp_student['reg_number']}) already checked in",
                     window,
                 )
+                cls.resize_column(window)
                 return True
             cls.student_verification_window()
         return True
@@ -1333,6 +1439,11 @@ class StudentRegNumInputWindow(
                 cls.display_message(val_check, window)
                 return True
         return None
+
+    @staticmethod
+    def resize_column(window):
+        window.refresh()
+        window["main_column"].contents_changed()
 
 
 class CameraWindow(BaseGUIWindow):
@@ -1454,7 +1565,9 @@ class FaceCameraWindow(CameraWindow):
                             "Multiple faces detected",
                         )
                     elif cam_facerec.face_count == 0:
-                        cls.popup_auto_close_error("Bring face closer to camera")
+                        cls.popup_auto_close_error(
+                            "Bring face closer to camera"
+                        )
 
                     if cam_facerec.face_count == 1:
                         captured_encodings = cam_facerec.face_encodings()
@@ -1787,7 +1900,9 @@ class StudentBarcodeCameraWindow(
             [
                 sg.Push(),
                 sg.Image(data=cls.get_icon("qr_code", 0.3)),
-                sg.Text("Present Student ID Card (Barcode)", font=("Helvetica", 13)),
+                sg.Text(
+                    "Present Student ID Card (Barcode)", font=("Helvetica", 11)
+                ),
                 sg.Push(),
             ],
         ]
@@ -1850,8 +1965,8 @@ class StaffBarcodeCameraWindow(
                 sg.Push(),
                 sg.Image(data=cls.get_icon("qr_code", 0.3)),
                 sg.Text(
-                    "Present Staff ID Card (Barcode) to authorize attendance-taking",
-                    font=("Helvetica", 13),
+                    "Present QR Code on Staff ID Card to authorize attendance",
+                    font=("Helvetica", 11),
                 ),
                 sg.Push(),
             ],
@@ -1903,7 +2018,7 @@ class StaffEnrolmentWindow(ValidationMixin, BaseGUIWindow):
     def window(cls):
         column1 = [
             [sg.Push(), sg.Text("Staff Enrolment"), sg.Push()],
-            [sg.Text("_" * 80)],
+            [sg.HorizontalSeparator()],
             [cls.message_display_field()],
             [
                 sg.Text("Staff Number:  "),
@@ -1967,7 +2082,7 @@ class StaffEnrolmentWindow(ValidationMixin, BaseGUIWindow):
             [sg.VPush()],
             [
                 sg.Push(),
-                sg.Column(column1, vertical_scroll_only=True),
+                sg.Column(column1, scrollable=True, vertical_scroll_only=True),
                 sg.Push(),
             ],
             [
@@ -2072,7 +2187,7 @@ class StaffPasswordSettingWindow(BaseGUIWindow):
     def window(cls):
         layout = [
             [sg.Text("Set Password")],
-            [sg.Text("_" * 80)],
+            [sg.HorizontalSeparator()],
             [cls.message_display_field()],
             [
                 sg.Text("Password:              "),
@@ -2475,7 +2590,7 @@ class FingerprintGenericWindow(BaseGUIWindow):
             [sg.VPush()],
             [
                 sg.Push(),
-                sg.Image(cls.get_icon("fingerprint", 1.3)),
+                sg.Image(cls.get_icon("fingerprint_grey", 1.3)),
                 sg.Push(),
             ],
             [sg.VPush()],
@@ -2610,7 +2725,7 @@ class StudentFingerprintVerificationWindow(
             return True
 
         return True
-    
+
     @classmethod
     def window_title(cls):
         return "Student Fingerprint Verification"
@@ -2731,7 +2846,6 @@ class StaffFingerprintVerificationWindow(
     @classmethod
     def window_title(cls):
         return "Staff Fingerprint Verification"
-
 
 
 class FingerprintEnrolmentWindow(FingerprintGenericWindow):
@@ -2902,7 +3016,7 @@ class StaffEnrolmentUpdateWindow(StaffEnrolmentWindow):
     def window(cls):
         column1 = [
             [sg.Push(), sg.Text("Staff Enrolment"), sg.Push()],
-            [sg.Text("_" * 80)],
+            [sg.HorizontalSeparator()],
             [cls.message_display_field()],
             [
                 sg.Text("Staff Number:  "),
