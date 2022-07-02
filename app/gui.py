@@ -1,3 +1,5 @@
+from csv import field_size_limit
+from dataclasses import field
 from datetime import datetime, timedelta
 import time
 
@@ -497,7 +499,7 @@ class NewAcademicSessionWindow(ValidationMixin, BaseGUIWindow):
             cls.message_display_field(),
             [sg.VPush()],
             [
-                sg.Text("Session:  "),
+                sg.Text("Session:", size=12),
                 sg.Spin(
                     values=allowed_yrs,
                     initial_value=current_year,
@@ -620,9 +622,12 @@ class EventDetailWindow(ValidationMixin, BaseGUIWindow):
 
     @classmethod
     def window(cls):
+        field_label_props = {
+            "size": 18
+        }
         section1 = [
             [
-                sg.Text("Faculty:          "),
+                sg.Text("Faculty:", **field_label_props),
                 sg.Combo(
                     Faculty.get_all_faculties(),
                     default_value=cls.COMBO_DEFAULT,
@@ -633,7 +638,7 @@ class EventDetailWindow(ValidationMixin, BaseGUIWindow):
                 ),
             ],
             [
-                sg.Text("Department:     "),
+                sg.Text("Department:", **field_label_props),
                 sg.Combo(
                     Department.get_departments(),
                     default_value=cls.COMBO_DEFAULT,
@@ -650,7 +655,7 @@ class EventDetailWindow(ValidationMixin, BaseGUIWindow):
             [sg.VPush()],
             [
                 [cls.message_display_field()],
-                sg.Text("Select Course:  "),
+                sg.Text("Select Course:", **field_label_props),
                 sg.Combo(
                     Course.get_courses(
                         semester=app_config.get("DEFAULT", "semester")
@@ -678,7 +683,7 @@ class EventDetailWindow(ValidationMixin, BaseGUIWindow):
             ],
             [sg.HorizontalSeparator()],
             [
-                sg.Text("Start Time:     "),
+                sg.Text("Start Time:", **field_label_props),
                 sg.Spin(
                     values=[str(a).zfill(2) for a in range(0, 24)],
                     initial_value="08",
@@ -707,7 +712,7 @@ class EventDetailWindow(ValidationMixin, BaseGUIWindow):
                 ),
             ],
             [
-                sg.Text("Duration:        "),
+                sg.Text("Duration:", **field_label_props),
                 sg.Spin(
                     values=[str(a).zfill(2) for a in range(0, 12)],
                     initial_value="01",
@@ -2016,65 +2021,67 @@ class StaffEnrolmentWindow(ValidationMixin, BaseGUIWindow):
 
     @classmethod
     def window(cls):
+        field_label_props = {"size":16}
+        combo_props={"size":28}
+        input_props={"size":29}
         column1 = [
             [sg.Push(), sg.Text("Staff Enrolment"), sg.Push()],
             [sg.HorizontalSeparator()],
             [cls.message_display_field()],
             [
-                sg.Text("Staff Number:  "),
+                sg.Text("Staff Number:", **field_label_props),
                 sg.Input(
-                    size=(15, 1),
                     justification="left",
                     key="staff_number_input",
-                    expand_x=True,
                     focus=True,
+                    **input_props,
                 ),
             ],
             [
-                sg.Text("First Name:     "),
+                sg.Text("First Name:", **field_label_props),
                 sg.Input(
-                    expand_x=True, justification="left", key="staff_first_name"
+                    justification="left", key="staff_first_name", **input_props
                 ),
             ],
             [
-                sg.Text("Last Name:     "),
+                sg.Text("Last Name:", **field_label_props),
                 sg.Input(
-                    expand_x=True, justification="left", key="staff_last_name"
+                    justification="left", key="staff_last_name", **input_props
                 ),
             ],
             [
-                sg.Text("Other Names: "),
+                sg.Text("Other Names:", **field_label_props),
                 sg.Input(
-                    expand_x=True, justification="left", key="staff_other_names"
+                    justification="left", key="staff_other_names", **input_props
                 ),
             ],
             [
-                sg.Text("Sex:               "),
+                sg.Text("Sex:", **field_label_props),
                 sg.Combo(
                     values=Sex.labels,
                     default_value=cls.COMBO_DEFAULT,
                     key="staff_sex",
-                    expand_x=True,
+                    **combo_props
                 ),
             ],
             [
-                sg.Text("Faculty:          "),
+                sg.Text("Faculty:", **field_label_props),
                 sg.Combo(
                     values=Faculty.get_all_faculties(),
                     default_value=cls.COMBO_DEFAULT,
                     enable_events=True,
-                    expand_x=True,
                     key="staff_faculty",
+                    **combo_props
                 ),
             ],
             [
-                sg.Text("Department:    "),
+                sg.Text("Department:", **field_label_props),
                 sg.Combo(
                     values=Department.get_departments(),
                     default_value=cls.COMBO_DEFAULT,
                     enable_events=True,
-                    expand_x=True,
                     key="staff_department",
+                    **combo_props
                 ),
             ],
         ]
@@ -2082,7 +2089,7 @@ class StaffEnrolmentWindow(ValidationMixin, BaseGUIWindow):
             [sg.VPush()],
             [
                 sg.Push(),
-                sg.Column(column1, scrollable=True, vertical_scroll_only=True),
+                sg.Column(column1),
                 sg.Push(),
             ],
             [
@@ -2091,7 +2098,9 @@ class StaffEnrolmentWindow(ValidationMixin, BaseGUIWindow):
             ],
             [sg.VPush()],
         ]
-        window = sg.Window("Staff Enrolment", layout, **cls.window_init_dict())
+
+        scrolled_layout = [[sg.Column(layout, scrollable=True, vertical_scroll_only=True, expand_y=True, expand_x=True, pad=(0,0), key="main_column")]]
+        window = sg.Window("Staff Enrolment", scrolled_layout, **cls.window_init_dict())
         return window
 
     @classmethod
@@ -2111,6 +2120,8 @@ class StaffEnrolmentWindow(ValidationMixin, BaseGUIWindow):
 
         if event == "submit":
             if cls.validate(values, window) is not None:
+                window.refresh()
+                window["main_column"].contents_changed()
                 return True
 
             values["staff_number_input"] = values["staff_number_input"].upper()
@@ -2325,92 +2336,95 @@ class StudentEnrolmentWindow(ValidationMixin, BaseGUIWindow):
 
     @classmethod
     def window(cls):
+        field_label_props = {"size":22}
+        combo_props={"size":22}
+        input_props={"size":23}
         column1 = [
             [sg.Push(), sg.Text("Student Enrolment"), sg.Push()],
             [cls.message_display_field()],
             [
-                sg.Text("Registration Number:  "),
+                sg.Text("Registration Number:", **field_label_props),
                 sg.Input(
                     justification="left",
                     key="student_reg_number_input",
-                    expand_x=True,
                     focus=True,
+                    **input_props,
                 ),
             ],
             [
-                sg.Text("First Name:               "),
+                sg.Text("First Name:", **field_label_props),
                 sg.Input(
-                    expand_x=True,
                     justification="left",
                     key="student_first_name",
+                    **input_props,
                 ),
             ],
             [
-                sg.Text("Last Name:               "),
+                sg.Text("Last Name:", **field_label_props),
                 sg.Input(
-                    expand_x=True, justification="left", key="student_last_name"
+                    justification="left", key="student_last_name", **input_props,
                 ),
             ],
             [
-                sg.Text("Other Names:            "),
+                sg.Text("Other Names:", **field_label_props),
                 sg.Input(
-                    expand_x=True,
                     justification="left",
                     key="student_other_names",
+                    **input_props,
                 ),
             ],
             [
-                sg.Text("Sex:                         "),
+                sg.Text("Sex:", **field_label_props),
                 sg.Combo(
                     values=Sex.labels,
                     default_value=cls.COMBO_DEFAULT,
                     key="student_sex",
-                    expand_x=True,
+                    **combo_props,
                 ),
             ],
             [
-                sg.Text("Level of study:          "),
+                sg.Text("Level of study:", **field_label_props),
                 sg.Input(
-                    size=(5, 1),
                     justification="left",
                     key="student_level_of_study",
-                    expand_x=True,
+                    **input_props,
                 ),
             ],
             [
-                sg.Text("Possible graduation year:  "),
+                sg.Text("Possible graduation year:", **field_label_props),
                 sg.Input(
                     justification="left",
                     key="student_possible_grad_yr",
-                    expand_x=True,
+                    **input_props,
                 ),
             ],
             [
-                sg.Text("Faculty:                   "),
+                sg.Text("Faculty:", **field_label_props),
                 sg.Combo(
                     values=Faculty.get_all_faculties(),
                     default_value=cls.COMBO_DEFAULT,
-                    expand_x=True,
                     enable_events=True,
                     key="student_faculty",
+                    **combo_props
                 ),
             ],
             [
-                sg.Text("Department:             "),
+                sg.Text("Department:", **field_label_props),
                 sg.Combo(
                     values=Department.get_departments(),
                     default_value=cls.COMBO_DEFAULT,
-                    expand_x=True,
                     enable_events=True,
                     key="student_department",
+                    **combo_props,
                 ),
             ],
         ]
+
         layout = [
             [sg.VPush()],
             [
                 sg.Push(),
-                sg.Column(column1, vertical_scroll_only=True),
+                sg.Column(column1),
                 sg.Push(),
             ],
             [
@@ -2419,8 +2433,10 @@ class StudentEnrolmentWindow(ValidationMixin, BaseGUIWindow):
             ],
             [sg.VPush()],
         ]
+
+        scrolled_layout = [[sg.Column(layout, scrollable=True, vertical_scroll_only=True, expand_y=True, expand_x=True, pad=(0,0), key="main_column")]]
         window = sg.Window(
-            "Student Enrolment", layout, **cls.window_init_dict()
+            "Student Enrolment", scrolled_layout, **cls.window_init_dict()
         )
         return window
 
@@ -2440,6 +2456,8 @@ class StudentEnrolmentWindow(ValidationMixin, BaseGUIWindow):
                 )
         if event == "submit":
             if cls.validate(values, window) is not None:
+                window.refresh()
+                window["main_column"].contents_changed()
                 return True
 
             app_config["new_student"] = {}
