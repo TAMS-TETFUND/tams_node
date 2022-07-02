@@ -24,6 +24,8 @@ class BaseGUIWindow:
         "red": "#fc2323",
         "yellow": "#fffb08",
         "green": "#08ff14",
+        "blue": "#1111fc",
+        "dull_yellow": "#f5ed71",
         "light_grey": "#505050",
         "lighter_grey": "#bbbbbb"
     }
