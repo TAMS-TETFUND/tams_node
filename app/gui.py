@@ -1,11 +1,21 @@
+from csv import field_size_limit
+from dataclasses import field
 from datetime import datetime, timedelta
 import time
 
 import PySimpleGUI as sg
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.utils import IntegrityError
-import app
 
+import __main__
+from app.gui_utils import (
+    StaffBiometricVerificationRouterMixin,
+    StaffIDInputRouterMixin,
+    StudentRegNumberInputRouterMixin,
+    StudentBiometricVerificationRouterMixin,
+    ValidationMixin,
+    update_device_op_mode,
+)
 from app.camerafacerec import CamFaceRec
 from app.appconfigparser import AppConfigParser
 from app.basegui import BaseGUIWindow
@@ -13,10 +23,7 @@ from app.fingerprint import FingerprintScanner
 from app.attendancelogger import AttendanceLogger
 from app.barcode import Barcode
 from app.facerec import FaceRecognition
-from app.windowdispatch import WindowDispatch
-from tams_node.settings import DEBUG
-
-
+from app.opmodes import OperationalMode
 from app.camera2 import Camera
 
 from db.models import (
@@ -40,7 +47,12 @@ from db.models import (
 app_config = AppConfigParser()
 
 # initializing WindowDispatch object
-window_dispatch = WindowDispatch()
+# window_dispatch = WindowDispatch()
+window_dispatch = __main__.window_dispatch
+
+# setting the operational mode of device
+app_config["tmp_settings"] = {}
+update_device_op_mode()
 
 
 class HomeWindow(BaseGUIWindow):
@@ -52,13 +64,23 @@ class HomeWindow(BaseGUIWindow):
             [
                 sg.Push(),
                 sg.Button(
-                    image_data=cls.get_icon("new"),
+                    image_data=cls.get_icon("new", 0.9),
                     button_color=cls.ICON_BUTTON_COLOR,
                     key="new_event",
+                    use_ttk_buttons=True,
                 ),
                 sg.Push(),
             ],
-            [sg.Push(), sg.Text("New Event"), sg.Push()],
+            [
+                sg.Push(),
+                sg.Text("New", key="new_event_txt", enable_events=True),
+                sg.Push(),
+            ],
+            [
+                sg.Push(),
+                sg.Text("Event", key="new_event_txt", enable_events=True),
+                sg.Push(),
+            ],
         ]
         column2 = [
             [
@@ -67,10 +89,28 @@ class HomeWindow(BaseGUIWindow):
                     image_data=cls.get_icon("right_arrow"),
                     button_color=cls.ICON_BUTTON_COLOR,
                     key="continue_attendance",
+                    use_ttk_buttons=True,
                 ),
                 sg.Push(),
             ],
-            [sg.Push(), sg.Text("Continue Attendance"), sg.Push()],
+            [
+                sg.Push(),
+                sg.Text(
+                    "Continue",
+                    key="continue_attendance_txt",
+                    enable_events=True,
+                ),
+                sg.Push(),
+            ],
+            [
+                sg.Push(),
+                sg.Text(
+                    "Attendance",
+                    key="continue_attendance_txt_2",
+                    enable_events=True,
+                ),
+                sg.Push(),
+            ],
         ]
         column3 = [
             [
@@ -79,10 +119,22 @@ class HomeWindow(BaseGUIWindow):
                     image_data=cls.get_icon("schedule"),
                     button_color=cls.ICON_BUTTON_COLOR,
                     key="schedule",
+                    use_ttk_buttons=True,
                 ),
                 sg.Push(),
             ],
-            [sg.Push(), sg.Text("Scheduled/Recurring Events"), sg.Push()],
+            [
+                sg.Push(),
+                sg.Text("Scheduled &", key="schedule_txt", enable_events=True),
+                sg.Push(),
+            ],
+            [
+                sg.Push(),
+                sg.Text(
+                    "Recurring Events", key="schedule_txt_2", enable_events=True
+                ),
+                sg.Push(),
+            ],
         ]
         layout = [
             [
@@ -91,10 +143,12 @@ class HomeWindow(BaseGUIWindow):
                     image_data=cls.get_icon("settings", 0.5),
                     button_color=cls.ICON_BUTTON_COLOR,
                     key="settings",
+                    use_ttk_buttons=True,
                 ),
                 sg.Button(
                     image_data=cls.get_icon("power", 0.5),
                     button_color=cls.ICON_BUTTON_COLOR,
+                    use_ttk_buttons=True,
                     key="quit",
                 ),
             ],
@@ -107,7 +161,7 @@ class HomeWindow(BaseGUIWindow):
                 sg.Push(),
             ],
             [sg.VPush()],
-            [sg.Text("_" * 80)],
+            [sg.HorizontalSeparator()],
             [sg.Push(), sg.Text("TAMS© 2022"), sg.Push()],
         ]
 
@@ -116,9 +170,13 @@ class HomeWindow(BaseGUIWindow):
 
     @classmethod
     def loop(cls, window, event, values):
-        if event == "new_event":
+        if event in ("new_event", "new_event_txt"):
             window_dispatch.open_window(EventMenuWindow)
-        if event == "continue_attendance":
+        if event in (
+            "continue_attendance",
+            "continue_attendance_txt",
+            "continue_attendance_txt_2",
+        ):
             if app_config.has_section("current_attendance_session"):
                 current_att_session = app_config["current_attendance_session"]
                 session_strt_time = datetime.strptime(
@@ -147,6 +205,9 @@ class HomeWindow(BaseGUIWindow):
                         f"attendance session has expired"
                     )
                     app_config.remove_section("current_attendance_session")
+                    app_config.remove_section("failed_attempts")
+                    app_config.remove_section("tmp_student")
+                    app_config.remove_section("tmp_staff")
                     return True
 
                 if app_config.has_option(
@@ -199,10 +260,15 @@ class EventMenuWindow(BaseGUIWindow):
                     image_data=cls.get_icon("lecture"),
                     button_color=cls.ICON_BUTTON_COLOR,
                     key="lecture",
+                    use_ttk_buttons=True,
                 ),
                 sg.Push(),
             ],
-            [sg.Push(), sg.Text("Lecture"), sg.Push()],
+            [
+                sg.Push(),
+                sg.Text("Lecture", key="lecture_txt", enable_events=True),
+                sg.Push(),
+            ],
         ]
 
         column2 = [
@@ -212,10 +278,15 @@ class EventMenuWindow(BaseGUIWindow):
                     image_data=cls.get_icon("lab"),
                     button_color=cls.ICON_BUTTON_COLOR,
                     key="lab",
+                    use_ttk_buttons=True,
                 ),
                 sg.Push(),
             ],
-            [sg.Push(), sg.Text("Lab"), sg.Push()],
+            [
+                sg.Push(),
+                sg.Text("Lab", key="lab_txt", enable_events=True),
+                sg.Push(),
+            ],
         ]
 
         column3 = [
@@ -225,10 +296,15 @@ class EventMenuWindow(BaseGUIWindow):
                     image_data=cls.get_icon("test_script"),
                     button_color=cls.ICON_BUTTON_COLOR,
                     key="quiz",
+                    use_ttk_buttons=True,
                 ),
                 sg.Push(),
             ],
-            [sg.Push(), sg.Text("Quiz"), sg.Push()],
+            [
+                sg.Push(),
+                sg.Text("Quiz", key="quiz_txt", enable_events=True),
+                sg.Push(),
+            ],
         ]
 
         column4 = [
@@ -238,19 +314,26 @@ class EventMenuWindow(BaseGUIWindow):
                     image_data=cls.get_icon("graduation_cap"),
                     button_color=cls.ICON_BUTTON_COLOR,
                     key="examination",
+                    use_ttk_buttons=True,
                 ),
                 sg.Push(),
             ],
-            [sg.Push(), sg.Text("Examination"), sg.Push()],
+            [
+                sg.Push(),
+                sg.Text(
+                    "Examination", key="examination_txt", enable_events=True
+                ),
+                sg.Push(),
+            ],
         ]
 
         layout = [
             [
                 sg.Push(),
-                sg.Text("Take Attendance for:", font="Any 20"),
+                sg.Text("Take Attendance for:", font="Helvetica 20"),
                 sg.Push(),
             ],
-            [sg.Text("_" * 80)],
+            [sg.HorizontalSeparator()],
             [sg.VPush()],
             [
                 sg.Push(),
@@ -261,18 +344,27 @@ class EventMenuWindow(BaseGUIWindow):
                 sg.Push(),
             ],
             [sg.VPush()],
-            [sg.Text("_" * 80)],
-            [sg.Push(), sg.Button("<< Back", key="back"), sg.Push()],
+            [sg.HorizontalSeparator()],
+            cls.navigation_pane(next_icon="next_disabled"),
         ]
-
         window = sg.Window("Event Menu", layout, **cls.window_init_dict())
         return window
 
     @classmethod
     def loop(cls, window, event, values):
-        if event in (sg.WIN_CLOSED, "back"):
+        if event in (sg.WIN_CLOSED, "back", "cancel", "home"):
             window_dispatch.open_window(HomeWindow)
-        if event in ("lecture", "examination", "lab", "quiz"):
+        if event in (
+            "lecture",
+            "examination",
+            "lab",
+            "quiz",
+            "lecture_txt",
+            "examination_txt",
+            "lab_txt",
+            "quiz_txt",
+        ):
+            event = event.split("_")[0]
             app_config["new_event"] = {}
             app_config["new_event"]["type"] = event
             app_config["new_event"]["recurring"] = "False"
@@ -289,7 +381,7 @@ class EventMenuWindow(BaseGUIWindow):
         return True
 
 
-class AcademicSessionDetailsWindow(BaseGUIWindow):
+class AcademicSessionDetailsWindow(ValidationMixin, BaseGUIWindow):
     """Window to choose the academic session and academic semester for
     new attendance event."""
 
@@ -297,7 +389,7 @@ class AcademicSessionDetailsWindow(BaseGUIWindow):
     def window(cls):
         layout = [
             [sg.Push(), sg.Text("Academic Session Details"), sg.Push()],
-            [sg.Text("_" * 80)],
+            [sg.HorizontalSeparator()],
             [sg.VPush()],
             [
                 [cls.message_display_field()],
@@ -331,13 +423,14 @@ class AcademicSessionDetailsWindow(BaseGUIWindow):
                 ),
             ],
             [sg.VPush()],
-            [
-                sg.Push(),
-                sg.Button("<< Back", key="back"),
-                sg.Button("Next >>", key="next"),
-                sg.Button("Cancel", key="cancel"),
-                sg.Push(),
-            ],
+            # [
+            #     sg.Push(),
+            #     sg.Button("<< Back", key="back"),
+            #     sg.Button("Next >>", key="next"),
+            #     sg.Button("Cancel", key="cancel", **cls.cancel_button_kwargs()),
+            #     sg.Push(),
+            # ],
+            cls.navigation_pane(),
         ]
 
         window = sg.Window(
@@ -356,7 +449,7 @@ class AcademicSessionDetailsWindow(BaseGUIWindow):
             window_dispatch.open_window(EventDetailWindow)
         elif event == "back":
             window_dispatch.open_window(EventMenuWindow)
-        elif event == "cancel":
+        elif event == "home":
             window_dispatch.open_window(HomeWindow)
         elif event == "new_session":
             window_dispatch.open_window(NewAcademicSessionWindow)
@@ -393,7 +486,7 @@ class AcademicSessionDetailsWindow(BaseGUIWindow):
         return None
 
 
-class NewAcademicSessionWindow(BaseGUIWindow):
+class NewAcademicSessionWindow(ValidationMixin, BaseGUIWindow):
     """Window to create a new academic session."""
 
     @classmethod
@@ -401,11 +494,12 @@ class NewAcademicSessionWindow(BaseGUIWindow):
         current_year = datetime.now().year
         allowed_yrs = [x for x in range(current_year, current_year + 4)]
         layout = [
-            [sg.Push(), sg.Text("New Academic Session"), sg.Push()],
-            [sg.Text("_" * 80)],
+            [sg.Push(), sg.Text("Add New Academic Session"), sg.Push()],
+            [sg.HorizontalSeparator()],
+            cls.message_display_field(),
             [sg.VPush()],
             [
-                sg.Text("Session:  "),
+                sg.Text("Session:", size=12),
                 sg.Spin(
                     values=allowed_yrs,
                     initial_value=current_year,
@@ -423,29 +517,20 @@ class NewAcademicSessionWindow(BaseGUIWindow):
                 ),
             ],
             [sg.Check("Is this the current session?", k="is_current_session")],
-            [sg.VPush()],
             [
+                sg.Push(),
                 sg.Button(
-                    "<<Back",
-                    k="back",
-                    font="Any 12",
-                ),
-                sg.Button(
-                    "Create Academic Session",
+                    "Create",
                     k="create_session",
-                    font="Any 12",
-                ),
-                sg.Button(
-                    "Home",
-                    k="home",
-                    font="Any 12",
+                    font="Helvetica 12",
                 ),
             ],
+            [sg.VPush()],
+            cls.navigation_pane(next_icon="next_disabled"),
         ]
         window = sg.Window(
             "New Academic Session",
             layout,
-            font="Any 14",
             **cls.window_init_dict(),
         )
         return window
@@ -531,15 +616,16 @@ class NewAcademicSessionWindow(BaseGUIWindow):
         return True
 
 
-class EventDetailWindow(BaseGUIWindow):
+class EventDetailWindow(ValidationMixin, BaseGUIWindow):
     """Window to for user to specify event deatils like: course,
     start date, and event duration"""
 
     @classmethod
     def window(cls):
+        field_label_props = {"size": 18}
         section1 = [
             [
-                sg.Text("Faculty:          "),
+                sg.Text("Faculty:", **field_label_props),
                 sg.Combo(
                     Faculty.get_all_faculties(),
                     default_value=cls.COMBO_DEFAULT,
@@ -550,7 +636,7 @@ class EventDetailWindow(BaseGUIWindow):
                 ),
             ],
             [
-                sg.Text("Department:     "),
+                sg.Text("Department:", **field_label_props),
                 sg.Combo(
                     Department.get_departments(),
                     default_value=cls.COMBO_DEFAULT,
@@ -563,11 +649,11 @@ class EventDetailWindow(BaseGUIWindow):
         ]
         layout = [
             [sg.Push(), sg.Text("Event Details"), sg.Push()],
-            [sg.Text("_" * 80)],
+            [sg.HorizontalSeparator()],
             [sg.VPush()],
             [
                 [cls.message_display_field()],
-                sg.Text("Select Course:  "),
+                sg.Text("Select Course:", **field_label_props),
                 sg.Combo(
                     Course.get_courses(
                         semester=app_config.get("DEFAULT", "semester")
@@ -585,7 +671,10 @@ class EventDetailWindow(BaseGUIWindow):
                     enable_events=True,
                 ),
                 sg.Text(
-                    "Filter Courses", enable_events=True, k="filter_courses"
+                    "Filter Courses",
+                    enable_events=True,
+                    k="filter_courses",
+                    text_color=cls.UI_COLORS["dull_yellow"],
                 ),
             ],
             [
@@ -593,9 +682,9 @@ class EventDetailWindow(BaseGUIWindow):
                     sg.Column(section1, k="sec1", visible=False, expand_y=True)
                 )
             ],
-            [sg.Text("_" * 80)],
+            [sg.HorizontalSeparator()],
             [
-                sg.Text("Start Time:     "),
+                sg.Text("Start Time:", **field_label_props),
                 sg.Spin(
                     values=[str(a).zfill(2) for a in range(0, 24)],
                     initial_value="08",
@@ -624,7 +713,7 @@ class EventDetailWindow(BaseGUIWindow):
                 ),
             ],
             [
-                sg.Text("Duration:        "),
+                sg.Text("Duration:", **field_label_props),
                 sg.Spin(
                     values=[str(a).zfill(2) for a in range(0, 12)],
                     initial_value="01",
@@ -634,13 +723,9 @@ class EventDetailWindow(BaseGUIWindow):
                 ),
                 sg.Text("Hour(s)"),
             ],
-            [
-                sg.Push(),
-                sg.Button("Next", k="next"),
-                sg.Button("Cancel", k="cancel"),
-                sg.Push(),
-            ],
             [sg.VPush()],
+            [sg.Button("Submit", key="submit")],
+            cls.navigation_pane(back_icon="back_disabled"),
         ]
 
         window = sg.Window("Event Details", layout, **cls.window_init_dict())
@@ -695,7 +780,7 @@ class EventDetailWindow(BaseGUIWindow):
                     value=f"{event_date[1]}-{event_date[0]}-{event_date[2]}"
                 )
             window.force_focus()
-        if event == "next":
+        if event in ("next", "submit"):
             if cls.validate(values, window) is not None:
                 return True
 
@@ -706,7 +791,7 @@ class EventDetailWindow(BaseGUIWindow):
             app_config["new_event"]["start_date"] = values["start_date"]
             app_config["new_event"]["duration"] = values["duration"]
             window_dispatch.open_window(NewEventSummaryWindow)
-        if event == "cancel":
+        if event == "home":
             app_config.remove_section("new_event")
             window_dispatch.open_window(HomeWindow)
         return True
@@ -765,7 +850,7 @@ class EventDetailWindow(BaseGUIWindow):
         return None
 
 
-class NewEventSummaryWindow(BaseGUIWindow):
+class NewEventSummaryWindow(StaffIDInputRouterMixin, BaseGUIWindow):
     """This window presents details selected by the user in the new
     attendance session about to be initiated."""
 
@@ -780,7 +865,7 @@ class NewEventSummaryWindow(BaseGUIWindow):
                 ),
                 sg.Push(),
             ],
-            [sg.Text("_" * 80)],
+            [sg.HorizontalSeparator()],
             [sg.VPush()],
             [cls.message_display_field()],
             [sg.Text(f"Course: {new_event_dict['course']}")],
@@ -798,13 +883,15 @@ class NewEventSummaryWindow(BaseGUIWindow):
             ],
             [sg.Text(f"Duration: {new_event_dict['duration']} Hours")],
             [sg.VPush()],
-            [sg.Text("_" * 80)],
             [
                 sg.Button("Start Event", k="start_event"),
                 sg.Button("Schedule Event", k="schedule_event"),
                 sg.Button("Edit Details", k="edit"),
-                sg.Button("Cancel", k="cancel"),
             ],
+            [sg.HorizontalSeparator()],
+            cls.navigation_pane(
+                back_icon="back_disabled", next_icon="next_disabled"
+            ),
         ]
         window = sg.Window(
             "New Event Summary", layout, **cls.window_init_dict()
@@ -853,7 +940,7 @@ class NewEventSummaryWindow(BaseGUIWindow):
                 return True
 
             if event == "start_event":
-                window_dispatch.open_window(StaffBarcodeCameraWindow)
+                cls.staff_id_input_window()
 
             if event == "schedule_event":
                 sg.popup(
@@ -863,13 +950,15 @@ class NewEventSummaryWindow(BaseGUIWindow):
                 )
                 window_dispatch.open_window(HomeWindow)
 
-        if event == "cancel":
+        if event == "home":
             app_config.remove_section("new_event")
             window_dispatch.open_window(HomeWindow)
         return True
 
 
-class ActiveEventSummaryWindow(BaseGUIWindow):
+class ActiveEventSummaryWindow(
+    StaffBiometricVerificationRouterMixin, BaseGUIWindow
+):
     """This window presents the details of an attendance session that
     has been initiated."""
 
@@ -889,7 +978,7 @@ class ActiveEventSummaryWindow(BaseGUIWindow):
                 ),
                 sg.Push(),
             ],
-            [sg.Text("_" * 80)],
+            [sg.HorizontalSeparator()],
             [sg.VPush()],
             [cls.message_display_field()],
             [sg.Text(f"Course: {event_dict['course']}")],
@@ -914,11 +1003,13 @@ class ActiveEventSummaryWindow(BaseGUIWindow):
                 )
             ],
             [sg.VPush()],
-            [sg.Text("_" * 80)],
             [
                 sg.Button("Continue Event", k="continue_event"),
-                sg.Button("Cancel", k="cancel"),
             ],
+            [sg.HorizontalSeparator()],
+            cls.navigation_pane(
+                next_icon="next_disabled", back_icon="back_disabled"
+            ),
         ]
         window = sg.Window(
             "Active Event Summary", layout, **cls.window_init_dict()
@@ -955,22 +1046,26 @@ class ActiveEventSummaryWindow(BaseGUIWindow):
                     "fingerprint_template",
                 ).first()
             )
-            window_dispatch.open_window(StaffFaceVerificationWindow)
+            cls.staff_verification_window()
+            return True
 
-        if event == "cancel":
+        if event in ("cancel", "home"):
             window_dispatch.open_window(HomeWindow)
         return True
 
 
-class AttendanceSessionLandingWindow(BaseGUIWindow):
+class AttendanceSessionLandingWindow(
+    StudentRegNumberInputRouterMixin, BaseGUIWindow
+):
     """This is the landing window for the active attendance session."""
 
     @classmethod
     def window(cls):
         event_dict = dict(app_config["current_attendance_session"])
         layout = [
+            [sg.VPush()],
             [sg.Text("Attendance Session Details")],
-            [sg.Text("_" * 80)],
+            [sg.HorizontalSeparator()],
             [sg.Text(f"Course: {event_dict['course']}")],
             [
                 sg.Text(
@@ -989,12 +1084,19 @@ class AttendanceSessionLandingWindow(BaseGUIWindow):
                     "{}".format(cls.valid_check_in_count()), k="valid_checks"
                 ),
             ],
-            [sg.Text("_" * 80)],
+            [sg.VPush()],
             [
                 sg.Button("Take Attendance", k="start_attendance"),
-                sg.Button("End Attendance", k="end_attendance"),
-                sg.Button("Go back home", k="home"),
+                sg.Button(
+                    "End Attendance",
+                    k="end_attendance",
+                    **cls.cancel_button_kwargs(),
+                ),
             ],
+            [sg.HorizontalSeparator()],
+            cls.navigation_pane(
+                back_icon="back_disabled", next_icon="next_disabled"
+            ),
         ]
 
         window = sg.Window(
@@ -1006,8 +1108,7 @@ class AttendanceSessionLandingWindow(BaseGUIWindow):
     def loop(cls, window, event, values):
         if event == "home":
             confirm = sg.popup_yes_no(
-                "Leaving attendance-taking. System will verify staff again "
-                "to continue attendance-taking. Do you wish to continue?",
+                "Leaving attendance-taking. Do you wish to continue?",
                 title="Go back?",
                 keep_on_top=True,
             )
@@ -1016,7 +1117,7 @@ class AttendanceSessionLandingWindow(BaseGUIWindow):
             return True
 
         if event == "start_attendance":
-            window_dispatch.open_window(StudentBarcodeCameraWindow)
+            cls.student_reg_number_input_window()
 
         if event == "end_attendance":
             confirm = sg.popup_yes_no(
@@ -1034,6 +1135,9 @@ class AttendanceSessionLandingWindow(BaseGUIWindow):
                 att_session.status = AttendanceSessionStatus.ENDED
                 att_session.save()
                 app_config.remove_section("current_attendance_session")
+                app_config.remove_section("failed_attempts")
+                app_config.remove_section("tmp_student")
+                app_config.remove_section("tmp_staff")
                 window_dispatch.open_window(HomeWindow)
         return True
 
@@ -1046,147 +1150,15 @@ class AttendanceSessionLandingWindow(BaseGUIWindow):
         ).count()
 
 
-class StaffNumberInputWindow(BaseGUIWindow):
+class StaffNumberInputWindow(
+    ValidationMixin, StaffBiometricVerificationRouterMixin, BaseGUIWindow
+):
     """This window will provide an on-screen keypad for staff to enter
     their staff id/number by button clicks."""
 
     @classmethod
     def window(cls):
-        INPUT_BUTTON_SIZE = (10, 2)
-        column1 = [
-            [
-                sg.Button("1", s=INPUT_BUTTON_SIZE),
-                sg.Button("2", s=INPUT_BUTTON_SIZE),
-                sg.Button("3", s=INPUT_BUTTON_SIZE),
-                sg.Button("4", s=INPUT_BUTTON_SIZE),
-            ],
-            [
-                sg.Button("5", s=INPUT_BUTTON_SIZE),
-                sg.Button("6", s=INPUT_BUTTON_SIZE),
-                sg.Button("7", s=INPUT_BUTTON_SIZE),
-                sg.Button("8", s=INPUT_BUTTON_SIZE),
-            ],
-            [
-                sg.Button("9", s=INPUT_BUTTON_SIZE),
-                sg.Button("0", s=INPUT_BUTTON_SIZE),
-                sg.Button("Submit", key="submit", s=INPUT_BUTTON_SIZE),
-                sg.Button("Clear", key="clear", s=INPUT_BUTTON_SIZE),
-            ],
-        ]
-
-        layout = [
-            [sg.Text("_" * 80)],
-            [sg.VPush()],
-            [cls.message_display_field()],
-            [
-                sg.Push(),
-                sg.Text("Staff Number:    SS."),
-                sg.Input(
-                    size=(15, 1), justification="left", key="staff_number_input"
-                ),
-                sg.Push(),
-            ],
-            [sg.Push(), sg.Column(column1), sg.Push()],
-            [sg.VPush()],
-            [sg.Push(), sg.Button("<< Back", key="back"), sg.Push()],
-        ]
-
-        window = sg.Window(
-            "Staff Number Input", layout, **cls.window_init_dict()
-        )
-        return window
-
-    @classmethod
-    def loop(cls, window, event, values):
-        if event == "back":
-            window_dispatch.open_window(HomeWindow)
-            sg.popup(
-                "Event has been saved as a scheduled event",
-                title="Event saved",
-                keep_on_top=True,
-            )
-            return True
-
-        keys_pressed = None
-        if event in "0123456789":
-            keys_pressed = values["staff_number_input"]
-            keys_pressed += event
-            window["staff_number_input"].update(keys_pressed)
-            return True
-
-        elif event == "clear":
-            window["staff_number_input"].update("")
-            return True
-
-        elif event == "submit":
-            if cls.validate(values, window) is not None:
-                return True
-
-            keys_pressed = values["staff_number_input"]
-            staff_number_entered = "SS." + keys_pressed
-
-            staff = Staff.objects.filter(staff_number=staff_number_entered)
-
-            if not staff.exists():
-                cls.display_message(
-                    "No staff found with given staff ID. "
-                    "Ensure you have been duly registered on the system.",
-                    window,
-                )
-                return True
-
-            app_config["tmp_staff"] = app_config.dict_vals_to_str(
-                staff.values(
-                    "id",
-                    "staff_number",
-                    "first_name",
-                    "last_name",
-                    "department__name",
-                    "department__faculty__name",
-                    "face_encodings",
-                    "fingerprint_template",
-                ).first()
-            )
-
-            tmp_staff = app_config["tmp_staff"]
-            if tmp_staff["face_encodings"] in (None, "None", ""):
-                if tmp_staff["fingerprint_template"] in (None, "None", ""):
-                    cls.popup_auto_close_error(
-                        "No biometric data found for student"
-                    )
-                    return True
-                else:
-                    window_dispatch.open_window(
-                        StaffFingerprintVerificationWindow
-                    )
-                    return True
-            else:
-                window_dispatch.open_window(StaffFaceVerificationWindow)
-                return True
-
-        return True
-
-    @classmethod
-    def validate(cls, values, window):
-        for val_check in (
-            cls.validate_required_field(
-                (values["staff_number_input"], "staff number")
-            ),
-            cls.validate_staff_number("SS." + values["staff_number_input"]),
-        ):
-            if val_check is not None:
-                cls.display_message(val_check, window)
-                return True
-        return None
-
-
-class StudentRegNumKeypadWindow(BaseGUIWindow):
-    """Window provides an interface for students to enter their registration
-    numbers by button clicks."""
-
-    @classmethod
-    def window(cls):
-        INPUT_BUTTON_SIZE = (10, 2)
+        INPUT_BUTTON_SIZE = (8, 2)
         column1 = [
             [
                 sg.Button("1", s=INPUT_BUTTON_SIZE),
@@ -1204,7 +1176,7 @@ class StudentRegNumKeypadWindow(BaseGUIWindow):
                 sg.Button("7", s=INPUT_BUTTON_SIZE),
                 sg.Button("8", s=INPUT_BUTTON_SIZE),
                 sg.Button("9", s=INPUT_BUTTON_SIZE),
-                sg.Button("Clear", key="clear", s=INPUT_BUTTON_SIZE),
+                sg.Button("AC", key="clear", s=INPUT_BUTTON_SIZE),
             ],
             [
                 sg.Push(),
@@ -1214,29 +1186,203 @@ class StudentRegNumKeypadWindow(BaseGUIWindow):
         ]
 
         layout = [
-            [sg.Text("_" * 80)],
+            [sg.VPush()],
+            [cls.message_display_field()],
+            [
+                sg.Push(),
+                sg.Text("Staff Number:    SS."),
+                sg.Input(
+                    size=(15, 1),
+                    justification="left",
+                    key="staff_number_input",
+                    focus=True,
+                ),
+                sg.Push(),
+            ],
+            [sg.Push(), sg.Column(column1), sg.Push()],
+            [sg.VPush()],
+            cls.navigation_pane(),
+        ]
+        scrolled_layout = [
+            [
+                sg.Column(
+                    layout,
+                    scrollable=True,
+                    vertical_scroll_only=True,
+                    expand_y=True,
+                    key="main_column",
+                )
+            ]
+        ]
+
+        window = sg.Window(
+            "Staff Number Input", scrolled_layout, **cls.window_init_dict()
+        )
+        return window
+
+    @classmethod
+    def loop(cls, window, event, values):
+        if event in ("back", "home"):
+            cls.back_nav_key_handler()
+            return True
+
+        keys_pressed = None
+        if event in "0123456789":
+            keys_pressed = values["staff_number_input"]
+            keys_pressed += event
+            window["staff_number_input"].update(keys_pressed)
+            return True
+
+        elif event == "clear":
+            window["staff_number_input"].update("")
+            cls.hide_message_display_field(window)
+            cls.resize_column(window)
+            return True
+
+        elif event in ("submit", "next"):
+            if cls.validate(values, window) is not None:
+                cls.resize_column(window)
+                return True
+
+            keys_pressed = values["staff_number_input"]
+            staff_number_entered = "SS." + keys_pressed
+
+            staff = Staff.objects.filter(staff_number=staff_number_entered)
+
+            if not staff.exists():
+                cls.display_message(
+                    "No staff found with given staff ID. "
+                    "\nEnsure you have been duly registered on the system.",
+                    window,
+                )
+                cls.resize_column(window)
+                return True
+            cls.process_staff(staff)
+        return True
+
+    @classmethod
+    def validate(cls, values, window):
+        for val_check in (
+            cls.validate_required_field(
+                (values["staff_number_input"], "staff number")
+            ),
+            cls.validate_staff_number("SS." + values["staff_number_input"]),
+        ):
+            if val_check is not None:
+                cls.display_message(val_check, window)
+                return True
+        return None
+
+    @staticmethod
+    def resize_column(window):
+        window.refresh()
+        window["main_column"].contents_changed()
+
+    @classmethod
+    def process_staff(cls, staff):
+        app_config["tmp_staff"] = app_config.dict_vals_to_str(
+            staff.values(
+                "id",
+                "staff_number",
+                "first_name",
+                "last_name",
+                "department__name",
+                "department__faculty__name",
+                "face_encodings",
+                "fingerprint_template",
+            ).first()
+        )
+        cls.staff_verification_window()
+        return
+
+    @staticmethod
+    def back_nav_key_handler():
+        window_dispatch.open_window(HomeWindow)
+        sg.popup(
+            "Event details saved.",
+            title="Event saved",
+            keep_on_top=True,
+        )
+        return
+
+
+class StudentRegNumInputWindow(
+    ValidationMixin, StudentBiometricVerificationRouterMixin, BaseGUIWindow
+):
+    """Window provides an interface for students to enter their registration
+    numbers by button clicks."""
+
+    @classmethod
+    def window(cls):
+        INPUT_BUTTON_SIZE = (8, 2)
+        column1 = [
+            [
+                sg.Button("1", s=INPUT_BUTTON_SIZE),
+                sg.Button("2", s=INPUT_BUTTON_SIZE),
+                sg.Button("3", s=INPUT_BUTTON_SIZE),
+                sg.Button("0", s=INPUT_BUTTON_SIZE),
+            ],
+            [
+                sg.Button("4", s=INPUT_BUTTON_SIZE),
+                sg.Button("5", s=INPUT_BUTTON_SIZE),
+                sg.Button("6", s=INPUT_BUTTON_SIZE),
+                sg.Button("/", s=INPUT_BUTTON_SIZE),
+            ],
+            [
+                sg.Button("7", s=INPUT_BUTTON_SIZE),
+                sg.Button("8", s=INPUT_BUTTON_SIZE),
+                sg.Button("9", s=INPUT_BUTTON_SIZE),
+                sg.Button("AC", key="clear", s=INPUT_BUTTON_SIZE),
+            ],
+            [
+                sg.Push(),
+                sg.Button("Submit", key="submit", s=INPUT_BUTTON_SIZE),
+                sg.Push(),
+            ],
+        ]
+
+        layout = [
             [sg.VPush()],
             [cls.message_display_field()],
             [
                 sg.Push(),
                 sg.Text("Registration Number:  "),
                 sg.Input(
-                    size=(25, 1), justification="left", key="reg_num_input"
+                    size=(25, 1),
+                    justification="left",
+                    key="reg_num_input",
+                    focus=True,
                 ),
                 sg.Push(),
             ],
             [sg.Push(), sg.Column(column1), sg.Push()],
             [sg.VPush()],
-            [sg.Push(), sg.Button("<< Back", key="back"), sg.Push()],
+            cls.navigation_pane(),
+        ]
+        scrolled_layout = [
+            [
+                sg.Column(
+                    layout,
+                    scrollable=True,
+                    vertical_scroll_only=True,
+                    key="main_column",
+                    expand_y=True,
+                )
+            ]
         ]
 
-        window = sg.Window("Reg Number Input", layout, **cls.window_init_dict())
+        window = sg.Window(
+            "Reg Number Input", scrolled_layout, **cls.window_init_dict()
+        )
         return window
 
     @classmethod
     def loop(cls, window, event, values):
         if event == "back":
-            window_dispatch.open_window(AttendanceSessionLandingWindow)
+            cls.back_nav_key_handler()
+            return True
+        if event == "home":
+            window_dispatch.open_window(HomeWindow)
             return True
 
         keys_pressed = None
@@ -1248,10 +1394,13 @@ class StudentRegNumKeypadWindow(BaseGUIWindow):
 
         elif event == "clear":
             window["reg_num_input"].update("")
+            cls.hide_message_display_field()
+            cls.resize_column(window)
             return True
 
-        elif event == "submit":
+        elif event in ("submit", "next"):
             if cls.validate(values, window) is not None:
+                cls.resize_column(window)
                 return True
 
             reg_number_entered = values["reg_num_input"]
@@ -1260,53 +1409,43 @@ class StudentRegNumKeypadWindow(BaseGUIWindow):
             if not student.exists():
                 cls.display_message(
                     "No student found with given registration number.", window
-                )  # here here
-                return True
-
-            app_config["tmp_student"] = app_config.dict_vals_to_str(
-                student.values(
-                    "id",
-                    "reg_number",
-                    "first_name",
-                    "last_name",
-                    "level_of_study",
-                    "department__name",
-                    "department__faculty__name",
-                    "face_encodings",
-                    "fingerprint_template",
-                ).first()
-            )
-
-            tmp_student = app_config["tmp_student"]
-            if AttendanceRecord.objects.filter(
-                attendance_session_id=app_config.getint(
-                    "current_attendance_session", "session_id"
-                ),
-                student_id=tmp_student["id"],
-            ).exists():
-                cls.display_message(
-                    f"{tmp_student['first_name']} {tmp_student['last_name']} "
-                    f"({tmp_student['reg_number']}) already checked in",
-                    window,
                 )
+                cls.resize_column(window)
                 return True
-
-            if tmp_student["face_encodings"] in (None, "None", ""):
-                if tmp_student["fingerprint_template"] in (None, "None", ""):
-                    cls.display_message(
-                        "No biometric data found for student", window
-                    )
-                    return True
-                else:
-                    window_dispatch.open_window(
-                        StudentFingerprintVerificationWindow
-                    )
-                    return True
-            else:
-                window_dispatch.open_window(StudentFaceVerificationWindow)
-                return True
-
+            cls.process_student(student, window)
         return True
+
+    @classmethod
+    def process_student(cls, student, window):
+        app_config["tmp_student"] = app_config.dict_vals_to_str(
+            student.values(
+                "id",
+                "reg_number",
+                "first_name",
+                "last_name",
+                "level_of_study",
+                "department__name",
+                "department__faculty__name",
+                "face_encodings",
+                "fingerprint_template",
+            ).first()
+        )
+
+        tmp_student = app_config["tmp_student"]
+        if AttendanceRecord.objects.filter(
+            attendance_session_id=app_config.getint(
+                "current_attendance_session", "session_id"
+            ),
+            student_id=tmp_student["id"],
+        ).exists():
+            cls.display_message(
+                f"{tmp_student['first_name']} {tmp_student['last_name']} "
+                f"({tmp_student['reg_number']}) already checked in",
+                window,
+            )
+            cls.resize_column(window)
+            return True
+        cls.student_verification_window()
 
     @classmethod
     def validate(cls, values, window):
@@ -1320,6 +1459,16 @@ class StudentRegNumKeypadWindow(BaseGUIWindow):
                 cls.display_message(val_check, window)
                 return True
         return None
+
+    @staticmethod
+    def resize_column(window):
+        window.refresh()
+        window["main_column"].contents_changed()
+
+    @staticmethod
+    def back_nav_key_handler():
+        window_dispatch.open_window(AttendanceSessionLandingWindow)
+        return
 
 
 class CameraWindow(BaseGUIWindow):
@@ -1338,17 +1487,19 @@ class CameraWindow(BaseGUIWindow):
             [
                 sg.Push(),
                 sg.Button(
-                    image_data=cls.get_icon("camera", 0.5),
+                    image_data=cls.get_icon("camera", 0.6),
                     button_color=cls.ICON_BUTTON_COLOR,
                     key="capture",
-                ),
-                sg.Button(
-                    image_data=cls.get_icon("cancel", 0.5),
-                    button_color=cls.ICON_BUTTON_COLOR,
-                    key="cancel",
+                    use_ttk_buttons=True,
                 ),
                 cls.get_fingerprint_button(),
                 cls.get_keyboard_button(),
+                sg.Button(
+                    image_data=cls.get_icon("cancel", 0.6),
+                    button_color=cls.ICON_BUTTON_COLOR,
+                    key="cancel",
+                    use_ttk_buttons=True,
+                ),
                 sg.Push(),
             ],
         ]
@@ -1360,19 +1511,21 @@ class CameraWindow(BaseGUIWindow):
         if issubclass(cls, BarcodeCameraWindow):
             return sg.pin(
                 sg.Button(
-                    image_data=cls.get_icon("keyboard", 0.5),
+                    image_data=cls.get_icon("keyboard", 0.6),
                     button_color=cls.ICON_BUTTON_COLOR,
                     key="keyboard",
                     visible=True,
+                    use_ttk_buttons=True,
                 )
             )
         else:
             return sg.pin(
                 sg.Button(
-                    image_data=cls.get_icon("keyboard", 0.5),
+                    image_data=cls.get_icon("keyboard", 0.6),
                     button_color=cls.ICON_BUTTON_COLOR,
                     key="keyboard",
                     visible=False,
+                    use_ttk_buttons=True,
                 )
             )
 
@@ -1381,20 +1534,22 @@ class CameraWindow(BaseGUIWindow):
         if "verification" in cls.__name__.lower():
             return sg.pin(
                 sg.Button(
-                    image_data=cls.get_icon("fingerprint", 0.5),
+                    image_data=cls.get_icon("fingerprint", 0.6),
                     button_color=cls.ICON_BUTTON_COLOR,
                     key="fingerprint",
                     visible=True,
+                    use_ttk_buttons=True,
                 )
             )
         else:
             return sg.pin(
                 sg.Button(
-                    image_data=cls.get_icon("fingerprint", 0.5),
+                    image_data=cls.get_icon("fingerprint", 0.6),
                     button_color=cls.ICON_BUTTON_COLOR,
                     key="fingerprint",
                     visible=False,
                     disabled=True,
+                    use_ttk_buttons=True,
                 )
             )
 
@@ -1417,7 +1572,12 @@ class FaceCameraWindow(CameraWindow):
                     return True
 
                 if event == "fingerprint":
-                    cls.open_fingerprint()
+                    if not OperationalMode.check_fingerprint():
+                        cls.popup_auto_close_error(
+                            "Fingerprint scanner not connected"
+                        )
+                    else:
+                        cls.open_fingerprint()
                     return True
 
                 if (
@@ -1430,7 +1590,9 @@ class FaceCameraWindow(CameraWindow):
                             "Multiple faces detected",
                         )
                     elif cam_facerec.face_count == 0:
-                        cls.popup_auto_close_error("Camera did not find a face")
+                        cls.popup_auto_close_error(
+                            "Bring face closer to camera"
+                        )
 
                     if cam_facerec.face_count == 1:
                         captured_encodings = cam_facerec.face_encodings()
@@ -1440,8 +1602,6 @@ class FaceCameraWindow(CameraWindow):
                 window["image_display"].update(
                     data=Camera.feed_to_bytes(cam_facerec.img_bbox)
                 )
-                # cam_facerec.refresh()
-        return True
 
     @classmethod
     def process_image(cls, captured_face_encodings, window):
@@ -1461,13 +1621,15 @@ class FaceCameraWindow(CameraWindow):
             [
                 sg.Push(),
                 sg.Image(data=cls.get_icon("face_scanner", 0.4)),
-                sg.Text("Position Face", font=("Any", 14)),
+                sg.Text("Position Face", font=("Helvetica", 14)),
                 sg.Push(),
             ]
         ]
 
 
-class StudentFaceVerificationWindow(FaceCameraWindow):
+class StudentFaceVerificationWindow(
+    StudentRegNumberInputRouterMixin, FaceCameraWindow
+):
     """This class carries out student face verification and logs
     student attendance."""
 
@@ -1482,7 +1644,7 @@ class StudentFaceVerificationWindow(FaceCameraWindow):
             cls.popup_auto_close_error(
                 "Student's Facial biometric data not found"
             )
-            window_dispatch.open_window(StudentBarcodeCameraWindow)
+            cls.student_reg_number_input_window()
             return
 
         if FaceRecognition.face_match(
@@ -1498,7 +1660,7 @@ class StudentFaceVerificationWindow(FaceCameraWindow):
             else:
                 cls.popup_auto_close_error(AttendanceLogger.message)
 
-            window_dispatch.open_window(StudentBarcodeCameraWindow)
+            cls.student_reg_number_input_window()
             return
         else:
             AttendanceLogger.log_failed_attempt(app_config)
@@ -1676,13 +1838,15 @@ class BarcodeCameraWindow(CameraWindow):
             [
                 sg.Push(),
                 sg.Image(data=cls.get_icon("qr_code", 0.3)),
-                sg.Text("Present ID Card", font=("Any", 14)),
+                sg.Text("Present ID Card", font=("Helvetica", 14)),
                 sg.Push(),
             ],
         ]
 
 
-class StudentBarcodeCameraWindow(BarcodeCameraWindow):
+class StudentBarcodeCameraWindow(
+    ValidationMixin, StudentRegNumberInputRouterMixin, BarcodeCameraWindow
+):
     """window responsible for processing student registration number
     from qr code during attendance marking"""
 
@@ -1741,20 +1905,8 @@ class StudentBarcodeCameraWindow(BarcodeCameraWindow):
             )
             return
 
-        if tmp_student["face_encodings"] in (None, "None", ""):
-            if tmp_student["fingerprint_template"] in (None, "None", ""):
-                cls.popup_auto_close_error(
-                    "No biometric data found for student"
-                )
-                return
-            else:
-                window_dispatch.open_window(
-                    StudentFingerprintVerificationWindow
-                )
-                return
-        else:
-            window_dispatch.open_window(StudentFaceVerificationWindow)
-            return
+        cls.student_verification_window()
+        return
 
     @staticmethod
     def cancel_camera():
@@ -1773,18 +1925,22 @@ class StudentBarcodeCameraWindow(BarcodeCameraWindow):
             [
                 sg.Push(),
                 sg.Image(data=cls.get_icon("qr_code", 0.3)),
-                sg.Text("Present Student ID Card (Barcode)", font=("Any", 13)),
+                sg.Text(
+                    "Present Student ID Card (Barcode)", font=("Helvetica", 11)
+                ),
                 sg.Push(),
             ],
         ]
 
     @classmethod
     def launch_keypad(cls):
-        window_dispatch.open_window(StudentRegNumKeypadWindow)
+        window_dispatch.open_window(StudentRegNumInputWindow)
         return
 
 
-class StaffBarcodeCameraWindow(BarcodeCameraWindow):
+class StaffBarcodeCameraWindow(
+    ValidationMixin, StaffBiometricVerificationRouterMixin, BarcodeCameraWindow
+):
     """window responsible for processing staff number
     from qr code during attendance session initiation"""
 
@@ -1817,17 +1973,8 @@ class StaffBarcodeCameraWindow(BarcodeCameraWindow):
             ).first()
         )
 
-        tmp_staff = app_config["tmp_staff"]
-        if tmp_staff["face_encodings"] in (None, "None", ""):
-            if tmp_staff["fingerprint_template"] in (None, "None", ""):
-                cls.popup_auto_close_error("No biometric data found for staff")
-                return
-            else:
-                window_dispatch.open_window(StaffFingerprintVerificationWindow)
-                return
-        else:
-            window_dispatch.open_window(StaffFaceVerificationWindow)
-            return
+        cls.staff_verification_window()
+        return
 
     @classmethod
     def window_title(cls):
@@ -1843,8 +1990,8 @@ class StaffBarcodeCameraWindow(BarcodeCameraWindow):
                 sg.Push(),
                 sg.Image(data=cls.get_icon("qr_code", 0.3)),
                 sg.Text(
-                    "Present Staff ID Card (Barcode) to authorize attendance-taking",
-                    font=("Any", 13),
+                    "Present QR Code on Staff ID Card to authorize attendance",
+                    font=("Helvetica", 11),
                 ),
                 sg.Push(),
             ],
@@ -1866,92 +2013,101 @@ class EnrolmentMenuWindow(BaseGUIWindow):
     def window(cls):
         layout = [
             [sg.VPush()],
+            [sg.Button("Staff Enrolment", key="staff_enrolment")],
+            [sg.Button("Student Enrolment", key="student_enrolment")],
+            [sg.Button("Staff Enrolment Update", key="staff_enrolment_update")],
             [
-                sg.Push(),
-                sg.Button("Staff Enrolment", key="staff_enrolment"),
-                sg.Button("Student Enrolment", key="student_enrolment"),
-                sg.Push(),
+                sg.Button(
+                    "Student Enrolment Update", key="student_enrolment_update"
+                )
             ],
             [sg.VPush()],
-            [sg.Button("<< Back", k="back")],
+            cls.navigation_pane(next_icon="next_disabled"),
         ]
         window = sg.Window("Enrolment Window", layout, **cls.window_init_dict())
         return window
 
     @classmethod
     def loop(cls, window, event, values):
-        if event == "back":
+        if event in ("back", "home"):
             window_dispatch.open_window(HomeWindow)
         if event == "staff_enrolment":
             window_dispatch.open_window(StaffEnrolmentWindow)
         if event == "student_enrolment":
             window_dispatch.open_window(StudentEnrolmentWindow)
+        if event == "staff_enrolment_update":
+            window_dispatch.open_window(StaffEnrolmentUpdateIDSearch)
+        if event == "student_enrolment_update":
+            window_dispatch.open_window(StudentEnrolmentUpdateIDSearch)
         return True
 
 
-class StaffEnrolmentWindow(BaseGUIWindow):
+class StaffEnrolmentWindow(ValidationMixin, BaseGUIWindow):
     """The GUI window for enrolment of staff biodata"""
 
     @classmethod
     def window(cls):
+        field_label_props = {"size": 16}
+        combo_props = {"size": 28}
+        input_props = {"size": 29}
         column1 = [
             [sg.Push(), sg.Text("Staff Enrolment"), sg.Push()],
-            [sg.Text("_" * 80)],
+            [sg.HorizontalSeparator()],
             [cls.message_display_field()],
             [
-                sg.Text("Staff Number:  "),
+                sg.Text("Staff Number:", **field_label_props),
                 sg.Input(
-                    size=(15, 1),
                     justification="left",
                     key="staff_number_input",
-                    expand_x=True,
+                    focus=True,
+                    **input_props,
                 ),
             ],
             [
-                sg.Text("First Name:     "),
+                sg.Text("First Name:", **field_label_props),
                 sg.Input(
-                    expand_x=True, justification="left", key="staff_first_name"
+                    justification="left", key="staff_first_name", **input_props
                 ),
             ],
             [
-                sg.Text("Last Name:     "),
+                sg.Text("Last Name:", **field_label_props),
                 sg.Input(
-                    expand_x=True, justification="left", key="staff_last_name"
+                    justification="left", key="staff_last_name", **input_props
                 ),
             ],
             [
-                sg.Text("Other Names: "),
+                sg.Text("Other Names:", **field_label_props),
                 sg.Input(
-                    expand_x=True, justification="left", key="staff_other_names"
+                    justification="left", key="staff_other_names", **input_props
                 ),
             ],
             [
-                sg.Text("Sex:               "),
+                sg.Text("Sex:", **field_label_props),
                 sg.Combo(
                     values=Sex.labels,
                     default_value=cls.COMBO_DEFAULT,
                     key="staff_sex",
-                    expand_x=True,
+                    **combo_props,
                 ),
             ],
             [
-                sg.Text("Faculty:          "),
+                sg.Text("Faculty:", **field_label_props),
                 sg.Combo(
                     values=Faculty.get_all_faculties(),
                     default_value=cls.COMBO_DEFAULT,
                     enable_events=True,
-                    expand_x=True,
                     key="staff_faculty",
+                    **combo_props,
                 ),
             ],
             [
-                sg.Text("Department:    "),
+                sg.Text("Department:", **field_label_props),
                 sg.Combo(
                     values=Department.get_departments(),
                     default_value=cls.COMBO_DEFAULT,
                     enable_events=True,
-                    expand_x=True,
                     key="staff_department",
+                    **combo_props,
                 ),
             ],
         ]
@@ -1959,16 +2115,32 @@ class StaffEnrolmentWindow(BaseGUIWindow):
             [sg.VPush()],
             [
                 sg.Push(),
-                sg.Column(column1, vertical_scroll_only=True),
+                sg.Column(column1),
                 sg.Push(),
             ],
             [
                 sg.Button("Submit", key="submit"),
-                sg.Button("Cancel", key="cancel"),
+                sg.Button("Cancel", key="cancel", **cls.cancel_button_kwargs()),
             ],
             [sg.VPush()],
         ]
-        window = sg.Window("Staff Enrolment", layout, **cls.window_init_dict())
+
+        scrolled_layout = [
+            [
+                sg.Column(
+                    layout,
+                    scrollable=True,
+                    vertical_scroll_only=True,
+                    expand_y=True,
+                    expand_x=True,
+                    pad=(0, 0),
+                    key="main_column",
+                )
+            ]
+        ]
+        window = sg.Window(
+            "Staff Enrolment", scrolled_layout, **cls.window_init_dict()
+        )
         return window
 
     @classmethod
@@ -1988,6 +2160,8 @@ class StaffEnrolmentWindow(BaseGUIWindow):
 
         if event == "submit":
             if cls.validate(values, window) is not None:
+                window.refresh()
+                window["main_column"].contents_changed()
                 return True
 
             values["staff_number_input"] = values["staff_number_input"].upper()
@@ -1997,7 +2171,9 @@ class StaffEnrolmentWindow(BaseGUIWindow):
                 "staff_number": values["staff_number_input"],
                 "first_name": values["staff_first_name"],
                 "last_name": values["staff_last_name"],
+                "other_names": values["staff_other_names"],
                 "department": Department.get_id(values["staff_department"]),
+                "sex": Sex.str_to_value(values["staff_sex"]),
             }
 
             new_staff_dict = app_config.section_dict("new_staff")
@@ -2017,8 +2193,7 @@ class StaffEnrolmentWindow(BaseGUIWindow):
                     department=department, **new_staff_dict
                 )
 
-            window_dispatch.open_window(StaffPasswordSettingWindow)
-
+            cls.next_window()
         if event == "cancel":
             window_dispatch.open_window(HomeWindow)
 
@@ -2055,6 +2230,10 @@ class StaffEnrolmentWindow(BaseGUIWindow):
                 return True
         return None
 
+    @classmethod
+    def next_window(cls):
+        window_dispatch.open_window(StaffPasswordSettingWindow)
+
 
 class StaffPasswordSettingWindow(BaseGUIWindow):
     """This window is used for setting password for the new staff being
@@ -2062,21 +2241,23 @@ class StaffPasswordSettingWindow(BaseGUIWindow):
 
     @classmethod
     def window(cls):
+        field_label_props = {"size": 25}
         layout = [
             [sg.Text("Set Password")],
-            [sg.Text("_" * 80)],
+            [sg.HorizontalSeparator()],
             [cls.message_display_field()],
             [
-                sg.Text("Password:              "),
+                sg.Text("Password:", **field_label_props),
                 sg.Input(
                     key="staff_password",
                     expand_x=True,
                     enable_events=True,
                     password_char="*",
+                    focus=True,
                 ),
             ],
             [
-                sg.Text("Confirm Password:  "),
+                sg.Text("Confirm Password:", **field_label_props),
                 sg.Input(
                     key="staff_password_confirm",
                     expand_x=True,
@@ -2085,8 +2266,11 @@ class StaffPasswordSettingWindow(BaseGUIWindow):
             ],
             [
                 sg.Button("Submit", key="submit"),
-                sg.Button("Cancel", key="cancel"),
+                sg.Button("Cancel", key="cancel", **cls.cancel_button_kwargs()),
             ],
+            cls.navigation_pane(
+                next_icon="next_disabled", back_icon="back_disabled"
+            ),
         ]
         window = sg.Window(
             "Staff Password Setup", layout, **cls.window_init_dict()
@@ -2126,9 +2310,24 @@ class StaffPasswordSettingWindow(BaseGUIWindow):
                         return True
                 staff.set_password(values["staff_password"])
                 staff.save()
-                window_dispatch.open_window(StaffFaceEnrolmentWindow)
 
-            if event == "cancel":
+                if not OperationalMode.check_camera():
+                    cls.popup_auto_close_warn("Camera not connected.")
+                    time.sleep(2)
+                    if not OperationalMode.check_fingerprint():
+                        cls.popup_auto_close_warn(
+                            "Fingerprint scanner not connected"
+                        )
+                        window_dispatch.open_window(HomeWindow)
+                    else:
+                        window_dispatch.open_window(
+                            StaffFingerprintEnrolmentWindow
+                        )
+                else:
+                    window_dispatch.open_window(StaffFaceEnrolmentWindow)
+                return True
+
+            if event in ("cancel", "home"):
                 confirm = sg.popup_yes_no(
                     "Cancel Staff registration?",
                     title="Cancel Registration",
@@ -2181,106 +2380,126 @@ class StaffFaceEnrolmentWindow(FaceCameraWindow):
         return
 
 
-class StudentEnrolmentWindow(BaseGUIWindow):
+class StudentEnrolmentWindow(ValidationMixin, BaseGUIWindow):
     """The GUI window for enrolment of student biodata."""
 
     @classmethod
     def window(cls):
+        field_label_props = {"size": 22}
+        combo_props = {"size": 22}
+        input_props = {"size": 23}
         column1 = [
             [sg.Push(), sg.Text("Student Enrolment"), sg.Push()],
             [cls.message_display_field()],
             [
-                sg.Text("Registration Number:  "),
+                sg.Text("Registration Number:", **field_label_props),
                 sg.Input(
                     justification="left",
                     key="student_reg_number_input",
-                    expand_x=True,
+                    focus=True,
+                    **input_props,
                 ),
             ],
             [
-                sg.Text("First Name:               "),
+                sg.Text("First Name:", **field_label_props),
                 sg.Input(
-                    expand_x=True,
                     justification="left",
                     key="student_first_name",
+                    **input_props,
                 ),
             ],
             [
-                sg.Text("Last Name:               "),
+                sg.Text("Last Name:", **field_label_props),
                 sg.Input(
-                    expand_x=True, justification="left", key="student_last_name"
+                    justification="left",
+                    key="student_last_name",
+                    **input_props,
                 ),
             ],
             [
-                sg.Text("Other Names:            "),
+                sg.Text("Other Names:", **field_label_props),
                 sg.Input(
-                    expand_x=True,
                     justification="left",
                     key="student_other_names",
+                    **input_props,
                 ),
             ],
             [
-                sg.Text("Sex:                         "),
+                sg.Text("Sex:", **field_label_props),
                 sg.Combo(
                     values=Sex.labels,
                     default_value=cls.COMBO_DEFAULT,
                     key="student_sex",
-                    expand_x=True,
+                    **combo_props,
                 ),
             ],
             [
-                sg.Text("Level of study:          "),
+                sg.Text("Level of study:", **field_label_props),
                 sg.Input(
-                    size=(5, 1),
                     justification="left",
                     key="student_level_of_study",
-                    expand_x=True,
+                    **input_props,
                 ),
             ],
             [
-                sg.Text("Possible graduation year:  "),
+                sg.Text("Possible graduation year:", **field_label_props),
                 sg.Input(
                     justification="left",
                     key="student_possible_grad_yr",
-                    expand_x=True,
+                    **input_props,
                 ),
             ],
             [
-                sg.Text("Faculty:                   "),
+                sg.Text("Faculty:", **field_label_props),
                 sg.Combo(
                     values=Faculty.get_all_faculties(),
                     default_value=cls.COMBO_DEFAULT,
-                    expand_x=True,
                     enable_events=True,
                     key="student_faculty",
+                    **combo_props,
                 ),
             ],
             [
-                sg.Text("Department:             "),
+                sg.Text("Department:", **field_label_props),
                 sg.Combo(
                     values=Department.get_departments(),
                     default_value=cls.COMBO_DEFAULT,
-                    expand_x=True,
                     enable_events=True,
                     key="student_department",
+                    **combo_props,
                 ),
             ],
         ]
+
         layout = [
             [sg.VPush()],
             [
                 sg.Push(),
-                sg.Column(column1, vertical_scroll_only=True),
+                sg.Column(column1),
                 sg.Push(),
             ],
             [
                 sg.Button("Submit", key="submit"),
-                sg.Button("Cancel", key="cancel"),
+                sg.Button("Cancel", key="cancel", **cls.cancel_button_kwargs()),
             ],
             [sg.VPush()],
         ]
+
+        scrolled_layout = [
+            [
+                sg.Column(
+                    layout,
+                    scrollable=True,
+                    vertical_scroll_only=True,
+                    expand_y=True,
+                    expand_x=True,
+                    pad=(0, 0),
+                    key="main_column",
+                )
+            ]
+        ]
         window = sg.Window(
-            "Student Enrolment", layout, **cls.window_init_dict()
+            "Student Enrolment", scrolled_layout, **cls.window_init_dict()
         )
         return window
 
@@ -2300,6 +2519,8 @@ class StudentEnrolmentWindow(BaseGUIWindow):
                 )
         if event == "submit":
             if cls.validate(values, window) is not None:
+                window.refresh()
+                window["main_column"].contents_changed()
                 return True
 
             app_config["new_student"] = {}
@@ -2330,7 +2551,23 @@ class StudentEnrolmentWindow(BaseGUIWindow):
                     department=department, **new_student_dict
                 )
 
-            window_dispatch.open_window(StudentFaceEnrolmentWindow)
+            if not OperationalMode.check_camera():
+                cls.popup_auto_close_error("Camera not connected")
+                time.sleep(1)
+                if not OperationalMode.check_fingerprint():
+                    cls.popup_auto_close_error(
+                        "Fingerprit scanner not connected"
+                    )
+                    window_dispatch.open_window(HomeWindow)
+                    return True
+                else:
+                    window_dispatch.open_window(
+                        StudentFingerprintEnrolmentWindow
+                    )
+                    return True
+            else:
+                window_dispatch.open_window(StudentFaceEnrolmentWindow)
+                return True
         if event == "cancel":
             window_dispatch.open_window(HomeWindow)
         return True
@@ -2373,15 +2610,15 @@ class StudentEnrolmentWindow(BaseGUIWindow):
                 cls.display_message(criteria, window)
                 return True
 
-        if Student.objects.filter(
-            reg_number=values["student_reg_number_input"]
-        ).exists():
-            cls.display_message(
-                f"Student with registration number "
-                f"{values['student_reg_number_input']} already exists",
-                window,
-            )
-            return True
+        # if Student.objects.filter(
+        #     reg_number=values["student_reg_number_input"]
+        # ).exists():
+        #     cls.display_message(
+        #         f"Student with registration number "
+        #         f"{values['student_reg_number_input']} already exists",
+        #         window,
+        #     )
+        #     return True
         return None
 
 
@@ -2434,7 +2671,7 @@ class FingerprintGenericWindow(BaseGUIWindow):
             [sg.VPush()],
             [
                 sg.Push(),
-                sg.Image(cls.get_icon("fingerprint", 1.3)),
+                sg.Image(cls.get_icon("fingerprint_grey", 1.3)),
                 sg.Push(),
             ],
             [sg.VPush()],
@@ -2442,10 +2679,12 @@ class FingerprintGenericWindow(BaseGUIWindow):
                 sg.Push(),
                 cls.get_camera_button(),
                 sg.Button(
-                    image_data=cls.get_icon("cancel", 0.5),
+                    image_data=cls.get_icon("cancel", 0.6),
                     button_color=cls.ICON_BUTTON_COLOR,
                     key="cancel",
+                    use_ttk_buttons=True,
                 ),
+                sg.Push(),
             ],
         ]
         window = sg.Window(
@@ -2458,28 +2697,32 @@ class FingerprintGenericWindow(BaseGUIWindow):
         if "verification" in cls.__name__.lower():
             return sg.pin(
                 sg.Button(
-                    image_data=cls.get_icon("camera", 0.5),
+                    image_data=cls.get_icon("camera", 0.6),
                     button_color=cls.ICON_BUTTON_COLOR,
                     key="camera",
                     visible=True,
+                    use_ttk_buttons=True,
                 )
             )
         else:
             return sg.pin(
                 sg.Button(
-                    image_data=cls.get_icon("camera", 0.5),
+                    image_data=cls.get_icon("camera", 0.6),
                     button_color=cls.ICON_BUTTON_COLOR,
                     key="camera",
                     visible=False,
+                    use_ttk_buttons=True,
                 )
             )
 
     @classmethod
     def window_title(cls):
-        return "Place your left thumb on the fingerprint scanner"
+        return "Fingerprint Scan"
 
 
-class StudentFingerprintVerificationWindow(FingerprintGenericWindow):
+class StudentFingerprintVerificationWindow(
+    StudentRegNumberInputRouterMixin, FingerprintGenericWindow
+):
     """This window provides an interface for verifying student fingerprint
     during attendance logging."""
 
@@ -2489,7 +2732,10 @@ class StudentFingerprintVerificationWindow(FingerprintGenericWindow):
             window_dispatch.open_window(AttendanceSessionLandingWindow)
             return True
         if event == "camera":
-            window_dispatch.open_window(StudentFaceVerificationWindow)
+            if not OperationalMode.check_camera():
+                cls.popup_auto_close_error("Camera not connected")
+            else:
+                window_dispatch.open_window(StudentFaceVerificationWindow)
             return True
 
         tmp_student = app_config["tmp_student"]
@@ -2499,7 +2745,8 @@ class StudentFingerprintVerificationWindow(FingerprintGenericWindow):
             cls.popup_auto_close_error(
                 "Invalid fingerprint data from student registration", duration=5
             )
-            window_dispatch.open_window(StudentBarcodeCameraWindow)
+            cls.student_reg_number_input_window()
+
             return True
 
         if fp_template in (None, ""):
@@ -2507,18 +2754,26 @@ class StudentFingerprintVerificationWindow(FingerprintGenericWindow):
                 "No valid fingerprint data from student registration",
                 duration=5,
             )
-            window_dispatch.open_window(StudentBarcodeCameraWindow)
+            cls.student_reg_number_input_window()
             return True
 
         try:
             fp_scanner = FingerprintScanner()
         except RuntimeError as e:
             cls.popup_auto_close_error(e, duration=5)
-            window_dispatch.open_window(StudentBarcodeCameraWindow)
+            cls.student_reg_number_input_window()
             return True
 
         cls.display_message("Waiting for finger print...", window)
-        fp_scanner.fp_capture()
+        try:
+            fp_response = fp_scanner.fp_capture()
+        except RuntimeError:
+            cls.popup_auto_close_error("Connection to fingerprint scanner lost")
+            cls.student_reg_number_input_window()
+            return True
+        if not fp_response:
+            cls.display_message(fp_scanner.error, window)
+            return True
 
         if not fp_scanner.image_2_tz():
             cls.display_message(fp_scanner.error, window)
@@ -2528,7 +2783,7 @@ class StudentFingerprintVerificationWindow(FingerprintGenericWindow):
             cls.popup_auto_close_error(
                 "Error processing registration data. Contact admin", duration=5
             )
-            window_dispatch.open_window(StudentBarcodeCameraWindow)
+            cls.student_reg_number_input_window()
             return True
 
         if fp_scanner.verify_match():
@@ -2539,7 +2794,7 @@ class StudentFingerprintVerificationWindow(FingerprintGenericWindow):
             else:
                 cls.popup_auto_close_error(AttendanceLogger.message)
 
-            window_dispatch.open_window(StudentBarcodeCameraWindow)
+            cls.student_reg_number_input_window()
             return True
         elif not fp_scanner.verify_match():
             AttendanceLogger.log_failed_attempt(app_config)
@@ -2552,19 +2807,38 @@ class StudentFingerprintVerificationWindow(FingerprintGenericWindow):
 
         return True
 
+    @classmethod
+    def window_title(cls):
+        return "Student Fingerprint Verification"
 
-class StaffFingerprintVerificationWindow(FingerprintGenericWindow):
+
+class StaffFingerprintVerificationWindow(
+    StaffIDInputRouterMixin,
+    StaffBiometricVerificationRouterMixin,
+    FingerprintGenericWindow,
+):
     """This window provides an interface for verifying staff
     fingerprint during attendance initiation."""
 
     @classmethod
     def loop(cls, window, event, values):
         if event == "cancel":
-            window_dispatch.open_window(AttendanceSessionLandingWindow)
+            if app_config.has_option(
+                "current_attendance_session", "initiator_id"
+            ):
+                window_dispatch.open_window(ActiveEventSummaryWindow)
+            else:
+                app_config["new_event"] = app_config[
+                    "current_attendance_session"
+                ]
+                window_dispatch.open_window(NewEventSummaryWindow)
             return True
 
         if event == "camera":
-            window_dispatch.open_window(StaffFaceVerificationWindow)
+            if not OperationalMode.check_camera():
+                cls.popup_auto_close_error("Camera not connected")
+            else:
+                window_dispatch.open_window(StaffFaceVerificationWindow)
             return True
 
         tmp_staff = app_config["tmp_staff"]
@@ -2574,37 +2848,40 @@ class StaffFingerprintVerificationWindow(FingerprintGenericWindow):
             cls.popup_auto_close_error(
                 "Invalid fingerprint data from staff registration", duration=5
             )
-            window_dispatch.open_window(StaffBarcodeCameraWindow)
+            app_config.remove_section("tmp_staff")
+            cls.staff_id_input_window()
             return True
 
         if fp_template in (None, ""):
             cls.popup_auto_close_error(
                 "No valid fingerprint data from staff registration", duration=5
             )
-            window_dispatch.open_window(StaffBarcodeCameraWindow)
+            cls.staff_id_input_window()
             return True
 
         try:
             fp_scanner = FingerprintScanner()
         except RuntimeError as e:
-            confirm = sg.popup_yes_no(
-                str(e) + ". Use Face verification instead?",
+            sg.popup(
+                e,
                 title="Error",
                 keep_on_top=True,
             )
-            if confirm == "Yes":
-                window_dispatch.open_window(StaffFaceVerificationWindow)
-            else:
-                if app_config.has_option(
-                    "current_attendance_session", "initiator_id"
-                ):
-                    window_dispatch.open_window(ActiveEventSummaryWindow)
-                else:
-                    window_dispatch.open_window(NewEventSummaryWindow)
+            cls.staff_verification_window()
             return True
 
         cls.display_message("Waiting for fingerprint...", window)
-        fp_scanner.fp_capture()
+
+        try:
+            fp_response = fp_scanner.fp_capture()
+        except RuntimeError as e:
+            cls.popup_auto_close_error("Connection to fingerprint scanner lost")
+            cls.staff_verification_window()
+            return True
+
+        if not fp_response:
+            cls.display_message(fp_scanner.error, window)
+            return True
 
         if not fp_scanner.image_2_tz():
             cls.display_message(fp_scanner.error, window)
@@ -2647,6 +2924,10 @@ class StaffFingerprintVerificationWindow(FingerprintGenericWindow):
         window_dispatch.open_window(AttendanceSessionLandingWindow)
         return True
 
+    @classmethod
+    def window_title(cls):
+        return "Staff Fingerprint Verification"
+
 
 class FingerprintEnrolmentWindow(FingerprintGenericWindow):
     """
@@ -2671,21 +2952,33 @@ class FingerprintEnrolmentWindow(FingerprintGenericWindow):
 
         for fingerimg in range(1, 3):
             if fingerimg == 1:
-                cls.display_message(
-                    "Place your right thumb on fingerprint sensor...", window
+                cls.popup_auto_close_warn(
+                    "Place your right thumb on fingerprint sensor...",
+                    title="Info",
                 )
             else:
-                cls.display_message("Place same finger again...", window)
+                cls.popup_auto_close_warn(
+                    "Place same finger again...", title="Info"
+                )
 
-            fp_scanner.fp_capture()
+            time.sleep(1)
+
+            try:
+                fp_scanner.fp_continuous_capture()
+            except RuntimeError as e:
+                cls.popup_auto_close_error(
+                    "Connection to fingerprint scanner lost"
+                )
+                window_dispatch.open_window(HomeWindow)
+                return True
 
             if not fp_scanner.image_2_tz(fingerimg):
                 cls.popup_auto_close_error(fp_scanner.error, duration=5)
                 return True
 
             if fingerimg == 1:
-                cls.display_message("Remove finger", window)
-                time.sleep(1)
+                cls.popup_auto_close_warn("Remove finger...", title="Info")
+                time.sleep(2)
                 i = fp_scanner.get_image()
                 while i != fp_scanner.NOFINGER:
                     i = fp_scanner.get_image()
@@ -2747,6 +3040,10 @@ class StudentFingerprintEnrolmentWindow(FingerprintEnrolmentWindow):
         app_config.remove_section("new_student")
         return
 
+    @classmethod
+    def window_title(cls):
+        return "Student Fingerprint Enrolment"
+
 
 class StaffFingerprintEnrolmentWindow(FingerprintEnrolmentWindow):
     """This class provides methods tailored to staff fingerprint enrolement."""
@@ -2784,10 +3081,361 @@ class StaffFingerprintEnrolmentWindow(FingerprintEnrolmentWindow):
         app_config.remove_section("new_staff")
         return
 
+    @classmethod
+    def window_title(cls):
+        return "Student Fingerprint Verification"
+
+
+class StudentEnrolmentUpdateWindow(StudentEnrolmentWindow):
+    """A window for updating biodata of existing student."""
+
+    @classmethod
+    def window(cls):
+        student = app_config["edit_student"]
+
+        try:
+            student_sex = Sex(int(student["sex"])).label
+        except Exception:
+            student_sex = None
+
+        field_label_props = {"size": 22}
+        combo_props = {"size": 22}
+        input_props = {"size": 23}
+        column1 = [
+            [sg.Push(), sg.Text("Student Enrolment"), sg.Push()],
+            [cls.message_display_field()],
+            [
+                sg.Text("Registration Number:", **field_label_props),
+                sg.Input(
+                    justification="left",
+                    key="student_reg_number_input",
+                    disabled=True,
+                    **input_props,
+                    default_text=student["reg_number"],
+                ),
+            ],
+            [
+                sg.Text("First Name:", **field_label_props),
+                sg.Input(
+                    justification="left",
+                    key="student_first_name",
+                    focus=True,
+                    **input_props,
+                    default_text=student["first_name"],
+                ),
+            ],
+            [
+                sg.Text("Last Name:", **field_label_props),
+                sg.Input(
+                    justification="left",
+                    key="student_last_name",
+                    **input_props,
+                    default_text=student["last_name"],
+                ),
+            ],
+            [
+                sg.Text("Other Names:", **field_label_props),
+                sg.Input(
+                    justification="left",
+                    key="student_other_names",
+                    **input_props,
+                    default_text=student["other_names"],
+                ),
+            ],
+            [
+                sg.Text("Sex:", **field_label_props),
+                sg.Combo(
+                    values=Sex.labels,
+                    default_value=student_sex or cls.COMBO_DEFAULT,
+                    key="student_sex",
+                    **combo_props,
+                ),
+            ],
+            [
+                sg.Text("Level of study:", **field_label_props),
+                sg.Input(
+                    justification="left",
+                    key="student_level_of_study",
+                    **input_props,
+                    default_text=student["level_of_study"],
+                ),
+            ],
+            [
+                sg.Text("Possible graduation year:", **field_label_props),
+                sg.Input(
+                    justification="left",
+                    key="student_possible_grad_yr",
+                    **input_props,
+                    default_text=student["possible_grad_yr"],
+                ),
+            ],
+            [
+                sg.Text("Faculty:", **field_label_props),
+                sg.Combo(
+                    values=Faculty.get_all_faculties(),
+                    default_value=student["department__faculty__name"],
+                    enable_events=True,
+                    key="student_faculty",
+                    **combo_props,
+                ),
+            ],
+            [
+                sg.Text("Department:", **field_label_props),
+                sg.Combo(
+                    values=Department.get_departments(),
+                    default_value=student["department__name"],
+                    enable_events=True,
+                    key="student_department",
+                    **combo_props,
+                ),
+            ],
+        ]
+
+        layout = [
+            [sg.VPush()],
+            [
+                sg.Push(),
+                sg.Column(column1),
+                sg.Push(),
+            ],
+            [
+                sg.Button("Submit", key="submit"),
+                sg.Button("Cancel", key="cancel", **cls.cancel_button_kwargs()),
+            ],
+            [sg.VPush()],
+        ]
+
+        scrolled_layout = [
+            [
+                sg.Column(
+                    layout,
+                    scrollable=True,
+                    vertical_scroll_only=True,
+                    expand_y=True,
+                    expand_x=True,
+                    pad=(0, 0),
+                    key="main_column",
+                )
+            ]
+        ]
+        window = sg.Window(
+            "Student Enrolment", scrolled_layout, **cls.window_init_dict()
+        )
+        return window
+
+    @classmethod
+    def loop(cls, window, event, values):
+        return super().loop(window, event, values)
+
+
+class StudentEnrolmentUpdateIDSearch(StudentRegNumInputWindow):
+    @classmethod
+    def window(cls):
+        return super().window()
+
+    @classmethod
+    def loop(cls, window, event, values):
+        return super().loop(window, event, values)
+
+    @classmethod
+    def process_student(cls, student, window):
+        app_config["edit_student"] = app_config.dict_vals_to_str(
+            student.values(
+                "id",
+                "reg_number",
+                "first_name",
+                "last_name",
+                "other_names",
+                "level_of_study",
+                "possible_grad_yr",
+                "sex",
+                "department__name",
+                "department__faculty__name",
+                "face_encodings",
+                "fingerprint_template",
+            ).first()
+        )
+        window_dispatch.open_window(StudentEnrolmentUpdateWindow)
+        return
+
+
+class StaffEnrolmentUpdateIDSearch(StaffNumberInputWindow):
+    @classmethod
+    def window(cls):
+        return super().window()
+
+    @classmethod
+    def loop(cls, window, event, values):
+        return super().loop(window, event, values)
+
+    @classmethod
+    def process_staff(cls, staff):
+        app_config["edit_staff"] = app_config.dict_vals_to_str(
+            staff.values(
+                "id",
+                "staff_number",
+                "first_name",
+                "last_name",
+                "other_names",
+                "sex",
+                "department__name",
+                "department__faculty__name",
+                "face_encodings",
+                "fingerprint_template",
+            ).first()
+        )
+        window_dispatch.open_window(StaffEnrolmentUpdateWindow)
+        return
+
+    @staticmethod
+    def back_nav_key_handler():
+        window_dispatch.open_window(HomeWindow)
+        return
+
+
+class StaffEnrolmentUpdateWindow(StaffEnrolmentWindow):
+    """A window for updating biodata of existing staff."""
+
+    @classmethod
+    def window(cls):
+        staff = app_config["edit_staff"]
+
+        try:
+            staff_sex = Sex(int(staff["sex"])).label
+        except Exception:
+            staff_sex = None
+
+        field_label_props = {"size": 16}
+        combo_props = {"size": 28}
+        input_props = {"size": 29}
+        column1 = [
+            [sg.Push(), sg.Text("Staff Enrolment"), sg.Push()],
+            [sg.HorizontalSeparator()],
+            [cls.message_display_field()],
+            [
+                sg.Text("Staff Number:", **field_label_props),
+                sg.Input(
+                    justification="left",
+                    key="staff_number_input",
+                    disabled=True,
+                    **input_props,
+                    default_text=staff["staff_number"],
+                ),
+            ],
+            [
+                sg.Text("First Name:", **field_label_props),
+                sg.Input(
+                    justification="left",
+                    focus=True,
+                    key="staff_first_name",
+                    **input_props,
+                    default_text=staff["first_name"],
+                ),
+            ],
+            [
+                sg.Text("Last Name:", **field_label_props),
+                sg.Input(
+                    justification="left",
+                    default_text=staff["last_name"],
+                    key="staff_last_name",
+                    **input_props,
+                ),
+            ],
+            [
+                sg.Text("Other Names:", **field_label_props),
+                sg.Input(
+                    justification="left",
+                    default_text=staff["other_names"],
+                    key="staff_other_names",
+                    **input_props,
+                    
+                ),
+            ],
+            [
+                sg.Text("Sex:", **field_label_props),
+                sg.Combo(
+                    values=Sex.labels,
+                    default_value=staff_sex or cls.COMBO_DEFAULT,
+                    key="staff_sex",
+                    **combo_props,
+                    
+                ),
+            ],
+            [
+                sg.Text("Faculty:", **field_label_props),
+                sg.Combo(
+                    values=Faculty.get_all_faculties(),
+                    default_value=staff["department__faculty__name"],
+                    enable_events=True,
+                    key="staff_faculty",
+                    **combo_props,
+                ),
+            ],
+            [
+                sg.Text("Department:", **field_label_props),
+                sg.Combo(
+                    values=Department.get_departments(),
+                    default_value=staff["department__name"],
+                    enable_events=True,
+                    key="staff_department",
+                    **combo_props,
+                ),
+            ],
+        ]
+        layout = [
+            [sg.VPush()],
+            [
+                sg.Push(),
+                sg.Column(column1),
+                sg.Push(),
+            ],
+            [
+                sg.Button("Submit", key="submit"),
+                sg.Button("Cancel", key="cancel", **cls.cancel_button_kwargs()),
+            ],
+            [sg.VPush()],
+        ]
+
+        scrolled_layout = [
+            [
+                sg.Column(
+                    layout,
+                    scrollable=True,
+                    vertical_scroll_only=True,
+                    expand_y=True,
+                    expand_x=True,
+                    pad=(0, 0),
+                    key="main_column",
+                )
+            ]
+        ]
+        window = sg.Window(
+            "Staff Enrolment", scrolled_layout, **cls.window_init_dict()
+        )
+        return window
+
+    @classmethod
+    def loop(cls, window, event, values):
+        return super().loop(window, event, values)
+
+    @classmethod
+    def next_window(cls):
+        if not OperationalMode.check_camera():
+            cls.popup_auto_close_warn("Camera not connected.")
+            time.sleep(2)
+            if not OperationalMode.check_fingerprint():
+                cls.popup_auto_close_warn("Fingerprint scanner not connected")
+                window_dispatch.open_window(HomeWindow)
+            else:
+                window_dispatch.open_window(StaffFingerprintEnrolmentWindow)
+        else:
+            window_dispatch.open_window(StaffFaceEnrolmentWindow)
+
 
 def main():
     window_dispatch.open_window(HomeWindow)
     loop_exit_code = True
+
     while True:
         window = window_dispatch.current_window
         event, values = window.read(timeout=500)

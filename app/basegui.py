@@ -6,22 +6,9 @@ import base64
 
 from PIL import Image
 import PySimpleGUI as sg
-from manage import django_setup
-
-django_setup()
-from db.models import (
-    AcademicSession,
-    Department,
-    Faculty,
-    Semester,
-    Sex,
-    Student,
-    Staff,
-)
-
 
 # set application-wide theme
-sg.theme("LightGreen6")
+sg.theme("DarkGrey")
 
 
 class BaseGUIWindow:
@@ -32,6 +19,16 @@ class BaseGUIWindow:
         sg.theme_background_color(),
         sg.theme_background_color(),
     )
+    BUTTON_COLOR = ("#004f00", "#004f00")
+    UI_COLORS = {
+        "red": "#fc2323",
+        "yellow": "#fffb08",
+        "green": "#08ff14",
+        "blue": "#1111fc",
+        "dull_yellow": "#f5ed71",
+        "light_grey": "#505050",
+        "lighter_grey": "#bbbbbb",
+    }
 
     @classmethod
     def window(cls):
@@ -52,7 +49,11 @@ class BaseGUIWindow:
         return imgbytes
 
     @classmethod
-    def get_icon(cls, icon_name, size_ratio=1):
+    def get_icon(cls, icon_name, size_ratio=1, image_dimension=None):
+        image_height, image_width = image_dimension or [
+            cls.ICON_SIZE["h"],
+            cls.ICON_SIZE["w"],
+        ]
         icons_path = os.path.join(
             Path(os.path.abspath(__file__)).parent, "icons.json"
         )
@@ -61,7 +62,7 @@ class BaseGUIWindow:
         icon = icon_dict[icon_name]
         return cls._image_file_to_bytes(
             icon,
-            (cls.ICON_SIZE["h"] * size_ratio, cls.ICON_SIZE["w"] * size_ratio),
+            (image_height * size_ratio, image_width * size_ratio),
         )
 
     @classmethod
@@ -98,9 +99,10 @@ class BaseGUIWindow:
     def window_init_dict(cls):
         init_dict = {
             "size": cls.SCREEN_SIZE,
+            "font": "Helvetica 12",
             "no_titlebar": True,
             "keep_on_top": True,
-            "grab_anywhere": True,
+            "grab_anywhere": False,
             "finalize": True,
             "use_custom_titlebar": False,
         }
@@ -112,6 +114,11 @@ class BaseGUIWindow:
             sg.Text("", enable_events=True, k="message_display", visible=False)
         )
 
+    @classmethod
+    def cancel_button_kwargs(cls):
+        kwargs_dict = {"button_color": ("#ffffff", cls.UI_COLORS["red"])}
+        return kwargs_dict
+
     @staticmethod
     def display_message(message, window):
         window["message_display"].update(value=message, visible=True)
@@ -120,89 +127,34 @@ class BaseGUIWindow:
     def hide_message_display_field(window):
         window["message_display"].update(value="", visible=False)
 
-    @staticmethod
-    def validate_required_field(req_field):
-        field_value, field_name_for_display = req_field
-        if field_value in (None, "", "--select--"):
-            return "Invalid value provided in {}".format(field_name_for_display)
-        else:
-            return None
-
     @classmethod
-    def validate_required_fields(cls, req_fields, window):
-        for field in req_fields:
-            validation_value = cls.validate_required_field(field)
-            if validation_value is not None:
-                cls.display_message(validation_value, window)
-                return True
-            else:
-                return None
-
-    @staticmethod
-    def validate_semester(semester):
-        if semester not in Semester.labels:
-            return "Invalid value for semester"
-        else:
-            return None
-
-    @staticmethod
-    def validate_academic_session(session):
-        if not AcademicSession.is_valid_session(session):
-            return "Invalid value for academic session"
-        else:
-            return None
-
-    @staticmethod
-    def validate_student_reg_number(reg_no):
-        if not Student.is_valid_student_reg_number(reg_no):
-            return f"Invalid format for student registration number ({reg_no})"
-        else:
-            return None
-
-    @staticmethod
-    def validate_staff_number(staff_no):
-        if not Staff.is_valid_staff_number(staff_no):
-            return "Invalid value for staff number"
-        else:
-            return None
-
-    @staticmethod
-    def validate_faculty(faculty):
-        if faculty.lower() not in [
-            fac.lower() for fac in Faculty.get_all_faculties()
-        ]:
-            return "Invalid value in faculty"
-        else:
-            return None
-
-    @staticmethod
-    def validate_department(department):
-        if department.lower() not in [
-            dept.lower() for dept in Department.get_departments()
-        ]:
-            return "Invalid value in department"
-        else:
-            return None
-
-    @staticmethod
-    def validate_sex(sex):
-        if sex not in Sex.labels:
-            return "Invalid value in sex"
-        else:
-            return None
-
-    @staticmethod
-    def validate_int_field(field_value, field_name):
-        try:
-            field_val_int = int(field_value)
-        except Exception:
-            return f"Enter a numeric value for {field_name}"
-        else:
-            return None
-
-    @staticmethod
-    def validate_text_field(field_value, field_name):
-        if len(field_value) == 0:
-            return f"{field_name.capitalize()} cannot be blank"
-        else:
-            return None
+    def navigation_pane(cls, *, next_icon="next_grey", back_icon="back_grey"):
+        return [
+            sg.Column(
+                [
+                    [
+                        sg.Button(
+                            image_data=cls.get_icon(back_icon, 0.4),
+                            button_color=cls.ICON_BUTTON_COLOR,
+                            key="back",
+                            use_ttk_buttons=True,
+                        ),
+                        sg.Button(
+                            image_data=cls.get_icon(next_icon, 0.4),
+                            button_color=cls.ICON_BUTTON_COLOR,
+                            key="next",
+                            use_ttk_buttons=True,
+                        ),
+                        sg.Push(),
+                        sg.Button(
+                            image_data=cls.get_icon("home_grey", 0.4),
+                            button_color=cls.ICON_BUTTON_COLOR,
+                            key="home",
+                            use_ttk_buttons=True,
+                        ),
+                    ]
+                ],
+                expand_x=True,
+                pad=(0, 0),
+            )
+        ]

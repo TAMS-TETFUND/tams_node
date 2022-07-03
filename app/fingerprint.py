@@ -115,14 +115,24 @@ class FingerprintScanner:
             return False
 
     def fp_capture(self):
+        fp_scan_end_time = time.time() + 1
+        while time.time() < fp_scan_end_time:
+            i = self.finger.get_image()
+            if i == adafruit_fingerprint.OK:
+                return True
+
+        if i == adafruit_fingerprint.NOFINGER:
+            self.error = "Place finger on scanner"
+            return False
+        if i == adafruit_fingerprint.IMAGEFAIL:
+            self.error = "Imaging error. Place finger again"
+            return False
+
+    def fp_continuous_capture(self):
         while True:
             i = self.finger.get_image()
             if i == adafruit_fingerprint.OK:
                 break
-            if i == adafruit_fingerprint.NOFINGER:
-                self.error = "Place finger on scanner"
-            if i == adafruit_fingerprint.IMAGEFAIL:
-                self.error = "Imaging error. Place finger again"
 
     def store_template_in_file(self, filename):
         img = Image.new("L", (256, 288), "white")
