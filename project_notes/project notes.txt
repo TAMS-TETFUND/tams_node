@@ -91,3 +91,7 @@ Department/Faculty Information:
 ***What happens when the device turns off and comes back on during an attendance-taking 
 	session
 =======================================================================================
+attendance sign-out feature
+	-	check if student signed in during the sign-in segment of the event
+	-	confirm student hasn't already signed out
+	- 	log sign-out record for student
