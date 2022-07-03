@@ -1223,12 +1223,7 @@ class StaffNumberInputWindow(
     @classmethod
     def loop(cls, window, event, values):
         if event in ("back", "home"):
-            window_dispatch.open_window(HomeWindow)
-            sg.popup(
-                "Event has been saved as a scheduled event",
-                title="Event saved",
-                keep_on_top=True,
-            )
+            cls.back_nav_key_handler()
             return True
 
         keys_pressed = None
@@ -1298,6 +1293,16 @@ class StaffNumberInputWindow(
             ).first()
         )
         cls.staff_verification_window()
+        return
+
+    @staticmethod
+    def back_nav_key_handler():
+        window_dispatch.open_window(HomeWindow)
+        sg.popup(
+            "Event details saved.",
+            title="Event saved",
+            keep_on_top=True,
+        )
         return
 
 
@@ -1374,7 +1379,7 @@ class StudentRegNumInputWindow(
     @classmethod
     def loop(cls, window, event, values):
         if event == "back":
-            window_dispatch.open_window(AttendanceSessionLandingWindow)
+            cls.back_nav_key_handler()
             return True
         if event == "home":
             window_dispatch.open_window(HomeWindow)
@@ -1393,7 +1398,7 @@ class StudentRegNumInputWindow(
             cls.resize_column(window)
             return True
 
-        elif event == "submit":
+        elif event in ("submit", "next"):
             if cls.validate(values, window) is not None:
                 cls.resize_column(window)
                 return True
@@ -1459,6 +1464,11 @@ class StudentRegNumInputWindow(
     def resize_column(window):
         window.refresh()
         window["main_column"].contents_changed()
+
+    @staticmethod
+    def back_nav_key_handler():
+        window_dispatch.open_window(AttendanceSessionLandingWindow)
+        return
 
 
 class CameraWindow(BaseGUIWindow):
@@ -2161,7 +2171,9 @@ class StaffEnrolmentWindow(ValidationMixin, BaseGUIWindow):
                 "staff_number": values["staff_number_input"],
                 "first_name": values["staff_first_name"],
                 "last_name": values["staff_last_name"],
+                "other_names": values["staff_other_names"],
                 "department": Department.get_id(values["staff_department"]),
+                "sex": Sex.str_to_value(values["staff_sex"]),
             }
 
             new_staff_dict = app_config.section_dict("new_staff")
@@ -3265,6 +3277,7 @@ class StaffEnrolmentUpdateIDSearch(StaffNumberInputWindow):
                 "first_name",
                 "last_name",
                 "other_names",
+                "sex",
                 "department__name",
                 "department__faculty__name",
                 "face_encodings",
@@ -3274,6 +3287,11 @@ class StaffEnrolmentUpdateIDSearch(StaffNumberInputWindow):
         window_dispatch.open_window(StaffEnrolmentUpdateWindow)
         return
 
+    @staticmethod
+    def back_nav_key_handler():
+        window_dispatch.open_window(HomeWindow)
+        return
+
 
 class StaffEnrolmentUpdateWindow(StaffEnrolmentWindow):
     """A window for updating biodata of existing staff."""
@@ -3281,6 +3299,11 @@ class StaffEnrolmentUpdateWindow(StaffEnrolmentWindow):
     @classmethod
     def window(cls):
         staff = app_config["edit_staff"]
+
+        try:
+            staff_sex = Sex(int(staff["sex"])).label
+        except Exception:
+            staff_sex = None
 
         field_label_props = {"size": 16}
         combo_props = {"size": 28}
@@ -3313,26 +3336,29 @@ class StaffEnrolmentUpdateWindow(StaffEnrolmentWindow):
                 sg.Text("Last Name:", **field_label_props),
                 sg.Input(
                     justification="left",
+                    default_text=staff["last_name"],
                     key="staff_last_name",
                     **input_props,
-                    default_text=staff["last_name"],
                 ),
             ],
             [
                 sg.Text("Other Names:", **field_label_props),
                 sg.Input(
                     justification="left",
+                    default_text=staff["other_names"],
                     key="staff_other_names",
                     **input_props,
-                    default_text=staff["other_names"],
+                    
                 ),
             ],
             [
                 sg.Text("Sex:", **field_label_props),
                 sg.Combo(
                     values=Sex.labels,
+                    default_value=staff_sex or cls.COMBO_DEFAULT,
                     key="staff_sex",
                     **combo_props,
+                    
                 ),
             ],
             [
