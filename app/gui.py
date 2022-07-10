@@ -3453,7 +3453,7 @@ class DeviceSetupWindow(BaseGUIWindow):
         return True
 
 
-class ServerDetailsWindow(ValidationMixin, BaseGUIWindow):
+class ServerConnectionDetailsWindow(ValidationMixin, BaseGUIWindow):
     """
     This window will be collect information (server address, SSID, password)
     that will enable connection to the server.
