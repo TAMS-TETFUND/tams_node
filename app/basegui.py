@@ -101,10 +101,10 @@ class BaseGUIWindow:
             "size": cls.SCREEN_SIZE,
             "font": "Helvetica 12",
             "no_titlebar": True,
-            "keep_on_top": True,
+            "icon": cls.get_icon("icon"),
             "grab_anywhere": False,
+            "modal":True,
             "finalize": True,
-            "use_custom_titlebar": False,
         }
         return init_dict
 
