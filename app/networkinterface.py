@@ -51,6 +51,12 @@ class WLANInterface:
 
     @staticmethod
     def connection_query():
+        """
+        This method returns a list of detailed information about the 
+        wireless interface of the device.
+        Returns an empty list if the WLAN interface is 
+        disabled/unavailable
+        """
         interface_name = wlan_interface_name()
         connection_state_query = (
             subprocess.run(
@@ -78,6 +84,7 @@ class WLANInterface:
 
     @classmethod
     def is_connected(cls):
+        """Checks if the device is currently connected to a WLAN network"""
         connection_state = cls.find_parameter("GENERAL.STATE")
 
         if connection_state == "100 (connected)":
@@ -87,6 +94,10 @@ class WLANInterface:
 
     @classmethod
     def current_network_name(cls):
+        """
+        Returns name of network device is currently connected to.
+        Returns None if the device is not connected.
+        """
         network_name = cls.find_parameter("GENERAL.CONNECTION")
         if network_name == "--":
             return None
@@ -95,6 +106,11 @@ class WLANInterface:
 
     @classmethod
     def device_ip_address(cls):
+        """
+        Returns the IP address assigned to currently assigned to the 
+        device's WLAN interface. 
+        Returns None if the device is not connected to a WLAN network.
+        """
         if cls.is_connected():
             ip_address = cls.find_parameter("IP4.ADDRESS[1]")
             if ip_address is None:
