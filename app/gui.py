@@ -2022,6 +2022,7 @@ class EnrolmentMenuWindow(BaseGUIWindow):
                     "Student Enrolment Update", key="student_enrolment_update"
                 )
             ],
+            [sg.Button("Synch Device", key="synch_device")],
             [sg.VPush()],
             cls.navigation_pane(next_icon="next_disabled"),
         ]
@@ -2040,6 +2041,8 @@ class EnrolmentMenuWindow(BaseGUIWindow):
             window_dispatch.open_window(StaffEnrolmentUpdateIDSearch)
         if event == "student_enrolment_update":
             window_dispatch.open_window(StudentEnrolmentUpdateIDSearch)
+        if event == "synch_device":
+            window_dispatch.open_window(ServerConnectionDetailsWindow)
         return True
 
 
@@ -3439,7 +3442,7 @@ class DeviceSetupWindow(BaseGUIWindow):
     def window(cls):
         layout = [
             [sg.Text("Device Synch")],
-            [sg.Image(data=cls.get_icon("loading_ring_lines"), enable_events=True, key="loading_image")]
+            [sg.Image(data=cls.get_icon("loading_ring_lines"), enable_events=True, key="loading_image")],
             [sg.Push(), sg.Text("Synching..."), sg.Push()],
             cls.navigation_pane(),
         ]
@@ -3466,7 +3469,7 @@ class ServerConnectionDetailsWindow(ValidationMixin, BaseGUIWindow):
         combo_props = {"size": 22}
         layout = [
             [sg.Push(), sg.Text("Server Details"), sg.Push()],
-            cls.message_display_field(),
+            [cls.message_display_field()],
             [
                 sg.Text("Server IP adress:", **field_label_props),
                 sg.Input(key="server_ip_address", **input_props),
@@ -3504,6 +3507,10 @@ class ServerConnectionDetailsWindow(ValidationMixin, BaseGUIWindow):
 
     @classmethod
     def loop(cls, window, event, values):
+        if event in ("back","home"):
+            window_dispatch.open_window(HomeWindow)
+            return True
+
         if event == "connection_type":
             if values["connection_type"] != "WiFi":
                 window["ssid"].disabled = True
@@ -3512,7 +3519,7 @@ class ServerConnectionDetailsWindow(ValidationMixin, BaseGUIWindow):
                 window["ssid"].disabled = False
                 window["wlan_password"].disabled = False
         
-        if event == "submit":
+        if event in ("submit", "next"):
             required_fields = [
                 (values["server_ip_address"], "Server IP address"),
                 (values["server_port"], "Server port"),
