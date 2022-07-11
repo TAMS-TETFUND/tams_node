@@ -54,7 +54,9 @@ class WLANInterface:
         interface_name = wlan_interface_name()
         connection_state_query = (
             subprocess.run(
-                "nmcli device show "+interface_name, shell=True, capture_output=True
+                "nmcli device show " + interface_name,
+                shell=True,
+                capture_output=True,
             )
             .stdout.decode("utf8")
             .split("\n")

@@ -3438,21 +3438,30 @@ class DeviceSetupWindow(BaseGUIWindow):
     """
     Window for setting up the node device.
     The window will handle synching data from the server."""
+
     @classmethod
     def window(cls):
         layout = [
             [sg.Text("Device Synch")],
-            [sg.Image(data=cls.get_icon("loading_ring_lines"), enable_events=True, key="loading_image")],
+            [
+                sg.Image(
+                    data=cls.get_icon("loading_ring_lines"),
+                    enable_events=True,
+                    key="loading_image",
+                )
+            ],
             [sg.Push(), sg.Text("Synching..."), sg.Push()],
             cls.navigation_pane(),
         ]
 
     @classmethod
     def loop(cls, window, event, values):
-        # The synching operation could be running in another thread and 
+        # The synching operation could be running in another thread and
         # send a signal when done
 
-        window["loading_image"].update_animation(cls.get_icon("loading_ring_lines"), time_between_frames=500)
+        window["loading_image"].update_animation(
+            cls.get_icon("loading_ring_lines"), time_between_frames=500
+        )
         return True
 
 
@@ -3507,7 +3516,7 @@ class ServerConnectionDetailsWindow(ValidationMixin, BaseGUIWindow):
 
     @classmethod
     def loop(cls, window, event, values):
-        if event in ("back","home"):
+        if event in ("back", "home"):
             window_dispatch.open_window(HomeWindow)
             return True
 
@@ -3518,13 +3527,16 @@ class ServerConnectionDetailsWindow(ValidationMixin, BaseGUIWindow):
             else:
                 window["ssid"].disabled = False
                 window["wlan_password"].disabled = False
-        
+
         if event in ("submit", "next"):
             required_fields = [
                 (values["server_ip_address"], "Server IP address"),
                 (values["server_port"], "Server port"),
             ]
-            if cls.validate_required_fields(required_fields, window) is not None:
+            if (
+                cls.validate_required_fields(required_fields, window)
+                is not None
+            ):
                 return True
 
             app_config["server_details"] = {
@@ -3538,19 +3550,25 @@ class ServerConnectionDetailsWindow(ValidationMixin, BaseGUIWindow):
             server_details = app_config["server_details"]
             if values["connection_type"] == "WiFi":
                 try:
-                    connect_result = connect_to_wifi(server_details["ssid"], server_details["wlan_password"])
+                    connect_result = connect_to_wifi(
+                        server_details["ssid"], server_details["wlan_password"]
+                    )
                 except Exception as e:
                     cls.popup_auto_close_error(e)
                     return True
-                
+
                 if connect_result == 0:
-                    cls.popup_auto_close_success("WiFi network connection established")
+                    cls.popup_auto_close_success(
+                        "WiFi network connection established"
+                    )
                     time.sleep(1)
                 elif connect_result != 0:
-                    cls.popup_auto_close_error("Error establishing WiFi Network connection. Check details provided.")
+                    cls.popup_auto_close_error(
+                        "Error establishing WiFi Network connection. Check details provided."
+                    )
                     return True
-                
-                #test connection to server after network has been established
+
+                # test connection to server after network has been established
         return True
 
 

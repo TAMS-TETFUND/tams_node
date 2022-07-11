@@ -17,12 +17,12 @@ have provision for this address to be passed to method performing the request.)
 
 
 model_sequence = [
-    {"model":"StaffTitle", "url":"/staff/titles/"},
-    {"model":"Faculty", "url":"/faculties"},
-    {"model":"Department", "url":"/departments"},
-    {"model":"Staff", "url":"/staff"},
-    {"model":"Student", "url":"/students"},
-    {"model":"Course", "url":"/courses"},
-    {"model":"AcademicSession", "url":"/academic-sessions/"},
-    {"model":"CourseRegistration", "url":"/course-registrations"}
+    {"model": "StaffTitle", "url": "/staff/titles/"},
+    {"model": "Faculty", "url": "/faculties"},
+    {"model": "Department", "url": "/departments"},
+    {"model": "Staff", "url": "/staff"},
+    {"model": "Student", "url": "/students"},
+    {"model": "Course", "url": "/courses"},
+    {"model": "AcademicSession", "url": "/academic-sessions/"},
+    {"model": "CourseRegistration", "url": "/course-registrations"},
 ]
