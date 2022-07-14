@@ -101,7 +101,7 @@ def download_attendance(request, pk):
         },
     )
 
-    field_names = ["S/N", "Name", "Reg. Number", "Department" "Sign In"]
+    field_names = ["S/N", "Name", "Reg. Number", "Department", "Sign In"]
     attendance_writer = csv.DictWriter(response, fieldnames=field_names)
     attendance_writer.writerow(
         {
