@@ -3580,7 +3580,6 @@ def main():
         window = window_dispatch.current_window
         event, values = window.read(timeout=500)
         current_window = window_dispatch.find_window(window)
-        print(current_window)
         if current_window:
             loop_exit_code = eval(current_window).loop(window, event, values)
         if not loop_exit_code:

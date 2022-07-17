@@ -13,8 +13,8 @@ class WindowDispatch(UserDict):
         super(WindowDispatch, self).__init__(*args, **kwargs)
 
     def open_window(
-        self,
-        window_class: Type[BaseGUIWindow],
+            self,
+            window_class: Type[BaseGUIWindow],
     ) -> None:
         self.update({window_class.__name__: window_class.window()})
         open_windows = self.copy()

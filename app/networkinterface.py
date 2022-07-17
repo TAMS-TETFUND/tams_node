@@ -33,6 +33,7 @@ def connect_to_wifi(ssid, network_password):
 
 def connect_to_LORA():
     """This function will handle connection to LORA."""
+    pass
 
 
 class WLANInterface:
