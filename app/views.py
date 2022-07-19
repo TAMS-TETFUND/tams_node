@@ -10,13 +10,14 @@ from django.core.wsgi import get_wsgi_application
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "tams_node.settings")
 application = get_wsgi_application()
 
-SERVER_URL = 'http://127.0.0.1:8080/students/backup/'  # TODO: update the url
+SERVER_ENDPOINT = 'node-devices/backup/'  # TODO: update the url
 
 
 # method to sync the user data in the server to the node device
-def first_time_sync():
+def first_time_sync(ip: str, port: int, protocol: str = "http"):
+    server_url = f'{protocol}://{ip}:{port}/{SERVER_ENDPOINT}'
     backup_file = 'server_backup.json'
-    x = requests.get(SERVER_URL).json()
+    x = requests.get(server_url).json()
 
     # Serializing json response
     json_object = json.dumps(x, indent=2)
@@ -30,4 +31,4 @@ def first_time_sync():
 
 
 if __name__ == '__main__':
-    first_time_sync()
+    first_time_sync("127.0.0.1", 8080)

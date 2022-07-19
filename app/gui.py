@@ -26,6 +26,7 @@ from app.facerec import FaceRecognition
 from app.networkinterface import connect_to_wifi
 from app.opmodes import OperationalMode
 from app.camera2 import Camera
+from app.views import first_time_sync
 
 from db.models import (
     AttendanceRecord,
@@ -174,9 +175,9 @@ class HomeWindow(BaseGUIWindow):
         if event in ("new_event", "new_event_txt"):
             window_dispatch.open_window(EventMenuWindow)
         if event in (
-            "continue_attendance",
-            "continue_attendance_txt",
-            "continue_attendance_txt_2",
+                "continue_attendance",
+                "continue_attendance_txt",
+                "continue_attendance_txt_2",
         ):
             if app_config.has_section("current_attendance_session"):
                 current_att_session = app_config["current_attendance_session"]
@@ -212,7 +213,7 @@ class HomeWindow(BaseGUIWindow):
                     return True
 
                 if app_config.has_option(
-                    "current_attendance_session", "initiator_id"
+                        "current_attendance_session", "initiator_id"
                 ):
                     window_dispatch.open_window(ActiveEventSummaryWindow)
                 else:
@@ -242,7 +243,7 @@ class HomeWindow(BaseGUIWindow):
         if clicked == "OK":
             return False
         if clicked in ("Cancel", None):
-            pass
+            return True
         return True
 
 
@@ -356,14 +357,14 @@ class EventMenuWindow(BaseGUIWindow):
         if event in (sg.WIN_CLOSED, "back", "cancel", "home"):
             window_dispatch.open_window(HomeWindow)
         if event in (
-            "lecture",
-            "examination",
-            "lab",
-            "quiz",
-            "lecture_txt",
-            "examination_txt",
-            "lab_txt",
-            "quiz_txt",
+                "lecture",
+                "examination",
+                "lab",
+                "quiz",
+                "lecture_txt",
+                "examination_txt",
+                "lab_txt",
+                "quiz_txt",
         ):
             event = event.split("_")[0]
             app_config["new_event"] = {}
@@ -478,7 +479,7 @@ class AcademicSessionDetailsWindow(ValidationMixin, BaseGUIWindow):
             return True
 
         if not AcademicSession.objects.filter(
-            session=values["current_session"]
+                session=values["current_session"]
         ).exists():
             cls.display_message(
                 "Academic Session has not been registered.", window
@@ -555,9 +556,9 @@ class NewAcademicSessionWindow(ValidationMixin, BaseGUIWindow):
                     return True
 
                 new_session = (
-                    str(values["session_start"])
-                    + "/"
-                    + str(values["session_end"])
+                        str(values["session_start"])
+                        + "/"
+                        + str(values["session_end"])
                 )
                 is_current_session = values["is_current_session"]
                 val_check = cls.validate_academic_session(new_session)
@@ -787,7 +788,7 @@ class EventDetailWindow(ValidationMixin, BaseGUIWindow):
 
             app_config["new_event"]["course"] = values["selected_course"]
             app_config["new_event"]["start_time"] = (
-                values["start_hour"] + ":" + values["start_minute"]
+                    values["start_hour"] + ":" + values["start_minute"]
             )
             app_config["new_event"]["start_date"] = values["start_date"]
             app_config["new_event"]["duration"] = values["duration"]
@@ -815,16 +816,16 @@ class EventDetailWindow(ValidationMixin, BaseGUIWindow):
             return True
 
         for val_check in (
-            cls.validate_int_field(values["start_hour"], "start time"),
-            cls.validate_int_field(values["start_minute"], "start time"),
+                cls.validate_int_field(values["start_hour"], "start time"),
+                cls.validate_int_field(values["start_minute"], "start time"),
         ):
             if val_check is not None:
                 cls.display_message(val_check, window)
                 return True
 
         if (
-            cls.validate_int_field(values["duration"], "duration") is not None
-            or int(values["duration"]) <= 0
+                cls.validate_int_field(values["duration"], "duration") is not None
+                or int(values["duration"]) <= 0
         ):
             cls.display_message("Invalid value in duration", window)
             return True
@@ -1264,10 +1265,10 @@ class StaffNumberInputWindow(
     @classmethod
     def validate(cls, values, window):
         for val_check in (
-            cls.validate_required_field(
-                (values["staff_number_input"], "staff number")
-            ),
-            cls.validate_staff_number("SS." + values["staff_number_input"]),
+                cls.validate_required_field(
+                    (values["staff_number_input"], "staff number")
+                ),
+                cls.validate_staff_number("SS." + values["staff_number_input"]),
         ):
             if val_check is not None:
                 cls.display_message(val_check, window)
@@ -1434,10 +1435,10 @@ class StudentRegNumInputWindow(
 
         tmp_student = app_config["tmp_student"]
         if AttendanceRecord.objects.filter(
-            attendance_session_id=app_config.getint(
-                "current_attendance_session", "session_id"
-            ),
-            student_id=tmp_student["id"],
+                attendance_session_id=app_config.getint(
+                    "current_attendance_session", "session_id"
+                ),
+                student_id=tmp_student["id"],
         ).exists():
             cls.display_message(
                 f"{tmp_student['first_name']} {tmp_student['last_name']} "
@@ -1451,10 +1452,10 @@ class StudentRegNumInputWindow(
     @classmethod
     def validate(cls, values, window):
         for val_check in (
-            cls.validate_required_field(
-                (values["reg_num_input"], "registration number")
-            ),
-            cls.validate_student_reg_number(values["reg_num_input"]),
+                cls.validate_required_field(
+                    (values["reg_num_input"], "registration number")
+                ),
+                cls.validate_student_reg_number(values["reg_num_input"]),
         ):
             if val_check is not None:
                 cls.display_message(val_check, window)
@@ -1582,8 +1583,8 @@ class FaceCameraWindow(CameraWindow):
                     return True
 
                 if (
-                    event in ("capture", "image_display")
-                    and cam_facerec.deque_not_empty()
+                        event in ("capture", "image_display")
+                        and cam_facerec.deque_not_empty()
                 ):
                     cam_facerec.load_facerec_attrs()
                     if cam_facerec.face_count > 1:
@@ -1649,10 +1650,10 @@ class StudentFaceVerificationWindow(
             return
 
         if FaceRecognition.face_match(
-            known_face_encodings=[
-                str_to_face_enc(tmp_student["face_encodings"])
-            ],
-            face_encoding_to_check=captured_face_encodings,
+                known_face_encodings=[
+                    str_to_face_enc(tmp_student["face_encodings"])
+                ],
+                face_encoding_to_check=captured_face_encodings,
         ):
             if AttendanceLogger.log_attendance(app_config):
                 cls.popup_auto_close_success(AttendanceLogger.message)
@@ -1717,10 +1718,10 @@ class StaffFaceVerificationWindow(FaceCameraWindow):
             return
         tmp_staff = app_config["tmp_staff"]
         if FaceRecognition.face_match(
-            known_face_encodings=[
-                str_to_face_enc(app_config["tmp_staff"]["face_encodings"])
-            ],
-            face_encoding_to_check=captured_face_encodings,
+                known_face_encodings=[
+                    str_to_face_enc(app_config["tmp_staff"]["face_encodings"])
+                ],
+                face_encoding_to_check=captured_face_encodings,
         ):
             att_session = AttendanceSession.objects.get(
                 id=app_config.getint("current_attendance_session", "session_id")
@@ -1895,10 +1896,10 @@ class StudentBarcodeCameraWindow(
 
         tmp_student = app_config["tmp_student"]
         if AttendanceRecord.objects.filter(
-            attendance_session_id=app_config.getint(
-                "current_attendance_session", "session_id"
-            ),
-            student_id=tmp_student["id"],
+                attendance_session_id=app_config.getint(
+                    "current_attendance_session", "session_id"
+                ),
+                student_id=tmp_student["id"],
         ).exists():
             cls.popup_auto_close_warn(
                 f"{tmp_student['first_name']} {tmp_student['last_name']} "
@@ -2186,7 +2187,7 @@ class StaffEnrolmentWindow(ValidationMixin, BaseGUIWindow):
             )
 
             if Staff.objects.filter(
-                staff_number=new_staff_dict["staff_number"]
+                    staff_number=new_staff_dict["staff_number"]
             ).exists():
                 staff = Staff.objects.filter(
                     staff_number=new_staff_dict["staff_number"]
@@ -2224,10 +2225,10 @@ class StaffEnrolmentWindow(ValidationMixin, BaseGUIWindow):
                 return True
 
         for criteria in (
-            cls.validate_staff_number(values["staff_number_input"]),
-            cls.validate_sex(values["staff_sex"]),
-            cls.validate_faculty(values["staff_faculty"]),
-            cls.validate_department(values["staff_department"]),
+                cls.validate_staff_number(values["staff_number_input"]),
+                cls.validate_sex(values["staff_sex"]),
+                cls.validate_faculty(values["staff_faculty"]),
+                cls.validate_department(values["staff_department"]),
         ):
             if criteria is not None:
                 cls.display_message(criteria, window)
@@ -2304,8 +2305,8 @@ class StaffPasswordSettingWindow(BaseGUIWindow):
 
             if event == "submit":
                 for field in (
-                    values["staff_password"],
-                    values["staff_password_confirm"],
+                        values["staff_password"],
+                        values["staff_password_confirm"],
                 ):
                     if field in (None, ""):
                         cls.display_message(
@@ -2544,7 +2545,7 @@ class StudentEnrolmentWindow(ValidationMixin, BaseGUIWindow):
             )
 
             if Student.objects.filter(
-                reg_number=new_student_dict["reg_number"]
+                    reg_number=new_student_dict["reg_number"]
             ).exists():
                 student = Student.objects.filter(
                     reg_number=new_student_dict["reg_number"]
@@ -2598,17 +2599,17 @@ class StudentEnrolmentWindow(ValidationMixin, BaseGUIWindow):
                 return True
 
         for criteria in (
-            cls.validate_student_reg_number(values["student_reg_number_input"]),
-            cls.validate_sex(values["student_sex"]),
-            cls.validate_faculty(values["student_faculty"]),
-            cls.validate_department(values["student_department"]),
-            cls.validate_int_field(
-                values["student_level_of_study"], "level of study"
-            ),
-            cls.validate_int_field(
-                values["student_possible_grad_yr"],
-                "possible year of graduation",
-            ),
+                cls.validate_student_reg_number(values["student_reg_number_input"]),
+                cls.validate_sex(values["student_sex"]),
+                cls.validate_faculty(values["student_faculty"]),
+                cls.validate_department(values["student_department"]),
+                cls.validate_int_field(
+                    values["student_level_of_study"], "level of study"
+                ),
+                cls.validate_int_field(
+                    values["student_possible_grad_yr"],
+                    "possible year of graduation",
+                ),
         ):
             if criteria is not None:
                 cls.display_message(criteria, window)
@@ -2828,7 +2829,7 @@ class StaffFingerprintVerificationWindow(
     def loop(cls, window, event, values):
         if event == "cancel":
             if app_config.has_option(
-                "current_attendance_session", "initiator_id"
+                    "current_attendance_session", "initiator_id"
             ):
                 window_dispatch.open_window(ActiveEventSummaryWindow)
             else:
@@ -3473,19 +3474,19 @@ class ServerConnectionDetailsWindow(ValidationMixin, BaseGUIWindow):
 
     @classmethod
     def window(cls):
-        field_label_props = {"size": 22}
-        input_props = {"size": 23}
+        field_label_props = {"size": (22, 1)}
+        input_props = {"size": (23, 1)}
         combo_props = {"size": 22}
         layout = [
             [sg.Push(), sg.Text("Server Details"), sg.Push()],
             [cls.message_display_field()],
             [
                 sg.Text("Server IP adress:", **field_label_props),
-                sg.Input(key="server_ip_address", **input_props),
+                sg.InputText(key="server_ip_address", default_text="127.0.0.1", **input_props),
             ],
             [
                 sg.Text("Server Port:", **field_label_props),
-                sg.Input(key="server_port", default_text="8000", **input_props),
+                sg.InputText(key="server_port", default_text="8080", **input_props),
             ],
             [
                 sg.Text("Connection Type:", **field_label_props),
@@ -3499,11 +3500,11 @@ class ServerConnectionDetailsWindow(ValidationMixin, BaseGUIWindow):
             ],
             [
                 sg.Text("WLAN Name (SSID):", **field_label_props),
-                sg.Input(key="ssid", **input_props),
+                sg.InputText(key="ssid", **input_props),
             ],
             [
                 sg.Text("WLAN Password:", **field_label_props),
-                sg.Input(key="wlan_password", password_char="*", **input_props),
+                sg.InputText(key="wlan_password", password_char="*", **input_props),
             ],
             [sg.Button("Submit", key="submit")],
             cls.navigation_pane(),
@@ -3533,9 +3534,11 @@ class ServerConnectionDetailsWindow(ValidationMixin, BaseGUIWindow):
                 (values["server_ip_address"], "Server IP address"),
                 (values["server_port"], "Server port"),
             ]
+
+            # TODO: not validating all required fields. Only validating the first field
             if (
-                cls.validate_required_fields(required_fields, window)
-                is not None
+                    cls.validate_required_fields(required_fields, window)
+                    is not None
             ):
                 return True
 
@@ -3550,18 +3553,23 @@ class ServerConnectionDetailsWindow(ValidationMixin, BaseGUIWindow):
             server_details = app_config["server_details"]
             if values["connection_type"] == "WiFi":
                 try:
-                    connect_result = connect_to_wifi(
-                        server_details["ssid"], server_details["wlan_password"]
-                    )
+                    connect_result = 0
+                    # TODO: uncomment and fix the connect to wifi method
+                    # connect_result = connect_to_wifi(
+                    #     server_details["ssid"], server_details["wlan_password"]
+                    # )
                 except Exception as e:
                     cls.popup_auto_close_error(e)
-                    return True
+                    connect_result = 0  # TODO: remove this flag  and uncomment return value when done testing
+                    # return True
 
                 if connect_result == 0:
                     cls.popup_auto_close_success(
                         "WiFi network connection established"
                     )
                     time.sleep(1)
+                    first_time_sync(server_details["server_ip_address"], int(server_details["server_port"]))
+
                 elif connect_result != 0:
                     cls.popup_auto_close_error(
                         "Error establishing WiFi Network connection. Check details provided."
