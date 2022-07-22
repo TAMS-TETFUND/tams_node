@@ -15,6 +15,15 @@ SERVER_ENDPOINT = 'node-devices/backup/'  # TODO: update the url
 
 # method to sync the user data in the server to the node device
 def first_time_sync(ip: str, port: int, protocol: str = "http"):
+    """
+    method to be called to sync the server data with the node device
+    on initial setup when connection has been made to the server
+
+        :param ip:  the ip of the server when connection has been made
+        :param port: the port the server is running
+        :param protocol: the protocol used to access the server
+    """
+
     server_url = f'{protocol}://{ip}:{port}/{SERVER_ENDPOINT}'
     backup_file = 'server_backup.json'
     x = requests.get(server_url).json()

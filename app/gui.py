@@ -3517,8 +3517,12 @@ class ServerConnectionDetailsWindow(ValidationMixin, BaseGUIWindow):
 
     @classmethod
     def loop(cls, window, event, values):
-        if event in ("back", "home"):
-            window_dispatch.open_window(HomeWindow)
+        if event == "back":
+            window_dispatch.previous_window()
+            return True
+
+        if event == "home":
+            window_dispatch.pop_home()
             return True
 
         if event == "connection_type":
@@ -3582,19 +3586,33 @@ class ServerConnectionDetailsWindow(ValidationMixin, BaseGUIWindow):
 
 def main():
     window_dispatch.open_window(HomeWindow)
-    loop_exit_code = True
+    continue_loop = True
 
-    while True:
+    while continue_loop:
         window = window_dispatch.current_window
         event, values = window.read(timeout=500)
-        current_window = window_dispatch.find_window(window)
+        current_window = window_dispatch.find_window_name(window)
         if current_window:
-            loop_exit_code = eval(current_window).loop(window, event, values)
-        if not loop_exit_code:
-            break
+            continue_loop = eval(current_window).loop(window, event, values)
         if event == sg.WIN_CLOSED:
             break
     window.close()
+
+
+# def main():
+#     window = HomeWindow.window()
+#     loop_exit_code = True
+#
+#     while loop_exit_code:
+#         # window = window_dispatch.current_window
+#         event, values = window.read(timeout=500)
+#         print(event)
+#         # current_window = window_dispatch.find_window(window)
+#         loop_exit_code = HomeWindow.loop(window, event, values)
+#
+#         if event == sg.WIN_CLOSED:
+#             break
+#     window.close()
 
 
 if __name__ == "__main__":

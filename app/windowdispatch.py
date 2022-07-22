@@ -26,12 +26,64 @@ class WindowDispatch(UserDict):
     def close_window(self, window_name: str):
         return self.pop(window_name).close()
 
-    def find_window(self, window_object: sg.Window):
+    def find_window_name(self, window_object: sg.Window):
         return next((k for k, v in self.items() if v == window_object), None)
 
     @property
     def current_window(self):
         return self._current_window
+
+    @current_window.setter
+    def current_window(self, value):
+        if isinstance(value, sg.Window):
+            self._current_window = value
+
+
+class WindowDispatched:
+
+    def __init__(self):
+        self._current_window: sg.Window = sg.Window('default')
+        self._current_window_obj = None
+        self._window_stack: list = []
+
+    def open_window(
+            self,
+            window_class: Type[BaseGUIWindow],
+    ) -> None:
+
+        self.current_window.close()
+
+        if self._current_window_obj is not None and self._current_window_obj.__name__ != "LoadingWindow":
+            self._window_stack.append(self._current_window_obj)
+
+        print(self._window_stack)
+
+        self._current_window_obj = window_class
+        self.current_window = window_class.window()
+
+    def find_window_name(self, window_object: sg.Window):
+        return self._current_window_obj.__name__
+
+    def previous_window(self):
+        if len(self._window_stack) == 0:
+            return
+        self.current_window.close()
+        self._current_window_obj = self._window_stack.pop()
+        self.current_window = self._current_window_obj.window()
+
+    def pop_home(self):
+        self.current_window.close()
+        self._current_window_obj = self._window_stack[0]
+        self.current_window = self._current_window_obj.window()
+        self._window_stack.clear()
+
+    @property
+    def current_window(self):
+        return self._current_window
+
+    @property
+    def window_stack(self):
+        return self._window_stack
 
     @current_window.setter
     def current_window(self, value):
