@@ -51,8 +51,11 @@ class WindowDispatched:
             window_class: Type[BaseGUIWindow],
     ) -> None:
 
-        self.current_window.close()
+        # temporary store the current window
+        # to be closed after the new window is opened
+        temp = self.current_window
 
+        # excluding the loading window from the stack of windows
         if self._current_window_obj is not None and self._current_window_obj.__name__ != "LoadingWindow":
             self._window_stack.append(self._current_window_obj)
 
@@ -60,6 +63,7 @@ class WindowDispatched:
 
         self._current_window_obj = window_class
         self.current_window = window_class.window()
+        temp.close()
 
     def find_window_name(self, window_object: sg.Window):
         return self._current_window_obj.__name__
@@ -67,15 +71,18 @@ class WindowDispatched:
     def previous_window(self):
         if len(self._window_stack) == 0:
             return
-        self.current_window.close()
+
+        temp = self.current_window
         self._current_window_obj = self._window_stack.pop()
         self.current_window = self._current_window_obj.window()
+        temp.close()
 
     def pop_home(self):
-        self.current_window.close()
+        temp = self.current_window
         self._current_window_obj = self._window_stack[0]
         self.current_window = self._current_window_obj.window()
         self._window_stack.clear()
+        temp.close()
 
     @property
     def current_window(self):

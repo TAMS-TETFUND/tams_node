@@ -3587,6 +3587,7 @@ class ServerConnectionDetailsWindow(ValidationMixin, BaseGUIWindow):
 def main():
     window_dispatch.open_window(HomeWindow)
     continue_loop = True
+    window = None
 
     while continue_loop:
         window = window_dispatch.current_window
@@ -3594,9 +3595,12 @@ def main():
         current_window = window_dispatch.find_window_name(window)
         if current_window:
             continue_loop = eval(current_window).loop(window, event, values)
+        print(event)
         if event == sg.WIN_CLOSED:
             break
-    window.close()
+
+    if window is not None:
+        window.close()
 
 
 # def main():
