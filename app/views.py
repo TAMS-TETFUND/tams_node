@@ -26,10 +26,10 @@ def first_time_sync(ip: str, port: int, protocol: str = "http"):
 
     server_url = f'{protocol}://{ip}:{port}/{SERVER_ENDPOINT}'
     backup_file = 'server_backup.json'
-    x = requests.get(server_url).json()
+    backup_data = requests.get(server_url).json()
 
     # Serializing json response
-    json_object = json.dumps(x, indent=2)
+    json_object = json.dumps(backup_data, indent=2)
 
     # Writing to back up file
     with open(backup_file, "w") as outfile:
