@@ -42,7 +42,7 @@ from db.models import (
     Semester,
     Department,
     face_enc_to_str,
-    str_to_face_enc,
+    str_to_face_enc, EventTypeChoices, SemesterChoices, SexChoices,
 )
 
 # initializing the configparser object
@@ -416,8 +416,8 @@ class AcademicSessionDetailsWindow(ValidationMixin, BaseGUIWindow):
             [
                 sg.Text("Select Current Semester: "),
                 sg.Combo(
-                    Semester.labels,
-                    default_value=Semester.labels[0],
+                    SemesterChoices.labels,
+                    default_value=SemesterChoices.labels[0],
                     enable_events=True,
                     key="current_semester",
                     expand_y=True,
@@ -909,7 +909,7 @@ class NewEventSummaryWindow(StaffIDInputRouterMixin, BaseGUIWindow):
                 "session": AcademicSession.objects.get(
                     session__iexact=new_event["session"]
                 ),
-                "event_type": EventType.str_to_value(new_event["type"]),
+                "event_type": EventTypeChoices.str_to_value(new_event["type"]),
                 "start_time": datetime.strptime(
                     f"{new_event['start_date']} {new_event['start_time']}",
                     "%d-%m-%Y %H:%M",
@@ -1308,6 +1308,69 @@ class StaffNumberInputWindow(
         return
 
 
+class AttendanceSignOutWindow(BaseGUIWindow):
+    @classmethod
+    def window(cls):
+        event_dict = dict(app_config["current_attendance_session"])
+        student_dict = dict(app_config["tmp_student"])
+        student_attendance = AttendanceRecord.objects.filter(
+            attendance_session_id=app_config.getint(
+                "current_attendance_session", "session_id"
+            ),
+            student_id=student_dict["id"],
+        )
+        layout = [
+            [sg.VPush()],
+            [sg.Text("Student Attendance Details")],
+            [sg.HorizontalSeparator()],
+            [sg.Text(f"Course: {event_dict['course']}")],
+            [
+                sg.Text(
+                    f"Student Name: {student_dict['first_name']} {student_dict['last_name']}"
+                )
+            ],
+            [
+                sg.Text(
+                    f"Registration Number: {student_dict['reg_number']} "
+                )
+            ],
+            [
+                sg.Text(
+                    f"Sign In Time: {student_attendance[0].logged_by}"
+                )
+            ],
+            [sg.VPush()],
+            [
+                sg.Button("Sign Out", k="sign_out", **cls.cancel_button_kwargs(), ),
+                sg.Button(
+                    "Back",
+                    k="back",
+                ),
+            ],
+            [sg.HorizontalSeparator()],
+            cls.navigation_pane(
+                back_icon="back_disabled", next_icon="next_disabled"
+            ),
+        ]
+
+        window = sg.Window(
+            "Student Attendance Session Page", layout, **cls.window_init_dict()
+        )
+        return window
+
+    @classmethod
+    def loop(cls, window, event, values):
+        if event == "back":
+            window_dispatch.previous_window()
+            return True
+        if event == "home":
+            window_dispatch.pop_home()
+        if event == "sign_out":
+            # TODO: implement this
+            pass
+        return True
+
+
 class StudentRegNumInputWindow(
     ValidationMixin, StudentBiometricVerificationRouterMixin, BaseGUIWindow
 ):
@@ -1440,12 +1503,14 @@ class StudentRegNumInputWindow(
                 ),
                 student_id=tmp_student["id"],
         ).exists():
+            # TODO: remove this display message
             cls.display_message(
                 f"{tmp_student['first_name']} {tmp_student['last_name']} "
                 f"({tmp_student['reg_number']}) already checked in",
                 window,
             )
             cls.resize_column(window)
+            window_dispatch.open_window(AttendanceSignOutWindow)
             return True
         cls.student_verification_window()
 
@@ -2089,7 +2154,7 @@ class StaffEnrolmentWindow(ValidationMixin, BaseGUIWindow):
             [
                 sg.Text("Sex:", **field_label_props),
                 sg.Combo(
-                    values=Sex.labels,
+                    values=SexChoices.labels,
                     default_value=cls.COMBO_DEFAULT,
                     key="staff_sex",
                     **combo_props,
@@ -2178,7 +2243,7 @@ class StaffEnrolmentWindow(ValidationMixin, BaseGUIWindow):
                 "last_name": values["staff_last_name"],
                 "other_names": values["staff_other_names"],
                 "department": Department.get_id(values["staff_department"]),
-                "sex": Sex.str_to_value(values["staff_sex"]),
+                "sex": SexChoices.str_to_value(values["staff_sex"]),
             }
 
             new_staff_dict = app_config.section_dict("new_staff")
@@ -2432,7 +2497,7 @@ class StudentEnrolmentWindow(ValidationMixin, BaseGUIWindow):
             [
                 sg.Text("Sex:", **field_label_props),
                 sg.Combo(
-                    values=Sex.labels,
+                    values=SexChoices.labels,
                     default_value=cls.COMBO_DEFAULT,
                     key="student_sex",
                     **combo_props,
@@ -2536,7 +2601,7 @@ class StudentEnrolmentWindow(ValidationMixin, BaseGUIWindow):
                 "other_names": values["student_other_names"],
                 "level_of_study": values["student_level_of_study"],
                 "possible_grad_yr": values["student_possible_grad_yr"],
-                "sex": Sex.str_to_value(values["student_sex"]),
+                "sex": SexChoices.str_to_value(values["student_sex"]),
                 "department": Department.get_id(values["student_department"]),
             }
             new_student_dict = app_config.section_dict("new_student")
@@ -3595,7 +3660,6 @@ def main():
         current_window = window_dispatch.find_window_name(window)
         if current_window:
             continue_loop = eval(current_window).loop(window, event, values)
-        print(event)
         if event == sg.WIN_CLOSED:
             break
 
