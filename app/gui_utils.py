@@ -10,12 +10,12 @@ django_setup()
 
 from db.models import (
     Student,
-    Semester,
+    SemesterChoices,
     AcademicSession,
     Staff,
     Faculty,
     Department,
-    Sex,
+    SexChoices,
 )
 
 
@@ -197,7 +197,7 @@ class ValidationMixin:
 
     @staticmethod
     def validate_semester(semester):
-        if semester not in Semester.labels:
+        if semester not in SemesterChoices.labels:
             return "Invalid value for semester"
         else:
             return None
@@ -243,7 +243,7 @@ class ValidationMixin:
 
     @staticmethod
     def validate_sex(sex):
-        if sex not in Sex.labels:
+        if sex not in SexChoices.labels:
             return "Invalid value in sex"
         else:
             return None
