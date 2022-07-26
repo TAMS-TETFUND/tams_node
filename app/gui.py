@@ -1,5 +1,3 @@
-from csv import field_size_limit
-from dataclasses import field
 from datetime import datetime, timedelta
 import time
 
@@ -31,14 +29,14 @@ from db.models import (
     AttendanceRecord,
     AttendanceSession,
     AcademicSession,
-    AttendanceSessionStatus,
-    EventType,
+    AttendanceSessionStatusChoices,
+    EventTypeChoices,
     Student,
-    Sex,
+    SexChoices,
     Staff,
     Course,
     Faculty,
-    Semester,
+    SemesterChoices,
     Department,
     face_enc_to_str,
     str_to_face_enc,
@@ -197,7 +195,7 @@ class HomeWindow(BaseGUIWindow):
                             attendance_session.delete()
                         else:
                             attendance_session.status = (
-                                AttendanceSessionStatus.ENDED
+                                AttendanceSessionStatusChoices.ENDED
                             )
                             attendance_session.save()
 
@@ -388,6 +386,7 @@ class AcademicSessionDetailsWindow(ValidationMixin, BaseGUIWindow):
 
     @classmethod
     def window(cls):
+        all_academic_sessions = AcademicSession.get_all_academic_sessions()
         layout = [
             [sg.Push(), sg.Text("Academic Session Details"), sg.Push()],
             [sg.HorizontalSeparator()],
@@ -396,10 +395,8 @@ class AcademicSessionDetailsWindow(ValidationMixin, BaseGUIWindow):
                 [cls.message_display_field()],
                 sg.Text("Select Current Session:   "),
                 sg.Combo(
-                    AcademicSession.get_all_academic_sessions(),
-                    default_value=AcademicSession.get_all_academic_sessions()[
-                        0
-                    ],
+                    all_academic_sessions,
+                    default_value=(all_academic_sessions if all_academic_sessions else cls.COMBO_DEFAULT),
                     enable_events=True,
                     key="current_session",
                     expand_y=True,
@@ -413,10 +410,10 @@ class AcademicSessionDetailsWindow(ValidationMixin, BaseGUIWindow):
                 ),
             ],
             [
-                sg.Text("Select Current Semester: "),
+                sg.Text("Select Current SemesterChoices: "),
                 sg.Combo(
-                    Semester.labels,
-                    default_value=Semester.labels[0],
+                    SemesterChoices.labels,
+                    default_value=SemesterChoices.labels[0],
                     enable_events=True,
                     key="current_semester",
                     expand_y=True,
@@ -908,7 +905,7 @@ class NewEventSummaryWindow(StaffIDInputRouterMixin, BaseGUIWindow):
                 "session": AcademicSession.objects.get(
                     session__iexact=new_event["session"]
                 ),
-                "event_type": EventType.str_to_value(new_event["type"]),
+                "event_type": EventTypeChoices.str_to_value(new_event["type"]),
                 "start_time": datetime.strptime(
                     f"{new_event['start_date']} {new_event['start_time']}",
                     "%d-%m-%Y %H:%M",
@@ -1133,7 +1130,7 @@ class AttendanceSessionLandingWindow(
                         "current_attendance_session", "session_id"
                     )
                 )
-                att_session.status = AttendanceSessionStatus.ENDED
+                att_session.status = AttendanceSessionStatusChoices.ENDED
                 att_session.save()
                 app_config.remove_section("current_attendance_session")
                 app_config.remove_section("failed_attempts")
@@ -2086,9 +2083,9 @@ class StaffEnrolmentWindow(ValidationMixin, BaseGUIWindow):
                 ),
             ],
             [
-                sg.Text("Sex:", **field_label_props),
+                sg.Text("SexChoices:", **field_label_props),
                 sg.Combo(
-                    values=Sex.labels,
+                    values=SexChoices.labels,
                     default_value=cls.COMBO_DEFAULT,
                     key="staff_sex",
                     **combo_props,
@@ -2177,7 +2174,7 @@ class StaffEnrolmentWindow(ValidationMixin, BaseGUIWindow):
                 "last_name": values["staff_last_name"],
                 "other_names": values["staff_other_names"],
                 "department": Department.get_id(values["staff_department"]),
-                "sex": Sex.str_to_value(values["staff_sex"]),
+                "sex": SexChoices.str_to_value(values["staff_sex"]),
             }
 
             new_staff_dict = app_config.section_dict("new_staff")
@@ -2429,9 +2426,9 @@ class StudentEnrolmentWindow(ValidationMixin, BaseGUIWindow):
                 ),
             ],
             [
-                sg.Text("Sex:", **field_label_props),
+                sg.Text("SexChoices:", **field_label_props),
                 sg.Combo(
-                    values=Sex.labels,
+                    values=SexChoices.labels,
                     default_value=cls.COMBO_DEFAULT,
                     key="student_sex",
                     **combo_props,
@@ -2535,7 +2532,7 @@ class StudentEnrolmentWindow(ValidationMixin, BaseGUIWindow):
                 "other_names": values["student_other_names"],
                 "level_of_study": values["student_level_of_study"],
                 "possible_grad_yr": values["student_possible_grad_yr"],
-                "sex": Sex.str_to_value(values["student_sex"]),
+                "sex": SexChoices.str_to_value(values["student_sex"]),
                 "department": Department.get_id(values["student_department"]),
             }
             new_student_dict = app_config.section_dict("new_student")
@@ -3098,7 +3095,7 @@ class StudentEnrolmentUpdateWindow(StudentEnrolmentWindow):
         student = app_config["edit_student"]
 
         try:
-            student_sex = Sex(int(student["sex"])).label
+            student_sex = SexChoices(int(student["sex"])).label
         except Exception:
             student_sex = None
 
@@ -3147,9 +3144,9 @@ class StudentEnrolmentUpdateWindow(StudentEnrolmentWindow):
                 ),
             ],
             [
-                sg.Text("Sex:", **field_label_props),
+                sg.Text("SexChoices:", **field_label_props),
                 sg.Combo(
-                    values=Sex.labels,
+                    values=SexChoices.labels,
                     default_value=student_sex or cls.COMBO_DEFAULT,
                     key="student_sex",
                     **combo_props,
@@ -3305,7 +3302,7 @@ class StaffEnrolmentUpdateWindow(StaffEnrolmentWindow):
         staff = app_config["edit_staff"]
 
         try:
-            staff_sex = Sex(int(staff["sex"])).label
+            staff_sex = SexChoices(int(staff["sex"])).label
         except Exception:
             staff_sex = None
 
@@ -3355,9 +3352,9 @@ class StaffEnrolmentUpdateWindow(StaffEnrolmentWindow):
                 ),
             ],
             [
-                sg.Text("Sex:", **field_label_props),
+                sg.Text("SexChoices:", **field_label_props),
                 sg.Combo(
-                    values=Sex.labels,
+                    values=SexChoices.labels,
                     default_value=staff_sex or cls.COMBO_DEFAULT,
                     key="staff_sex",
                     **combo_props,
