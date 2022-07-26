@@ -396,7 +396,11 @@ class AcademicSessionDetailsWindow(ValidationMixin, BaseGUIWindow):
                 sg.Text("Select Current Session:   "),
                 sg.Combo(
                     all_academic_sessions,
-                    default_value=(all_academic_sessions if all_academic_sessions else cls.COMBO_DEFAULT),
+                    default_value=(
+                        all_academic_sessions
+                        if all_academic_sessions
+                        else cls.COMBO_DEFAULT
+                    ),
                     enable_events=True,
                     key="current_session",
                     expand_y=True,
