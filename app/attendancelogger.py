@@ -1,7 +1,7 @@
 from django.db.utils import IntegrityError
 
 from app.appconfigparser import AppConfigParser
-from db.models import AttendanceRecord
+from db.models import AttendanceRecord, RecordTypesChoices
 
 
 class AttendanceLogger:
@@ -11,18 +11,22 @@ class AttendanceLogger:
     def log_attendance(cls, app_config: AppConfigParser):
         tmp_student = app_config["tmp_student"]
         try:
-            AttendanceRecord.objects.create(
+            obj, created = AttendanceRecord.objects.update_or_create(
                 attendance_session_id=app_config.getint(
                     "current_attendance_session", "session_id"
                 ),
                 student_id=tmp_student.getint("id"),
+                defaults={"record_type": RecordTypesChoices.SIGN_OUT}
             )
         except IntegrityError:
             cls.message = "Something went wrong. Please contact admin."
             return False
         else:
-            cls.message = f"{tmp_student['reg_number']} checked in"
-            return True
+            if created:
+                cls.message = f"{tmp_student['reg_number']} checked in"
+            else:
+                cls.message = f"{tmp_student['reg_number']} checked out"
+
 
     @classmethod
     def log_failed_attempt(cls, app_config: AppConfigParser):
@@ -42,14 +46,14 @@ class AttendanceLogger:
 
         elif failed_attempts.getint(student_reg_number) >= 3:
             if (
-                "blocked_reg_numbers"
-                not in app_config["current_attendance_session"]
+                    "blocked_reg_numbers"
+                    not in app_config["current_attendance_session"]
             ):
                 app_config["current_attendance_session"][
                     "blocked_reg_numbers"
                 ] = ""
             app_config["current_attendance_session"]["blocked_reg_numbers"] += (
-                "," + student_reg_number
+                    "," + student_reg_number
             )
             app_config.save()
         else:

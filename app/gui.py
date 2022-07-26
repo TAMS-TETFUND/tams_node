@@ -42,7 +42,7 @@ from db.models import (
     Semester,
     Department,
     face_enc_to_str,
-    str_to_face_enc, EventTypeChoices, SemesterChoices, SexChoices,
+    str_to_face_enc, EventTypeChoices, SemesterChoices, SexChoices, RecordTypesChoices,
 )
 
 # initializing the configparser object
@@ -1148,7 +1148,8 @@ class AttendanceSessionLandingWindow(
         return AttendanceRecord.objects.filter(
             attendance_session=app_config.getint(
                 "current_attendance_session", "session_id"
-            )
+            ),
+            record_type=RecordTypesChoices.SIGN_IN,
         ).count()
 
 
@@ -1367,7 +1368,8 @@ class AttendanceSignOutWindow(BaseGUIWindow):
             window_dispatch.pop_home()
         if event == "sign_out":
             # TODO: implement this
-            pass
+            window_dispatch.open_window(StudentFaceVerificationWindow)
+
         return True
 
 
@@ -1503,13 +1505,18 @@ class StudentRegNumInputWindow(
                 ),
                 student_id=tmp_student["id"],
         ).exists():
-            # TODO: remove this display message
-            cls.display_message(
-                f"{tmp_student['first_name']} {tmp_student['last_name']} "
-                f"({tmp_student['reg_number']}) already checked in",
-                window,
-            )
-            cls.resize_column(window)
+            record = AttendanceRecord.objects.get(student_id=tmp_student["id"],
+                                                  attendance_session_id=app_config.getint(
+                                                      "current_attendance_session", "session_id"
+                                                  ), )
+            # check if the student is signed out and prevent re-entry
+            if record.record_type == RecordTypesChoices.SIGN_OUT:
+                cls.display_message(
+                    "Student already signed out!", window
+                )
+                cls.resize_column(window)
+                return True
+
             window_dispatch.open_window(AttendanceSignOutWindow)
             return True
         cls.student_verification_window()
