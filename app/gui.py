@@ -397,7 +397,7 @@ class AcademicSessionDetailsWindow(ValidationMixin, BaseGUIWindow):
                 sg.Combo(
                     all_academic_sessions,
                     default_value=(
-                        all_academic_sessions
+                        all_academic_sessions[0]
                         if all_academic_sessions
                         else cls.COMBO_DEFAULT
                     ),
