@@ -189,7 +189,12 @@ class HomeWindow(BaseGUIWindow):
                             id=current_att_session["session_id"]
                         )
                     except Exception as e:
-                        pass
+                        cls.popup_auto_close_error("Invalid session. Create new session.")
+                        app_config.remove_section("current_attendance_session")
+                        app_config.remove_section("failed_attempts")
+                        app_config.remove_section("tmp_student")
+                        app_config.remove_section("tmp_staff")
+                        return True
                     else:
                         if attendance_session.initiator_id is None:
                             attendance_session.delete()
