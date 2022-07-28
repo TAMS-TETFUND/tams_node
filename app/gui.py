@@ -1847,7 +1847,7 @@ class BarcodeCameraWindow(CameraWindow):
 
 
 class StudentBarcodeCameraWindow(
-    ValidationMixin, StudentRegNumberInputRouterMixin, BarcodeCameraWindow
+    ValidationMixin, StudentBiometricVerificationRouterMixin, StudentRegNumberInputRouterMixin, BarcodeCameraWindow
 ):
     """window responsible for processing student registration number
     from qr code during attendance marking"""
