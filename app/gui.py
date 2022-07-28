@@ -22,9 +22,9 @@ from app.attendancelogger import AttendanceLogger
 from app.barcode import Barcode
 from app.facerec import FaceRecognition
 from app.networkinterface import connect_to_wifi
+from app.nodedevicedatasynch import NodeDataSynch
 from app.opmodes import OperationalMode
 from app.camera2 import Camera
-from app.views import first_time_sync
 
 from db.models import (
     AttendanceRecord,
@@ -1358,11 +1358,9 @@ class AttendanceSignOutWindow(BaseGUIWindow):
 
     @classmethod
     def loop(cls, window, event, values):
-        if event == "back":
-            window_dispatch.previous_window()
+        if event in ("home", "back"):
+            window_dispatch.open_window(HomeWindow)
             return True
-        if event == "home":
-            window_dispatch.pop_home()
         if event == "sign_out":
             # TODO: implement this
             window_dispatch.open_window(StudentFaceVerificationWindow)
@@ -3585,12 +3583,8 @@ class ServerConnectionDetailsWindow(ValidationMixin, BaseGUIWindow):
 
     @classmethod
     def loop(cls, window, event, values):
-        if event == "back":
-            window_dispatch.previous_window()
-            return True
-
-        if event == "home":
-            window_dispatch.pop_home()
+        if event in ("home", "back"):
+            window_dispatch.open_window(HomeWindow)
             return True
 
         if event == "connection_type":
@@ -3640,7 +3634,8 @@ class ServerConnectionDetailsWindow(ValidationMixin, BaseGUIWindow):
                         "WiFi network connection established"
                     )
                     time.sleep(1)
-                    first_time_sync(server_details["server_ip_address"], int(server_details["server_port"]))
+                    NodeDataSynch.first_time_sync(server_details["server_ip_address"],
+                                                  int(server_details["server_port"]))
 
                 elif connect_result != 0:
                     cls.popup_auto_close_error(

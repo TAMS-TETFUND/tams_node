@@ -1,7 +1,7 @@
 import PySimpleGUI as sg
 
 from app.basegui import BaseGUIWindow
-from app.windowdispatch import WindowDispatch, WindowDispatched
+from app.windowdispatch import WindowDispatch
 
 
 class LoadingWindow(BaseGUIWindow):
@@ -31,7 +31,7 @@ class LoadingWindow(BaseGUIWindow):
         pass
 
 
-window_dispatch = WindowDispatched()
+window_dispatch = WindowDispatch()
 window_dispatch.open_window(LoadingWindow)
 
 
