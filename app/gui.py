@@ -973,7 +973,7 @@ class ActiveEventSummaryWindow(
     def window(cls):
         event_dict = app_config["current_attendance_session"]
         try:
-            initiator = Staff.objects.get(id=event_dict.getint("initiator_id"))
+            initiator = Staff.objects.get(pk=event_dict.get("initiator_id"))
         except Exception as e:
             print(e)
             initiator = None
@@ -1030,7 +1030,7 @@ class ActiveEventSummaryWindow(
 
             try:
                 initiator = Staff.objects.filter(
-                    id=active_event.getint("initiator_id")
+                    pk=active_event.get("initiator_id")
                 )
             except ObjectDoesNotExist:
                 sg.popup(
@@ -1043,7 +1043,6 @@ class ActiveEventSummaryWindow(
 
             app_config["tmp_staff"] = app_config.dict_vals_to_str(
                 initiator.values(
-                    "id",
                     "staff_number",
                     "first_name",
                     "last_name",
@@ -1289,7 +1288,6 @@ class StaffNumberInputWindow(
     def process_staff(cls, staff):
         app_config["tmp_staff"] = app_config.dict_vals_to_str(
             staff.values(
-                "id",
                 "staff_number",
                 "first_name",
                 "last_name",
@@ -1426,7 +1424,6 @@ class StudentRegNumInputWindow(
     def process_student(cls, student, window):
         app_config["tmp_student"] = app_config.dict_vals_to_str(
             student.values(
-                "id",
                 "reg_number",
                 "first_name",
                 "last_name",
@@ -1443,7 +1440,7 @@ class StudentRegNumInputWindow(
             attendance_session_id=app_config.getint(
                 "current_attendance_session", "session_id"
             ),
-            student_id=tmp_student["id"],
+            student_id=tmp_student["reg_number"],
         ).exists():
             cls.display_message(
                 f"{tmp_student['first_name']} {tmp_student['last_name']} "
@@ -1731,11 +1728,11 @@ class StaffFaceVerificationWindow(FaceCameraWindow):
             att_session = AttendanceSession.objects.get(
                 id=app_config.getint("current_attendance_session", "session_id")
             )
-            att_session.initiator_id = tmp_staff.getint("id")
+            att_session.initiator_id = tmp_staff.get("staff_number")
             att_session.save()
             app_config["current_attendance_session"][
                 "initiator_id"
-            ] = tmp_staff["id"]
+            ] = tmp_staff["staff_number"]
             cls.popup_auto_close_success(
                 f"{tmp_staff['first_name'][0].upper()}. "
                 f"{tmp_staff['last_name'].capitalize()} "
@@ -1887,7 +1884,6 @@ class StudentBarcodeCameraWindow(
 
         app_config["tmp_student"] = app_config.dict_vals_to_str(
             student.values(
-                "id",
                 "reg_number",
                 "first_name",
                 "last_name",
@@ -1904,7 +1900,7 @@ class StudentBarcodeCameraWindow(
             attendance_session_id=app_config.getint(
                 "current_attendance_session", "session_id"
             ),
-            student_id=tmp_student["id"],
+            student_id=tmp_student["reg_number"],
         ).exists():
             cls.popup_auto_close_warn(
                 f"{tmp_student['first_name']} {tmp_student['last_name']} "
@@ -1969,7 +1965,6 @@ class StaffBarcodeCameraWindow(
 
         app_config["tmp_staff"] = app_config.dict_vals_to_str(
             staff.values(
-                "id",
                 "staff_number",
                 "first_name",
                 "last_name",
@@ -2908,11 +2903,11 @@ class StaffFingerprintVerificationWindow(
             att_session = AttendanceSession.objects.get(
                 id=app_config.getint("current_attendance_session", "session_id")
             )
-            att_session.initiator_id = tmp_staff.getint("id")
+            att_session.initiator_id = tmp_staff.get("staff_number")
             att_session.save()
             app_config["current_attendance_session"][
                 "initiator_id"
-            ] = tmp_staff["id"]
+            ] = tmp_staff["staff_number"]
             cls.popup_auto_close_success(
                 f"{tmp_staff['first_name'][0].upper()}. "
                 f"{tmp_staff['last_name'].capitalize()} "
@@ -3251,7 +3246,6 @@ class StudentEnrolmentUpdateIDSearch(StudentRegNumInputWindow):
     def process_student(cls, student, window):
         app_config["edit_student"] = app_config.dict_vals_to_str(
             student.values(
-                "id",
                 "reg_number",
                 "first_name",
                 "last_name",
@@ -3282,7 +3276,6 @@ class StaffEnrolmentUpdateIDSearch(StaffNumberInputWindow):
     def process_staff(cls, staff):
         app_config["edit_staff"] = app_config.dict_vals_to_str(
             staff.values(
-                "id",
                 "staff_number",
                 "first_name",
                 "last_name",
