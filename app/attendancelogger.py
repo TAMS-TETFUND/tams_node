@@ -15,7 +15,7 @@ class AttendanceLogger:
                 attendance_session_id=app_config.getint(
                     "current_attendance_session", "session_id"
                 ),
-                student_id=tmp_student.getint("id"),
+                student_id=tmp_student.get("reg_number"),
             )
         except IntegrityError:
             cls.message = "Something went wrong. Please contact admin."
