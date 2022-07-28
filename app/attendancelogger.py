@@ -1,3 +1,5 @@
+import datetime
+
 from django.db.utils import IntegrityError
 
 from app.appconfigparser import AppConfigParser
@@ -15,8 +17,8 @@ class AttendanceLogger:
                 attendance_session_id=app_config.getint(
                     "current_attendance_session", "session_id"
                 ),
-                student_id=tmp_student.getint("id"),
-                defaults={"record_type": RecordTypesChoices.SIGN_OUT}
+                student_id=tmp_student["reg_number"],
+                defaults={"record_type": RecordTypesChoices.SIGN_IN}
             )
         except IntegrityError:
             cls.message = "Something went wrong. Please contact admin."
@@ -25,8 +27,9 @@ class AttendanceLogger:
             if created:
                 cls.message = f"{tmp_student['reg_number']} checked in"
             else:
+                obj.record_type = RecordTypesChoices.SIGN_OUT
+                obj.save()
                 cls.message = f"{tmp_student['reg_number']} checked out"
-
 
     @classmethod
     def log_failed_attempt(cls, app_config: AppConfigParser):

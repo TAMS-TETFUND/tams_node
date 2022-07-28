@@ -13,7 +13,6 @@ from django.views.generic import ListView
 from db.models import (
     AttendanceRecord,
     AttendanceSession,
-    AttendanceSessionStatus,
 )
 from app.appconfigparser import AppConfigParser
 

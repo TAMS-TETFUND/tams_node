@@ -10,12 +10,11 @@ django_setup()
 
 from db.models import (
     Student,
-    Semester,
     AcademicSession,
     Staff,
     Faculty,
     Department,
-    Sex, SemesterChoices, SexChoices,
+    SemesterChoices, SexChoices,
 )
 
 

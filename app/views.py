@@ -39,5 +39,9 @@ def first_time_sync(ip: str, port: int, protocol: str = "http"):
     call_command('loaddata', backup_file)
 
 
+def node_sync():
+    pass
+
+
 if __name__ == '__main__':
     first_time_sync("127.0.0.1", 8080)

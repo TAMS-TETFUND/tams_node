@@ -1,5 +1,3 @@
-from csv import field_size_limit
-from dataclasses import field
 from datetime import datetime, timedelta
 import time
 
@@ -32,17 +30,13 @@ from db.models import (
     AttendanceRecord,
     AttendanceSession,
     AcademicSession,
-    AttendanceSessionStatus,
-    EventType,
     Student,
-    Sex,
     Staff,
     Course,
     Faculty,
-    Semester,
     Department,
     face_enc_to_str,
-    str_to_face_enc, EventTypeChoices, SemesterChoices, SexChoices, RecordTypesChoices,
+    str_to_face_enc, EventTypeChoices, SemesterChoices, SexChoices, RecordTypesChoices, AttendanceSessionStatusChoices,
 )
 
 # initializing the configparser object
@@ -198,7 +192,7 @@ class HomeWindow(BaseGUIWindow):
                             attendance_session.delete()
                         else:
                             attendance_session.status = (
-                                AttendanceSessionStatus.ENDED
+                                AttendanceSessionStatusChoices.ENDED
                             )
                             attendance_session.save()
 
@@ -1134,7 +1128,7 @@ class AttendanceSessionLandingWindow(
                         "current_attendance_session", "session_id"
                     )
                 )
-                att_session.status = AttendanceSessionStatus.ENDED
+                att_session.status = AttendanceSessionStatusChoices.ENDED
                 att_session.save()
                 app_config.remove_section("current_attendance_session")
                 app_config.remove_section("failed_attempts")
@@ -1318,12 +1312,15 @@ class AttendanceSignOutWindow(BaseGUIWindow):
             attendance_session_id=app_config.getint(
                 "current_attendance_session", "session_id"
             ),
-            student_id=student_dict["id"],
+            student_id=student_dict["reg_number"],
         )
         layout = [
             [sg.VPush()],
             [sg.Text("Student Attendance Details")],
             [sg.HorizontalSeparator()],
+            [
+                sg.Text("STATUS: SIGNED IN!"),
+            ],
             [sg.Text(f"Course: {event_dict['course']}")],
             [
                 sg.Text(
@@ -1337,7 +1334,7 @@ class AttendanceSignOutWindow(BaseGUIWindow):
             ],
             [
                 sg.Text(
-                    f"Sign In Time: {student_attendance[0].logged_by}"
+                    f"Sign In Time: {student_attendance[0].check_in_by}"
                 )
             ],
             [sg.VPush()],
@@ -1486,7 +1483,6 @@ class StudentRegNumInputWindow(
     def process_student(cls, student, window):
         app_config["tmp_student"] = app_config.dict_vals_to_str(
             student.values(
-                "id",
                 "reg_number",
                 "first_name",
                 "last_name",
@@ -1503,9 +1499,9 @@ class StudentRegNumInputWindow(
                 attendance_session_id=app_config.getint(
                     "current_attendance_session", "session_id"
                 ),
-                student_id=tmp_student["id"],
+                student_id=tmp_student["reg_number"],
         ).exists():
-            record = AttendanceRecord.objects.get(student_id=tmp_student["id"],
+            record = AttendanceRecord.objects.get(student_id=tmp_student["reg_number"],
                                                   attendance_session_id=app_config.getint(
                                                       "current_attendance_session", "session_id"
                                                   ), )
@@ -3171,7 +3167,7 @@ class StudentEnrolmentUpdateWindow(StudentEnrolmentWindow):
         student = app_config["edit_student"]
 
         try:
-            student_sex = Sex(int(student["sex"])).label
+            student_sex = SexChoices(int(student["sex"])).label
         except Exception:
             student_sex = None
 
@@ -3222,7 +3218,7 @@ class StudentEnrolmentUpdateWindow(StudentEnrolmentWindow):
             [
                 sg.Text("Sex:", **field_label_props),
                 sg.Combo(
-                    values=Sex.labels,
+                    values=SexChoices.labels,
                     default_value=student_sex or cls.COMBO_DEFAULT,
                     key="student_sex",
                     **combo_props,
@@ -3378,7 +3374,7 @@ class StaffEnrolmentUpdateWindow(StaffEnrolmentWindow):
         staff = app_config["edit_staff"]
 
         try:
-            staff_sex = Sex(int(staff["sex"])).label
+            staff_sex = SexChoices(int(staff["sex"])).label
         except Exception:
             staff_sex = None
 
@@ -3430,7 +3426,7 @@ class StaffEnrolmentUpdateWindow(StaffEnrolmentWindow):
             [
                 sg.Text("Sex:", **field_label_props),
                 sg.Combo(
-                    values=Sex.labels,
+                    values=SexChoices.labels,
                     default_value=staff_sex or cls.COMBO_DEFAULT,
                     key="staff_sex",
                     **combo_props,
