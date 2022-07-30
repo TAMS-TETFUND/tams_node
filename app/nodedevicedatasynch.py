@@ -14,14 +14,15 @@ The address of the api point will be appended to the address of the server.
 The address of the server will be entered by the user on the GUI. (the method will
 have provision for this address to be passed to method performing the request.)
 """
-import json
 import os
 import requests
 from django.core.management import call_command
 from django.core.wsgi import get_wsgi_application
 
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "tams_node.settings")
-application = get_wsgi_application()
+# os.environ.setdefault("DJANGO_SETTINGS_MODULE", "tams_node.settings")
+# application = get_wsgi_application()
+
+from db.models import *
 
 SERVER_ENDPOINT = 'node-devices/backup/'  # TODO: update the url
 
@@ -62,6 +63,8 @@ class NodeDataSynch:
 
         server_url = f'{protocol}://{ip}:{port}/{SERVER_ENDPOINT}'
         backup_file = 'server_backup.json'
+        cls = ('AppUser', 'Student', 'Staff', 'Department')
+
         backup_data = requests.get(server_url).json()
 
         # Serializing json response
@@ -70,6 +73,10 @@ class NodeDataSynch:
         # Writing to back up file
         with open(backup_file, "w") as outfile:
             outfile.write(json_object)
+
+        # delete old records if any
+        for c in cls:
+            eval(c).objects.all().delete()
 
         # load the data into node's database
         call_command('loaddata', backup_file)
@@ -83,4 +90,6 @@ class NodeDataSynch:
         there is need to have a unique identifier of the attendance record that is not the
         auto increment integer primary key
         """
+
         pass
+
