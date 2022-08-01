@@ -21,6 +21,7 @@ from django.core.wsgi import get_wsgi_application
 
 # os.environ.setdefault("DJANGO_SETTINGS_MODULE", "tams_node.settings")
 # application = get_wsgi_application()
+from requests import HTTPError
 
 from db.models import *
 
@@ -80,6 +81,21 @@ class NodeDataSynch:
 
         # load the data into node's database
         call_command('loaddata', backup_file)
+
+    @staticmethod
+    def node_register(ip: str, port: int, headers: dict, json_data: dict, protocol: str = "http",):
+        endpoint = "api/v1/node-devices/"
+        url = f'{protocol}://{ip}:{port}/{endpoint}'
+
+        try:
+            res = requests.post(url, headers=headers, data=json.dumps(json_data))
+        except requests.exceptions.RequestException as e:
+            raise HTTPError('{"detail": "Connection refused!"}')
+
+        if res.status_code not in (201, 200):
+            raise HTTPError(res.text)
+
+        return res.json()
 
     @staticmethod
     def node_sync():

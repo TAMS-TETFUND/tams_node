@@ -1,9 +1,12 @@
+import json
 from datetime import datetime, timedelta
 import time
 
 import PySimpleGUI as sg
+import requests
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.utils import IntegrityError
+from requests import HTTPError
 
 import __main__
 from app.gui_utils import (
@@ -2074,6 +2077,101 @@ class StaffBarcodeCameraWindow(
 # enrolment windows should not be available on all node devices;
 # should only be available on node devices that will be used for
 # enrolment
+
+
+class NodeDeviceRegistrationWindow(ValidationMixin, BaseGUIWindow):
+    """
+        This window will be collect information for node device registration
+        """
+
+    @classmethod
+    def window(cls):
+        field_label_props = {"size": (22, 1)}
+        input_props = {"size": (23, 1)}
+        combo_props = {"size": 22}
+        layout = [
+            [sg.Push(), sg.Text("Node Details"), sg.Push()],
+            [cls.message_display_field()],
+            [
+                sg.Text("Server IP adress:", **field_label_props),
+                sg.InputText(key="server_ip_address", default_text="127.0.0.1", **input_props),
+            ],
+            [
+                sg.Text("Server Port:", **field_label_props),
+                sg.InputText(key="server_port", default_text="8080", **input_props),
+            ],
+            [
+                sg.Text("Name:", **field_label_props),
+                sg.InputText(key="node_name", **input_props),
+            ],
+            [
+                sg.Text("Initial Token:", **field_label_props),
+                sg.InputText(key="node_token", **input_props),
+            ],
+            [
+                sg.Text("Initial ID:", **field_label_props),
+                sg.InputText(key="node_id", **input_props),
+            ],
+            [sg.Button("Submit", key="submit")],
+            cls.navigation_pane(),
+        ]
+
+        window = sg.Window(
+            "Node Registration Window", layout, **cls.window_init_dict()
+        )
+        return window
+
+    @classmethod
+    def loop(cls, window, event, values):
+        if event in ("home", "back"):
+            window_dispatch.open_window(HomeWindow)
+            return True
+
+        if event in ("submit", "next"):
+            required_fields = [
+                (values["server_ip_address"], "Server IP address"),
+                (values["server_port"], "Server port"),
+                (values["node_name"], "Node name"),
+            ]
+
+            # TODO: not validating all required fields. Only validating the first field
+            if (
+                    cls.validate_required_fields(required_fields, window)
+                    is not None
+            ):
+                return True
+
+            headers = {"Content-Type": "application/json",
+                       "Authorization": f"token {values['node_token']} {int(values['node_id'])}"}
+
+            data = {
+                "name": values['node_name'],
+            }
+
+            try:
+                response = NodeDataSynch.node_register(ip=values["server_ip_address"],
+                                                       port=int(values["server_port"]),
+                                                       headers=headers,
+                                                       json_data=data)
+            except Exception as e:
+                print(e)
+                cls.display_message(f"Error: {json.loads(str(e))['detail']}", window)
+                return True
+
+            app_config["node_device_details"] = {
+                "server_ip_address": values["server_ip_address"],
+                "server_port": values["server_port"],
+                "node_name": values["node_name"],
+                "node_token": response['token'],
+                "node_id": str(response['id']),
+
+            }
+            cls.popup_auto_close_success("Registered succesfully!")
+            window_dispatch.open_window(HomeWindow)
+
+        return True
+
+
 class EnrolmentMenuWindow(BaseGUIWindow):
     """This window provides links to student and staff enrolment."""
 
@@ -2089,6 +2187,7 @@ class EnrolmentMenuWindow(BaseGUIWindow):
                     "Student Enrolment Update", key="student_enrolment_update"
                 )
             ],
+            [sg.Button("Register Device", key="register_device")],
             [sg.Button("Synch Device", key="synch_device")],
             [sg.VPush()],
             cls.navigation_pane(next_icon="next_disabled"),
@@ -2108,6 +2207,8 @@ class EnrolmentMenuWindow(BaseGUIWindow):
             window_dispatch.open_window(StaffEnrolmentUpdateIDSearch)
         if event == "student_enrolment_update":
             window_dispatch.open_window(StudentEnrolmentUpdateIDSearch)
+        if event == "register_device":
+            window_dispatch.open_window(NodeDeviceRegistrationWindow)
         if event == "synch_device":
             window_dispatch.open_window(ServerConnectionDetailsWindow)
         return True
@@ -3655,7 +3756,7 @@ def main():
     while continue_loop:
         window = window_dispatch.current_window
         event, values = window.read(timeout=500)
-        current_window = window_dispatch.find_window_name(window)
+        current_window = window_dispatch.find_window_name()
         if current_window:
             continue_loop = eval(current_window).loop(window, event, values)
         if event == sg.WIN_CLOSED:
