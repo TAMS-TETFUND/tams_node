@@ -1,4 +1,5 @@
 import json
+
 from datetime import datetime, timedelta
 import time
 
@@ -33,10 +34,14 @@ from db.models import (
     AttendanceRecord,
     AttendanceSession,
     AcademicSession,
+    AttendanceSessionStatusChoices,
+    EventTypeChoices,
     Student,
+    SexChoices,
     Staff,
     Course,
     Faculty,
+    SemesterChoices,
     Department,
     face_enc_to_str,
     str_to_face_enc, EventTypeChoices, SemesterChoices, SexChoices, RecordTypesChoices, AttendanceSessionStatusChoices,
@@ -386,6 +391,7 @@ class AcademicSessionDetailsWindow(ValidationMixin, BaseGUIWindow):
 
     @classmethod
     def window(cls):
+        all_academic_sessions = AcademicSession.get_all_academic_sessions()
         layout = [
             [sg.Push(), sg.Text("Academic Session Details"), sg.Push()],
             [sg.HorizontalSeparator()],
@@ -394,10 +400,12 @@ class AcademicSessionDetailsWindow(ValidationMixin, BaseGUIWindow):
                 [cls.message_display_field()],
                 sg.Text("Select Current Session:   "),
                 sg.Combo(
-                    AcademicSession.get_all_academic_sessions(),
-                    default_value=AcademicSession.get_all_academic_sessions()[
-                        0
-                    ],
+                    all_academic_sessions,
+                    default_value=(
+                        all_academic_sessions
+                        if all_academic_sessions
+                        else cls.COMBO_DEFAULT
+                    ),
                     enable_events=True,
                     key="current_session",
                     expand_y=True,
@@ -411,7 +419,7 @@ class AcademicSessionDetailsWindow(ValidationMixin, BaseGUIWindow):
                 ),
             ],
             [
-                sg.Text("Select Current Semester: "),
+                sg.Text("Select Current SemesterChoices: "),
                 sg.Combo(
                     SemesterChoices.labels,
                     default_value=SemesterChoices.labels[0],
@@ -2262,7 +2270,7 @@ class StaffEnrolmentWindow(ValidationMixin, BaseGUIWindow):
                 ),
             ],
             [
-                sg.Text("Sex:", **field_label_props),
+                sg.Text("SexChoices:", **field_label_props),
                 sg.Combo(
                     values=SexChoices.labels,
                     default_value=cls.COMBO_DEFAULT,
@@ -2605,7 +2613,7 @@ class StudentEnrolmentWindow(ValidationMixin, BaseGUIWindow):
                 ),
             ],
             [
-                sg.Text("Sex:", **field_label_props),
+                sg.Text("SexChoices:", **field_label_props),
                 sg.Combo(
                     values=SexChoices.labels,
                     default_value=cls.COMBO_DEFAULT,
@@ -3323,7 +3331,7 @@ class StudentEnrolmentUpdateWindow(StudentEnrolmentWindow):
                 ),
             ],
             [
-                sg.Text("Sex:", **field_label_props),
+                sg.Text("SexChoices:", **field_label_props),
                 sg.Combo(
                     values=SexChoices.labels,
                     default_value=student_sex or cls.COMBO_DEFAULT,
@@ -3531,7 +3539,7 @@ class StaffEnrolmentUpdateWindow(StaffEnrolmentWindow):
                 ),
             ],
             [
-                sg.Text("Sex:", **field_label_props),
+                sg.Text("SexChoices:", **field_label_props),
                 sg.Combo(
                     values=SexChoices.labels,
                     default_value=staff_sex or cls.COMBO_DEFAULT,
