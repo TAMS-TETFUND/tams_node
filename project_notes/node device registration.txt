@@ -1,0 +1,14 @@
+=======Node device registrations==========
+Every legitimate device that will function as a node device for this system must
+be registered/known by the server.
+In IoT telemetry data operations, the server typically has a public key configured
+which every device that wants to send data to it must also have saved. 
+
+Also, in this system, we would like to be able to two different devices apart (unique
+device ids for all devices). An api point could exist that will be responsible for 
+enabling devices obtain their IDs and tokens that will authorize them to function as
+node devices of the system.
+
+    == device registration api point on the server (protected)
+    == feature on the node device that will access the api point and store the necessary
+        information in defined locations in the node device.

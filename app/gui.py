@@ -195,7 +195,12 @@ class HomeWindow(BaseGUIWindow):
                             id=current_att_session["session_id"]
                         )
                     except Exception as e:
-                        pass
+                        cls.popup_auto_close_error("Invalid session. Create new session.")
+                        app_config.remove_section("current_attendance_session")
+                        app_config.remove_section("failed_attempts")
+                        app_config.remove_section("tmp_student")
+                        app_config.remove_section("tmp_staff")
+                        return True
                     else:
                         if attendance_session.initiator_id is None:
                             attendance_session.delete()
@@ -403,7 +408,7 @@ class AcademicSessionDetailsWindow(ValidationMixin, BaseGUIWindow):
                 sg.Combo(
                     all_academic_sessions,
                     default_value=(
-                        all_academic_sessions
+                        all_academic_sessions[0]
                         if all_academic_sessions
                         else cls.COMBO_DEFAULT
                     ),
@@ -982,7 +987,7 @@ class ActiveEventSummaryWindow(
     def window(cls):
         event_dict = app_config["current_attendance_session"]
         try:
-            initiator = Staff.objects.get(id=event_dict.getint("initiator_id"))
+            initiator = Staff.objects.get(pk=event_dict.get("initiator_id"))
         except Exception as e:
             print(e)
             initiator = None
@@ -1039,7 +1044,7 @@ class ActiveEventSummaryWindow(
 
             try:
                 initiator = Staff.objects.filter(
-                    id=active_event.getint("initiator_id")
+                    pk=active_event.get("initiator_id")
                 )
             except ObjectDoesNotExist:
                 sg.popup(
@@ -1052,7 +1057,6 @@ class ActiveEventSummaryWindow(
 
             app_config["tmp_staff"] = app_config.dict_vals_to_str(
                 initiator.values(
-                    "id",
                     "staff_number",
                     "first_name",
                     "last_name",
@@ -1299,7 +1303,6 @@ class StaffNumberInputWindow(
     def process_staff(cls, staff):
         app_config["tmp_staff"] = app_config.dict_vals_to_str(
             staff.values(
-                "id",
                 "staff_number",
                 "first_name",
                 "last_name",
@@ -1514,10 +1517,10 @@ class StudentRegNumInputWindow(
 
         tmp_student = app_config["tmp_student"]
         if AttendanceRecord.objects.filter(
-                attendance_session_id=app_config.get(
-                    "current_attendance_session", "session_id"
-                ),
-                student_id=tmp_student["reg_number"],
+            attendance_session_id=app_config.getint(
+                "current_attendance_session", "session_id"
+            ),
+            student_id=tmp_student["reg_number"],
         ).exists():
             record = AttendanceRecord.objects.get(student_id=tmp_student["reg_number"],
                                                   attendance_session_id=app_config.get(
@@ -1812,11 +1815,11 @@ class StaffFaceVerificationWindow(FaceCameraWindow):
             att_session = AttendanceSession.objects.get(
                 id=app_config.get("current_attendance_session", "session_id")
             )
-            att_session.initiator_id = tmp_staff.getint("id")
+            att_session.initiator_id = tmp_staff.get("staff_number")
             att_session.save()
             app_config["current_attendance_session"][
                 "initiator_id"
-            ] = tmp_staff["id"]
+            ] = tmp_staff["staff_number"]
             cls.popup_auto_close_success(
                 f"{tmp_staff['first_name'][0].upper()}. "
                 f"{tmp_staff['last_name'].capitalize()} "
@@ -1933,7 +1936,7 @@ class BarcodeCameraWindow(CameraWindow):
 
 
 class StudentBarcodeCameraWindow(
-    ValidationMixin, StudentRegNumberInputRouterMixin, BarcodeCameraWindow
+    ValidationMixin, StudentBiometricVerificationRouterMixin, StudentRegNumberInputRouterMixin, BarcodeCameraWindow
 ):
     """window responsible for processing student registration number
     from qr code during attendance marking"""
@@ -1968,7 +1971,6 @@ class StudentBarcodeCameraWindow(
 
         app_config["tmp_student"] = app_config.dict_vals_to_str(
             student.values(
-                "id",
                 "reg_number",
                 "first_name",
                 "last_name",
@@ -2050,7 +2052,6 @@ class StaffBarcodeCameraWindow(
 
         app_config["tmp_staff"] = app_config.dict_vals_to_str(
             staff.values(
-                "id",
                 "staff_number",
                 "first_name",
                 "last_name",
@@ -3085,11 +3086,11 @@ class StaffFingerprintVerificationWindow(
             att_session = AttendanceSession.objects.get(
                 id=app_config.getint("current_attendance_session", "session_id")
             )
-            att_session.initiator_id = tmp_staff.getint("id")
+            att_session.initiator_id = tmp_staff.get("staff_number")
             att_session.save()
             app_config["current_attendance_session"][
                 "initiator_id"
-            ] = tmp_staff["id"]
+            ] = tmp_staff["staff_number"]
             cls.popup_auto_close_success(
                 f"{tmp_staff['first_name'][0].upper()}. "
                 f"{tmp_staff['last_name'].capitalize()} "
@@ -3428,7 +3429,6 @@ class StudentEnrolmentUpdateIDSearch(StudentRegNumInputWindow):
     def process_student(cls, student, window):
         app_config["edit_student"] = app_config.dict_vals_to_str(
             student.values(
-                "id",
                 "reg_number",
                 "first_name",
                 "last_name",
@@ -3459,7 +3459,6 @@ class StaffEnrolmentUpdateIDSearch(StaffNumberInputWindow):
     def process_staff(cls, staff):
         app_config["edit_staff"] = app_config.dict_vals_to_str(
             staff.values(
-                "id",
                 "staff_number",
                 "first_name",
                 "last_name",
@@ -3682,7 +3681,7 @@ class ServerConnectionDetailsWindow(ValidationMixin, BaseGUIWindow):
             ],
             [
                 sg.Text("WLAN Name (SSID):", **field_label_props),
-                sg.InputText(key="ssid", **input_props),
+                sg.Combo(key="ssid", **input_props),
             ],
             [
                 sg.Text("WLAN Password:", **field_label_props),
