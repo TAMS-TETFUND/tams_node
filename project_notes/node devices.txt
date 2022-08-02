@@ -139,3 +139,29 @@ Should the operational mode be on a per-event basis as to give initiator control
     verification modes that can be used for their events? - Yes
 ===================================================
 add loading window for initial startup of the gui application
+
+================================================
+Node Device synching
+    = It may be better to make the student reg. number/staff number the primary key
+        so that attendance synching from the node devices would be simpler.
+    = Deactivating students when their possible_grad_yr passes and automatically removing them
+        from the node devices to conserve space and optimize application performance.
+    = The server could also have a feature or a model that show the last time its db state was changed
+        to enable node-devices synch the new modifications.
+    = The last time a node device synched to the server could also be monitored.
+    = inactive students would have to be filtered out of the data being synched to 
+        node devices. This may warrant a switch from simple dumpdata and loaddata in
+        the implementation of the synch system. 
+
+===============================================
+Addition of the node_device field in the AttendanceSession model
+
+A device should be able to log attendance sessions locally without the need for registration?
+    = What exactly is it logging when courses and all initial data comes from the server?
+
+
+    ***simplest solution would be to ship the software with a pre-made init-config.ini file
+
+===========================================
+The need for a full alphanumeric keypad is apparent.
+It will greatly improve user experience in the tams_node application.

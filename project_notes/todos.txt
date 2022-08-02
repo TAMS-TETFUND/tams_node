@@ -6,5 +6,18 @@
     = initial node device configuration/setup
     = project security & logging
     = attendance sign-out feature for events
-    = keypad feature implementation
+    = full alphanumeric keypad feature implementation
     
+
+    = sleep/wake feature/button for battery conservation
+    = token encryption
+    = sd card failure/recovery
+    = investigate NTP in python
+==========================================
+***** invigilation mode*******************
+    = after students have checked in, there is now a list of students
+        that are legitimately allowed to be in an examination hall. If 
+        a student that has not checked in via the system is found in the hall,
+        it is safe to assume that he got there by suspicious means/ with 
+        questionable intents. 
+
