@@ -3498,7 +3498,7 @@ class ServerConnectionDetailsWindow(ValidationMixin, BaseGUIWindow):
             ],
             [
                 sg.Text("WLAN Name (SSID):", **field_label_props),
-                sg.Input(key="ssid", **input_props),
+                sg.Combo(key="ssid", **input_props),
             ],
             [
                 sg.Text("WLAN Password:", **field_label_props),
