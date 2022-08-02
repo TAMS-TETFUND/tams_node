@@ -3770,7 +3770,7 @@ def main():
     while continue_loop:
         window = window_dispatch.current_window
         event, values = window.read(timeout=500)
-        current_window = window_dispatch.find_window_name()
+        current_window = window_dispatch.find_window_name(window)
         if current_window:
             continue_loop = eval(current_window).loop(window, event, values)
         if event == sg.WIN_CLOSED:
@@ -3783,14 +3783,13 @@ def main():
 # def main():
 #     window = HomeWindow.window()
 #     loop_exit_code = True
-#
+
 #     while loop_exit_code:
 #         # window = window_dispatch.current_window
 #         event, values = window.read(timeout=500)
-#         print(event)
 #         # current_window = window_dispatch.find_window(window)
 #         loop_exit_code = HomeWindow.loop(window, event, values)
-#
+
 #         if event == sg.WIN_CLOSED:
 #             break
 #     window.close()
