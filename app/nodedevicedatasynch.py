@@ -15,7 +15,7 @@ The address of the server will be entered by the user on the GUI. (the method wi
 have provision for this address to be passed to method performing the request.)
 """
 import requests
-import db.models
+
 
 model_sequence = [
     {"model": "StaffTitle", "url": "/staff/titles/"},
@@ -40,3 +40,5 @@ class NodeDataSych:
             # model["model"]. Use create_or_update to save modifications to
             # already existing data.
             # Ensure that the request(line 35) is ok first!!
+    # @staticmethod
+    # def verify_node_device_registration
