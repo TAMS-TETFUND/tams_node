@@ -2,7 +2,7 @@ import csv
 from datetime import datetime
 
 from django.http import HttpResponse
-from django.db.models import Q, F, Value
+from django.db.models import Q, F
 from django.shortcuts import render
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -13,6 +13,7 @@ from django.views.generic import ListView
 from db.models import (
     AttendanceRecord,
     AttendanceSession,
+    AttendanceSessionStatusChoices,
 )
 from app.appconfigparser import AppConfigParser
 
@@ -47,7 +48,7 @@ def end_attendance_session(request, pk):
             )
         else:
             attendance_session = AttendanceSession.objects.get(id=pk)
-            attendance_session.status = AttendanceSessionStatus.ENDED
+            attendance_session.status = AttendanceSessionStatusChoices.ENDED
             attendance_session.save()
     else:
         messages.add_message(
@@ -82,7 +83,8 @@ def download_attendance(request, pk):
             "student__first_name",
             "student__last_name",
             "student__reg_number",
-            "logged_by",
+            "student__department__name",
+            "check_in_by",
         )
     )
 
@@ -99,7 +101,7 @@ def download_attendance(request, pk):
         },
     )
 
-    field_names = ["S/N", "Name", "Reg. Number", "Sign In"]
+    field_names = ["S/N", "Name", "Reg. Number", "Department", "Sign In"]
     attendance_writer = csv.DictWriter(response, fieldnames=field_names)
     attendance_writer.writerow(
         {
@@ -113,7 +115,8 @@ def download_attendance(request, pk):
                 "S/N": idx,
                 "Name": f'{row["student__last_name"].capitalize()} {row["student__first_name"].capitalize()}',
                 "Reg. Number": row["student__reg_number"],
-                "Sign In": f'{datetime.strftime(row["logged_by"], "%H:%M")}',
+                "Department": row["student__department__name"],
+                "Sign In": f'{datetime.strftime(row["check_in_by"], "%H:%M")}',
             }
         )
 
