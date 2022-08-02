@@ -900,6 +900,13 @@ class NewEventSummaryWindow(StaffIDInputRouterMixin, BaseGUIWindow):
     @classmethod
     def loop(cls, window, event, values):
         if event in ("start_event", "schedule_event"):
+            try:
+                node_id = app_config.getint("node_device_details", "node_id")
+            except Exception as e:
+                print(e)
+                cls.display_message("Please register device!", window)
+                return True
+
             new_event = dict(app_config["new_event"])
             attendance_session_model_kwargs = {
                 "course_id": Course.str_to_course(new_event["course"]),
@@ -911,6 +918,7 @@ class NewEventSummaryWindow(StaffIDInputRouterMixin, BaseGUIWindow):
                     f"{new_event['start_date']} {new_event['start_time']}",
                     "%d-%m-%Y %H:%M",
                 ),
+                "node_device_id": node_id,
                 "duration": timedelta(hours=int(new_event["duration"])),
                 "recurring": eval(new_event["recurring"]),
             }
