@@ -14,7 +14,7 @@ class AttendanceLogger:
         tmp_student = app_config["tmp_student"]
         try:
             obj, created = AttendanceRecord.objects.update_or_create(
-                attendance_session_id=app_config.getint(
+                attendance_session_id=app_config.get(
                     "current_attendance_session", "session_id"
                 ),
                 student_id=tmp_student["reg_number"],

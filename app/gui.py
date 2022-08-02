@@ -45,6 +45,7 @@ from db.models import (
     Department,
     face_enc_to_str,
     str_to_face_enc, EventTypeChoices, SemesterChoices, SexChoices, RecordTypesChoices, AttendanceSessionStatusChoices,
+    NodeDevice,
 )
 
 # initializing the configparser object
@@ -908,6 +909,13 @@ class NewEventSummaryWindow(StaffIDInputRouterMixin, BaseGUIWindow):
     @classmethod
     def loop(cls, window, event, values):
         if event in ("start_event", "schedule_event"):
+            try:
+                node_id = app_config.getint("node_device_details", "node_id")
+            except Exception as e:
+                print(e)
+                cls.display_message("Please register device!", window)
+                return True
+
             new_event = dict(app_config["new_event"])
             attendance_session_model_kwargs = {
                 "course_id": Course.str_to_course(new_event["course"]),
@@ -919,6 +927,7 @@ class NewEventSummaryWindow(StaffIDInputRouterMixin, BaseGUIWindow):
                     f"{new_event['start_date']} {new_event['start_time']}",
                     "%d-%m-%Y %H:%M",
                 ),
+                "node_device_id": node_id,
                 "duration": timedelta(hours=int(new_event["duration"])),
                 "recurring": eval(new_event["recurring"]),
             }
@@ -1151,7 +1160,7 @@ class AttendanceSessionLandingWindow(
     @staticmethod
     def valid_check_in_count():
         return AttendanceRecord.objects.filter(
-            attendance_session=app_config.getint(
+            attendance_session=app_config.get(
                 "current_attendance_session", "session_id"
             ),
             record_type=RecordTypesChoices.SIGN_IN,
@@ -1320,7 +1329,7 @@ class AttendanceSignOutWindow(BaseGUIWindow):
         event_dict = dict(app_config["current_attendance_session"])
         student_dict = dict(app_config["tmp_student"])
         student_attendance = AttendanceRecord.objects.filter(
-            attendance_session_id=app_config.getint(
+            attendance_session_id=app_config.get(
                 "current_attendance_session", "session_id"
             ),
             student_id=student_dict["reg_number"],
@@ -1505,13 +1514,13 @@ class StudentRegNumInputWindow(
 
         tmp_student = app_config["tmp_student"]
         if AttendanceRecord.objects.filter(
-                attendance_session_id=app_config.getint(
+                attendance_session_id=app_config.get(
                     "current_attendance_session", "session_id"
                 ),
                 student_id=tmp_student["reg_number"],
         ).exists():
             record = AttendanceRecord.objects.get(student_id=tmp_student["reg_number"],
-                                                  attendance_session_id=app_config.getint(
+                                                  attendance_session_id=app_config.get(
                                                       "current_attendance_session", "session_id"
                                                   ), )
             # check if the student is signed out and prevent re-entry
@@ -1801,7 +1810,7 @@ class StaffFaceVerificationWindow(FaceCameraWindow):
                 face_encoding_to_check=captured_face_encodings,
         ):
             att_session = AttendanceSession.objects.get(
-                id=app_config.getint("current_attendance_session", "session_id")
+                id=app_config.get("current_attendance_session", "session_id")
             )
             att_session.initiator_id = tmp_staff.getint("id")
             att_session.save()
@@ -2166,14 +2175,12 @@ class NodeDeviceRegistrationWindow(ValidationMixin, BaseGUIWindow):
                 cls.display_message(f"Error: {json.loads(str(e))['detail']}", window)
                 return True
 
-            app_config["node_device_details"] = {
-                "server_ip_address": values["server_ip_address"],
-                "server_port": values["server_port"],
-                "node_name": values["node_name"],
-                "node_token": response['token'],
-                "node_id": str(response['id']),
-
-            }
+            # store node device details
+            NodeDevice.objects.create(
+                id=int(response['id']),
+                name=values["node_name"],
+                token=response['token']
+            )
             cls.popup_auto_close_success("Registered succesfully!")
             window_dispatch.open_window(HomeWindow)
 

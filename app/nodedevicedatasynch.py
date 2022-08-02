@@ -25,7 +25,7 @@ from requests import HTTPError
 
 from db.models import *
 
-SERVER_ENDPOINT = 'node-devices/backup/'  # TODO: update the url
+SERVER_ENDPOINT = 'api/v1/node-devices/backup/'  # TODO: update the url
 
 model_sequence = [
     {"model": "StaffTitle", "url": "/staff/titles/"},
@@ -83,7 +83,7 @@ class NodeDataSynch:
         call_command('loaddata', backup_file)
 
     @staticmethod
-    def node_register(ip: str, port: int, headers: dict, json_data: dict, protocol: str = "http",):
+    def node_register(ip: str, port: int, headers: dict, json_data: dict, protocol: str = "http", ):
         endpoint = "api/v1/node-devices/"
         url = f'{protocol}://{ip}:{port}/{endpoint}'
 
@@ -107,5 +107,8 @@ class NodeDataSynch:
         auto increment integer primary key
         """
 
-        pass
-
+        sessions = AttendanceSession.objects.filter(status=AttendanceSessionStatusChoices.ENDED)
+        records = AttendanceRecord.objects.filter(
+            attendance_session__status=AttendanceSessionStatusChoices.ENDED)
+        print(sessions)
+        print(records)
