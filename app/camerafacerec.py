@@ -7,6 +7,10 @@ from app.facerec import FaceRecognition
 
 class CamFaceRec:
     def __init__(self):
+        self.img_bbox = None
+        self._face_locations = None
+        self._img = None
+        self._img_bbox = None
         self.cam = Camera()
         self.cam.start_thread()
         self.face_rec = FaceRecognition()

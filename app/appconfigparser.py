@@ -42,5 +42,5 @@ class AppConfigParser(configparser.ConfigParser):
         return section_dictionary
 
     @staticmethod
-    def dict_vals_to_str(input: dict):
-        return {k: str(v) for k, v in input.items()}
+    def dict_vals_to_str(input_dict: dict):
+        return {k: str(v) for k, v in input_dict.items()}

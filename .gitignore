@@ -109,6 +109,7 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+.idea/
 
 # Spyder project settings
 .spyderproject
@@ -124,8 +125,12 @@ venv.bak/
 .mypy_cache/
 .dmypy.json
 dmypy.json
+app/server_backup.json
+server_backup.json
+
 
 # Pyre type checker
 .pyre/
 
 faf
+app/.config.ini

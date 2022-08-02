@@ -103,7 +103,7 @@ class BaseGUIWindow:
             "no_titlebar": True,
             "icon": cls.get_icon("icon"),
             "grab_anywhere": False,
-            "modal":True,
+            "modal": True,
             "finalize": True,
         }
         return init_dict
@@ -129,6 +129,7 @@ class BaseGUIWindow:
 
     @classmethod
     def navigation_pane(cls, *, next_icon="next_grey", back_icon="back_grey"):
+        # TODO: all back button takes back to home instead of the previous screen
         return [
             sg.Column(
                 [
