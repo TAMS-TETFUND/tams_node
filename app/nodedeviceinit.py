@@ -3,9 +3,8 @@ import os
 from pathlib import Path
 import urllib3
 
-from app.appconfigparser import AppConfigParser
 from app.serverconnection import ServerConnection
-
+from db.models import NodeDevice
 
 class DeviceRegistration:
     """This class will be responsible for initial configuration of the node device.
@@ -29,24 +28,18 @@ class DeviceRegistration:
         response = urllib3.PoolManager().request('POST', 'http://%s:%s/%s' % (server_connection.server_address, server_connection.server_port, registration_url))
         if response.status == 201:
             device_details = json.loads(response.data.decode('utf-8'))
+            print(type(device_details))
+
             if 'token' in device_details:
-                cls.log_init_device_details(device_details)
-            return True
-        else:
-            return False
-
-    @classmethod
-    def log_init_device_details(cls, device_details):
-        config_parser = AppConfigParser(cls.config_file)
-
-        config_parser["DEFAULT"] = device_details
-        config_parser.save()
+                NodeDevice.objects.create(**device_details)
+                return True
+        return False
 
     @classmethod
     def is_registered(cls):
-        config_parser = AppConfigParser(cls.config_file)
+        device_registration = NodeDevice.objects.all()
         
-        if config_parser.has_option("DEFAULT","token"):
+        if device_registration.exists():
             return True
         else:
             return False
