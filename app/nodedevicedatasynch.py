@@ -22,6 +22,7 @@ from django.core.wsgi import get_wsgi_application
 # os.environ.setdefault("DJANGO_SETTINGS_MODULE", "tams_node.settings")
 # application = get_wsgi_application()
 from requests import HTTPError
+from rest_framework.serializers import ModelSerializer
 
 from db.models import *
 
@@ -37,6 +38,18 @@ model_sequence = [
     {"model": "AcademicSession", "url": "/academic-sessions/"},
     {"model": "CourseRegistration", "url": "/course-registrations"},
 ]
+
+
+class AttendanceSessionSerializer(ModelSerializer):
+    class Meta:
+        model = AttendanceSession
+        fields = "__all__"
+
+
+class AttendanceRecordSerializer(ModelSerializer):
+    class Meta:
+        model = AttendanceRecord
+        fields = "__all__"
 
 
 class NodeDataSynch:
@@ -87,18 +100,12 @@ class NodeDataSynch:
         endpoint = "api/v1/node-devices/"
         url = f'{protocol}://{ip}:{port}/{endpoint}'
 
-        try:
-            res = requests.post(url, headers=headers, data=json.dumps(json_data))
-        except requests.exceptions.RequestException as e:
-            raise HTTPError('{"detail": "Connection refused!"}')
+        response = NodeDataSynch.sync_post(headers, json_data, url)
 
-        if res.status_code not in (201, 200):
-            raise HTTPError(res.text)
-
-        return res.json()
+        return response.json()
 
     @staticmethod
-    def node_sync():
+    def node_sync(ip: str = '127.0.0.1', port: int = 8080, protocol: str = "http"):
         """
         method sends attendance session and the attendance record of the node device
         to the server
@@ -107,8 +114,44 @@ class NodeDataSynch:
         auto increment integer primary key
         """
 
+        endpoint = "api/v1/attendance/"
+        url = f'{protocol}://{ip}:{port}/{endpoint}'
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": "token  admin_1234567890 1"
+        }
+
         sessions = AttendanceSession.objects.filter(status=AttendanceSessionStatusChoices.ENDED)
-        records = AttendanceRecord.objects.filter(
-            attendance_session__status=AttendanceSessionStatusChoices.ENDED)
-        print(sessions)
-        print(records)
+        sync_data = []
+
+        # sync the attendance session first
+        for session in sessions:
+            sync_data.append(AttendanceSessionSerializer(session).data)
+
+        NodeDataSynch.sync_post(headers, sync_data, url)
+
+        # sync the records for each attendance session
+        # after successful attendance session syncing
+        sync_data.clear()
+        endpoint = "api/v1/attendance/records/"
+        url = f'{protocol}://{ip}:{port}/{endpoint}'
+
+        for session in sessions:
+            records = session.attendancerecord_set.all()
+            for record in records:
+                sync_data.append(AttendanceRecordSerializer(record).data)
+
+        print(sync_data)
+        NodeDataSynch.sync_post(headers, sync_data, url)
+
+    @staticmethod
+    def sync_post(headers, sync_data, url):
+        try:
+            res = requests.post(url, headers=headers, json=sync_data)
+        except requests.exceptions.RequestException as e:
+            raise HTTPError('{"detail": "Connection refused!"}')
+
+        if res.status_code not in (201, 200):
+            raise HTTPError(res.text)
+
+        return res

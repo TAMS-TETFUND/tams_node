@@ -2131,6 +2131,8 @@ class NodeDeviceRegistrationWindow(ValidationMixin, BaseGUIWindow):
                 sg.InputText(key="node_id", **input_props),
             ],
             [sg.Button("Submit", key="submit")],
+            # todo: remove this button
+            [sg.Button("sync", key="sync")],
             cls.navigation_pane(),
         ]
 
@@ -2143,6 +2145,11 @@ class NodeDeviceRegistrationWindow(ValidationMixin, BaseGUIWindow):
     def loop(cls, window, event, values):
         if event in ("home", "back"):
             window_dispatch.open_window(HomeWindow)
+            return True
+
+        # todo: remove this condition
+        if event == 'sync':
+            NodeDataSynch.node_sync()
             return True
 
         if event in ("submit", "next"):

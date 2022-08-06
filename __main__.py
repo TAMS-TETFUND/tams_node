@@ -1,8 +1,8 @@
-from app.windowdispatch import WindowDispatch
+from app.windowdispatch import WindowDispatch, WindowDispatched
 from app.initialloadingwindow import LoadingWindow
 
 
-window_dispatch = WindowDispatch()
+window_dispatch = WindowDispatched()
 window_dispatch.open_window(LoadingWindow)
 
 

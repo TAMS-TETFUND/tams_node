@@ -56,7 +56,7 @@ class WindowDispatched:
         self._current_window_name = window_class.__name__
         self.current_window = window_class.window()
 
-    def find_window_name(self):
+    def find_window_name(self, window_object: sg.Window):
         return self._current_window_name
 
     @property

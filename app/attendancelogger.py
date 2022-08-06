@@ -1,6 +1,7 @@
 import datetime
 
 from django.db.utils import IntegrityError
+from django.utils import timezone
 
 from app.appconfigparser import AppConfigParser
 from db.models import AttendanceRecord, RecordTypesChoices
@@ -28,6 +29,7 @@ class AttendanceLogger:
                 cls.message = f"{tmp_student['reg_number']} checked in"
             else:
                 obj.record_type = RecordTypesChoices.SIGN_OUT
+                obj.check_out_by = timezone.now()
                 obj.save()
                 cls.message = f"{tmp_student['reg_number']} checked out"
 
