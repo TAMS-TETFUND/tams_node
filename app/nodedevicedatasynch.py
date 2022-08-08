@@ -14,30 +14,20 @@ The address of the api point will be appended to the address of the server.
 The address of the server will be entered by the user on the GUI. (the method will
 have provision for this address to be passed to method performing the request.)
 """
+import json
 import os
+
 import requests
 from django.core.management import call_command
-from django.core.wsgi import get_wsgi_application
-
-# os.environ.setdefault("DJANGO_SETTINGS_MODULE", "tams_node.settings")
-# application = get_wsgi_application()
 from requests import HTTPError
 from rest_framework.serializers import ModelSerializer
+from __main__ import app_config
 
-from db.models import *
-
-SERVER_ENDPOINT = 'api/v1/node-devices/backup/'  # TODO: update the url
-
-model_sequence = [
-    {"model": "StaffTitle", "url": "/staff/titles/"},
-    {"model": "Faculty", "url": "/faculties"},
-    {"model": "Department", "url": "/departments"},
-    {"model": "Staff", "url": "/staff"},
-    {"model": "Student", "url": "/students"},
-    {"model": "Course", "url": "/courses"},
-    {"model": "AcademicSession", "url": "/academic-sessions/"},
-    {"model": "CourseRegistration", "url": "/course-registrations"},
-]
+from db.models import (AttendanceSession,
+                       AttendanceRecord,
+                       AttendanceSessionStatusChoices,
+                       NodeDevice, Staff,
+                       Student, )
 
 
 class AttendanceSessionSerializer(ModelSerializer):
@@ -53,19 +43,8 @@ class AttendanceRecordSerializer(ModelSerializer):
 
 
 class NodeDataSynch:
-    @staticmethod
-    def start_synch(server_address: str):
-        for model in model_sequence:
-            req = requests.get("http://%s%s" % (server_address, model["url"]))
-            # You can get the list of data passed from the server with something like:
-            # response_dict = req.json()
-            # After getting the data sent, proceed to saving it the model
-            # model["model"]. Use create_or_update to save modifications to
-            # already existing data.
-            # Ensure that the request(line 35) is ok first!!
-
-    @staticmethod
-    def first_time_sync(ip: str, port: int, protocol: str = "http"):
+    @classmethod
+    def first_time_sync(cls, protocol: str = "http"):
         """
         method to be called to sync the server data with the node device
         on initial setup when connection has been made to the server
@@ -75,37 +54,43 @@ class NodeDataSynch:
             :param protocol: the protocol used to access the server
         """
 
-        server_url = f'{protocol}://{ip}:{port}/{SERVER_ENDPOINT}'
-        backup_file = 'server_backup.json'
-        cls = ('AppUser', 'Student', 'Staff', 'Department')
+        ip, port = cls.get_server_details()
+        server_endpoint = 'api/v1/node-devices/backup/'
 
-        backup_data = requests.get(server_url).json()
+        server_url = f'{protocol}://{ip}:{port}/{server_endpoint}'
+        backup_file = 'server_backup.json'
+
+        backup_data = cls.sync_request(server_url, cls.get_header(), get=True)
 
         # Serializing json response
-        json_object = json.dumps(backup_data, indent=2)
+        json_object = json.dumps(backup_data.json(), indent=2)
 
         # Writing to back up file
         with open(backup_file, "w") as outfile:
             outfile.write(json_object)
 
-        # delete old records if any
-        for c in cls:
-            eval(c).objects.all().delete()
-
         # load the data into node's database
         call_command('loaddata', backup_file)
 
-    @staticmethod
-    def node_register(ip: str, port: int, headers: dict, json_data: dict, protocol: str = "http", ):
+        # clear the backup file
+        os.remove(backup_file)
+
+        # delete records that are not required
+        Student.objects.filter(is_active=False).delete()
+        Staff.objects.filter(is_active=False).delete()
+
+    @classmethod
+    def node_register(cls, headers: dict, json_data: dict, protocol: str = "http", ):
+        ip, port = cls.get_server_details()
         endpoint = "api/v1/node-devices/"
         url = f'{protocol}://{ip}:{port}/{endpoint}'
 
-        response = NodeDataSynch.sync_post(headers, json_data, url)
+        response = NodeDataSynch.sync_request(url, headers, json_data)
 
         return response.json()
 
-    @staticmethod
-    def node_sync(ip: str = '127.0.0.1', port: int = 8080, protocol: str = "http"):
+    @classmethod
+    def node_sync(cls, protocol: str = "http"):
         """
         method sends attendance session and the attendance record of the node device
         to the server
@@ -114,12 +99,12 @@ class NodeDataSynch:
         auto increment integer primary key
         """
 
+        ip, port = cls.get_server_details()
         endpoint = "api/v1/attendance/"
+
         url = f'{protocol}://{ip}:{port}/{endpoint}'
-        headers = {
-            "Content-Type": "application/json",
-            "Authorization": "token  admin_1234567890 1"
-        }
+
+        headers = cls.get_header()
 
         sessions = AttendanceSession.objects.filter(status=AttendanceSessionStatusChoices.ENDED)
         sync_data = []
@@ -128,7 +113,7 @@ class NodeDataSynch:
         for session in sessions:
             sync_data.append(AttendanceSessionSerializer(session).data)
 
-        NodeDataSynch.sync_post(headers, sync_data, url)
+        cls.sync_request(url, headers, sync_data)
 
         # sync the records for each attendance session
         # after successful attendance session syncing
@@ -142,12 +127,15 @@ class NodeDataSynch:
                 sync_data.append(AttendanceRecordSerializer(record).data)
 
         print(sync_data)
-        NodeDataSynch.sync_post(headers, sync_data, url)
+        cls.sync_request(url, headers, sync_data)
 
     @staticmethod
-    def sync_post(headers, sync_data, url):
+    def sync_request(url, headers, sync_data=None, get=False):
         try:
-            res = requests.post(url, headers=headers, json=sync_data)
+            if get:
+                res = requests.get(url, headers=headers)
+            else:
+                res = requests.post(url, headers=headers, json=sync_data)
         except requests.exceptions.RequestException as e:
             raise HTTPError('{"detail": "Connection refused!"}')
 
@@ -155,3 +143,26 @@ class NodeDataSynch:
             raise HTTPError(res.text)
 
         return res
+
+    @classmethod
+    def get_server_details(cls):
+        try:
+            ip = str(app_config.get("server_details", "server_ip_address"))
+            port = app_config.getint("server_details", "server_port")
+        except Exception:
+            raise HTTPError('{"detail": "Server IP and port not set!"}')
+
+        return ip, port
+
+    @classmethod
+    def get_header(cls):
+        node = NodeDevice.objects.all().first()
+
+        if node is None:
+            raise HTTPError('{"detail": "Device not registered!"}')
+
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Token  {node.token} {node.id}"
+        }
+        return headers

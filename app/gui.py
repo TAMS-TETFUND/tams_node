@@ -1,15 +1,10 @@
 import json
-
-from datetime import datetime, timedelta
 import time
-
 import PySimpleGUI as sg
-import requests
+import __main__
+from datetime import datetime, timedelta
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.utils import IntegrityError
-from requests import HTTPError
-
-import __main__
 from app.gui_utils import (
     StaffBiometricVerificationRouterMixin,
     StaffIDInputRouterMixin,
@@ -19,7 +14,6 @@ from app.gui_utils import (
     update_device_op_mode,
 )
 from app.camerafacerec import CamFaceRec
-from app.appconfigparser import AppConfigParser
 from app.basegui import BaseGUIWindow
 from app.fingerprint import FingerprintScanner
 from app.attendancelogger import AttendanceLogger
@@ -44,12 +38,13 @@ from db.models import (
     SemesterChoices,
     Department,
     face_enc_to_str,
-    str_to_face_enc, EventTypeChoices, SemesterChoices, SexChoices, RecordTypesChoices, AttendanceSessionStatusChoices,
+    str_to_face_enc,
+    RecordTypesChoices,
     NodeDevice,
 )
 
 # initializing the configparser object
-app_config = AppConfigParser()
+app_config = __main__.app_config
 
 # initializing WindowDispatch object
 # window_dispatch = WindowDispatch()
@@ -1517,10 +1512,10 @@ class StudentRegNumInputWindow(
 
         tmp_student = app_config["tmp_student"]
         if AttendanceRecord.objects.filter(
-            attendance_session_id=app_config.getint(
-                "current_attendance_session", "session_id"
-            ),
-            student_id=tmp_student["reg_number"],
+                attendance_session_id=app_config.getint(
+                    "current_attendance_session", "session_id"
+                ),
+                student_id=tmp_student["reg_number"],
         ).exists():
             record = AttendanceRecord.objects.get(student_id=tmp_student["reg_number"],
                                                   attendance_session_id=app_config.get(
@@ -2174,10 +2169,9 @@ class NodeDeviceRegistrationWindow(ValidationMixin, BaseGUIWindow):
             }
 
             try:
-                response = NodeDataSynch.node_register(ip=values["server_ip_address"],
-                                                       port=int(values["server_port"]),
-                                                       headers=headers,
-                                                       json_data=data)
+                response = NodeDataSynch.node_register(
+                    headers=headers,
+                    json_data=data)
             except Exception as e:
                 print(e)
                 cls.display_message(f"Error: {json.loads(str(e))['detail']}", window)
@@ -3688,7 +3682,7 @@ class ServerConnectionDetailsWindow(ValidationMixin, BaseGUIWindow):
             ],
             [
                 sg.Text("WLAN Name (SSID):", **field_label_props),
-                sg.Combo(key="ssid", **input_props),
+                sg.Combo(values=[], key="ssid", **input_props),
             ],
             [
                 sg.Text("WLAN Password:", **field_label_props),
@@ -3756,8 +3750,7 @@ class ServerConnectionDetailsWindow(ValidationMixin, BaseGUIWindow):
                         "WiFi network connection established"
                     )
                     time.sleep(1)
-                    NodeDataSynch.first_time_sync(server_details["server_ip_address"],
-                                                  int(server_details["server_port"]))
+                    NodeDataSynch.first_time_sync()
 
                 elif connect_result != 0:
                     cls.popup_auto_close_error(
