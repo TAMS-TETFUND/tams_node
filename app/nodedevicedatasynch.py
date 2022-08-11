@@ -88,7 +88,9 @@ class NodeDataSynch:
         url = f'{protocol}://{ip}:{port}/{endpoint}'
 
         try:
-            res = requests.post(url, headers=headers, data=json.dumps(json_data))
+            res = requests.post(url, 
+            headers=headers, 
+            data=json.dumps(json_data))
         except requests.exceptions.RequestException as e:
             raise HTTPError('{"detail": "Connection refused!"}')
 

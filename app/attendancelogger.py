@@ -1,5 +1,3 @@
-import datetime
-
 from django.db.utils import IntegrityError
 
 from app.appconfigparser import AppConfigParser
@@ -11,6 +9,10 @@ class AttendanceLogger:
 
     @classmethod
     def log_attendance(cls, app_config: AppConfigParser):
+        """This method handles student attendance logging.
+        Returns True if attendance logging is successful
+        False if attendance logging is unsuccessful
+        """
         tmp_student = app_config["tmp_student"]
         try:
             obj, created = AttendanceRecord.objects.update_or_create(
@@ -30,6 +32,7 @@ class AttendanceLogger:
                 obj.record_type = RecordTypesChoices.SIGN_OUT
                 obj.save()
                 cls.message = f"{tmp_student['reg_number']} checked out"
+            return True
 
     @classmethod
     def log_failed_attempt(cls, app_config: AppConfigParser):

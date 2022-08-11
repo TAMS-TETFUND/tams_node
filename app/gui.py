@@ -7,9 +7,11 @@ import PySimpleGUI as sg
 import requests
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.utils import IntegrityError
+from django.utils import timezone
 from requests import HTTPError
 
 import __main__
+from app import networkinterface
 from app.gui_utils import (
     StaffBiometricVerificationRouterMixin,
     StaffIDInputRouterMixin,
@@ -25,10 +27,12 @@ from app.fingerprint import FingerprintScanner
 from app.attendancelogger import AttendanceLogger
 from app.barcode import Barcode
 from app.facerec import FaceRecognition
-from app.networkinterface import connect_to_wifi
+from app.networkinterface import WLANInterface, connect_to_wifi
 from app.nodedevicedatasynch import NodeDataSynch
 from app.opmodes import OperationalMode
 from app.camera2 import Camera
+from app.nodedeviceinit import DeviceRegistration
+from app.serverconnection import ServerConnection
 
 from db.models import (
     AttendanceRecord,
@@ -176,6 +180,9 @@ class HomeWindow(BaseGUIWindow):
     @classmethod
     def loop(cls, window, event, values):
         if event in ("new_event", "new_event_txt"):
+            if not DeviceRegistration.is_registered():
+                cls.popup_auto_close_warn("Device setup incomplete. Contact admin")
+                return True
             window_dispatch.open_window(EventMenuWindow)
         if event in (
                 "continue_attendance",
@@ -185,11 +192,12 @@ class HomeWindow(BaseGUIWindow):
             if app_config.has_section("current_attendance_session"):
                 current_att_session = app_config["current_attendance_session"]
                 session_strt_time = datetime.strptime(
-                    f"{current_att_session['start_date']} {current_att_session['start_time']}",
-                    "%d-%m-%Y %H:%M",
+                    f"{current_att_session['start_date']} {current_att_session['start_time']} +0100",
+                    "%d-%m-%Y %H:%M %z",
                 )
 
-                if datetime.now() - session_strt_time > timedelta(hours=24):
+                # handling expired attendance sessions
+                if timezone.now() - session_strt_time > timedelta(hours=24):
                     try:
                         attendance_session = AttendanceSession.objects.get(
                             id=current_att_session["session_id"]
@@ -202,7 +210,7 @@ class HomeWindow(BaseGUIWindow):
                         app_config.remove_section("tmp_staff")
                         return True
                     else:
-                        if attendance_session.initiator_id is None:
+                        if attendance_session.initiator is None:
                             attendance_session.delete()
                         else:
                             attendance_session.status = (
@@ -436,13 +444,6 @@ class AcademicSessionDetailsWindow(ValidationMixin, BaseGUIWindow):
                 ),
             ],
             [sg.VPush()],
-            # [
-            #     sg.Push(),
-            #     sg.Button("<< Back", key="back"),
-            #     sg.Button("Next >>", key="next"),
-            #     sg.Button("Cancel", key="cancel", **cls.cancel_button_kwargs()),
-            #     sg.Push(),
-            # ],
             cls.navigation_pane(),
         ]
 
@@ -914,13 +915,6 @@ class NewEventSummaryWindow(StaffIDInputRouterMixin, BaseGUIWindow):
     @classmethod
     def loop(cls, window, event, values):
         if event in ("start_event", "schedule_event"):
-            try:
-                node_id = app_config.getint("node_device_details", "node_id")
-            except Exception as e:
-                print(e)
-                cls.display_message("Please register device!", window)
-                return True
-
             new_event = dict(app_config["new_event"])
             attendance_session_model_kwargs = {
                 "course_id": Course.str_to_course(new_event["course"]),
@@ -929,22 +923,28 @@ class NewEventSummaryWindow(StaffIDInputRouterMixin, BaseGUIWindow):
                 ),
                 "event_type": EventTypeChoices.str_to_value(new_event["type"]),
                 "start_time": datetime.strptime(
-                    f"{new_event['start_date']} {new_event['start_time']}",
-                    "%d-%m-%Y %H:%M",
+                    f"{new_event['start_date']} {new_event['start_time']} +0100",
+                    "%d-%m-%Y %H:%M %z",
                 ),
-                "node_device_id": node_id,
+                "node_device_id": NodeDevice.objects.first().id,
                 "duration": timedelta(hours=int(new_event["duration"])),
                 "recurring": eval(new_event["recurring"]),
             }
+
             try:
-                att_session = AttendanceSession.objects.create(
-                    **attendance_session_model_kwargs
-                )
-            except IntegrityError:
-                cls.display_message("Event has already been created", window)
-                att_session = AttendanceSession.objects.get(
-                    **attendance_session_model_kwargs
-                )
+                att_session, created = AttendanceSession.objects.get_or_create(**attendance_session_model_kwargs)
+            except Exception:
+                cls.display_message("Unknown system error", window)
+
+            if not created:
+                if att_session.status != AttendanceSessionStatusChoices.ACTIVE:
+                    cls.popup_auto_close_error("Attendance for this event has ended")
+                    app_config.remove_section("current_attendance_session")
+                    app_config.remove_section("new_event")
+                    window_dispatch.open_window(HomeWindow)
+                    return True
+                cls.popup_auto_close_warn("Event has already been created")
+
             app_config["current_attendance_session"] = app_config.section_dict(
                 "new_event"
             )
@@ -1148,7 +1148,7 @@ class AttendanceSessionLandingWindow(
             )
             if confirm == "Yes":
                 att_session = AttendanceSession.objects.get(
-                    id=app_config.getint(
+                    id=app_config.get(
                         "current_attendance_session", "session_id"
                     )
                 )
@@ -1517,7 +1517,7 @@ class StudentRegNumInputWindow(
 
         tmp_student = app_config["tmp_student"]
         if AttendanceRecord.objects.filter(
-            attendance_session_id=app_config.getint(
+            attendance_session_id=app_config.get(
                 "current_attendance_session", "session_id"
             ),
             student_id=tmp_student["reg_number"],
@@ -1721,8 +1721,9 @@ class FaceCameraWindow(CameraWindow):
 class StudentFaceVerificationWindow(
     StudentRegNumberInputRouterMixin, FaceCameraWindow
 ):
-    """This class carries out student face verification and logs
-    student attendance."""
+    """This class carries out student face verification and calls the 
+    uses the AttendanceLogger class to log attendance.
+    """
 
     @classmethod
     def process_image(cls, captured_face_encodings, window):
@@ -1984,10 +1985,10 @@ class StudentBarcodeCameraWindow(
 
         tmp_student = app_config["tmp_student"]
         if AttendanceRecord.objects.filter(
-                attendance_session_id=app_config.getint(
+                attendance_session_id=app_config.get(
                     "current_attendance_session", "session_id"
                 ),
-                student_id=tmp_student["id"],
+                student_id=tmp_student["reg_number"],
         ).exists():
             cls.popup_auto_close_warn(
                 f"{tmp_student['first_name']} {tmp_student['last_name']} "
@@ -2119,17 +2120,17 @@ class NodeDeviceRegistrationWindow(ValidationMixin, BaseGUIWindow):
                 sg.InputText(key="server_port", default_text="8080", **input_props),
             ],
             [
-                sg.Text("Name:", **field_label_props),
-                sg.InputText(key="node_name", **input_props),
+                sg.Text("Admin Username:", **field_label_props),
+                sg.InputText(key="admin_username", **input_props),
             ],
             [
-                sg.Text("Initial Token:", **field_label_props),
-                sg.InputText(key="node_token", **input_props),
+                sg.Text("Initial Password:", **field_label_props),
+                sg.InputText(key="password", password_char="*", **input_props),
             ],
-            [
-                sg.Text("Initial ID:", **field_label_props),
-                sg.InputText(key="node_id", **input_props),
-            ],
+            # [
+            #     sg.Text("Initial ID:", **field_label_props),
+            #     sg.InputText(key="node_id", **input_props),
+            # ],
             [sg.Button("Submit", key="submit")],
             cls.navigation_pane(),
         ]
@@ -2149,7 +2150,8 @@ class NodeDeviceRegistrationWindow(ValidationMixin, BaseGUIWindow):
             required_fields = [
                 (values["server_ip_address"], "Server IP address"),
                 (values["server_port"], "Server port"),
-                (values["node_name"], "Node name"),
+                (values["admin_username"], "Admin Username"),
+                (values["password"], "Password"),
             ]
 
             # TODO: not validating all required fields. Only validating the first field
@@ -2158,33 +2160,17 @@ class NodeDeviceRegistrationWindow(ValidationMixin, BaseGUIWindow):
                     is not None
             ):
                 return True
-
-            headers = {"Content-Type": "application/json",
-                       "Authorization": f"token {values['node_token']} {int(values['node_id'])}"}
-
-            data = {
-                "name": values['node_name'],
-            }
-
-            try:
-                response = NodeDataSynch.node_register(ip=values["server_ip_address"],
-                                                       port=int(values["server_port"]),
-                                                       headers=headers,
-                                                       json_data=data)
-            except Exception as e:
-                print(e)
-                cls.display_message(f"Error: {json.loads(str(e))['detail']}", window)
-                return True
-
-            # store node device details
-            NodeDevice.objects.create(
-                id=int(response['id']),
-                name=values["node_name"],
-                token=response['token']
+            
+            conn = ServerConnection()
+            conn.token_authentication(
+                server_address=values['server_ip_address'], 
+                server_port=values['server_port'], 
+                username=values['admin_username'], 
+                password=values['password'] 
             )
+            DeviceRegistration.register_device(conn)
             cls.popup_auto_close_success("Registered succesfully!")
             window_dispatch.open_window(HomeWindow)
-
         return True
 
 
@@ -3084,7 +3070,7 @@ class StaffFingerprintVerificationWindow(
 
         if fp_scanner.verify_match():
             att_session = AttendanceSession.objects.get(
-                id=app_config.getint("current_attendance_session", "session_id")
+                id=app_config.get("current_attendance_session", "session_id")
             )
             att_session.initiator_id = tmp_staff.get("staff_number")
             att_session.save()
@@ -3681,7 +3667,10 @@ class ServerConnectionDetailsWindow(ValidationMixin, BaseGUIWindow):
             ],
             [
                 sg.Text("WLAN Name (SSID):", **field_label_props),
-                sg.Combo(key="ssid", **input_props),
+                sg.Combo(
+                    key="ssid",
+                    values=WLANInterface.available_networks() or [],
+                    **combo_props),
             ],
             [
                 sg.Text("WLAN Password:", **field_label_props),
