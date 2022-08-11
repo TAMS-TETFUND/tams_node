@@ -4,7 +4,7 @@ import urllib3
 
 class ServerConnection:
     """
-    This class will be responsible for establishing connection to the 
+    This class will be responsible for establishing connection to the
     TAMS server.
     """
 
@@ -17,7 +17,7 @@ class ServerConnection:
         server_port: str,
         username: str,
         password: str,
-        login_url: str = "api/v1/token/login"
+        login_url: str = "api/v1/token/login",
     ):
         """This method will be responsible for authenticating the
         the node device on the server.
@@ -32,22 +32,22 @@ class ServerConnection:
             fields={"username": username, "password": password},
         )
         if response.status == 200:
-            self.token = json.loads(response.data.decode('utf-8'))['auth_token']
-            
+            self.token = json.loads(response.data.decode("utf-8"))["auth_token"]
+
             # saving the server address details after authentication
             self.server_address = server_address
-            self.server_port = server_port         
+            self.server_port = server_port
             return True
         else:
             raise ConnectionError("Connection error (%s)." % response.status)
-    
+
     def get_token(self):
         if self.token is None:
             raise RuntimeError("Unathenticated Request")
         return self.token
-    
+
     def is_authenticated(self):
         if self.token:
-                return True
+            return True
         else:
             return False

@@ -25,7 +25,7 @@ from requests import HTTPError
 
 from db.models import *
 
-SERVER_ENDPOINT = 'api/v1/node-devices/backup/'  # TODO: update the url
+SERVER_ENDPOINT = "api/v1/node-devices/backup/"  # TODO: update the url
 
 model_sequence = [
     {"model": "StaffTitle", "url": "/staff/titles/"},
@@ -62,9 +62,9 @@ class NodeDataSynch:
             :param protocol: the protocol used to access the server
         """
 
-        server_url = f'{protocol}://{ip}:{port}/{SERVER_ENDPOINT}'
-        backup_file = 'server_backup.json'
-        cls = ('AppUser', 'Student', 'Staff', 'Department')
+        server_url = f"{protocol}://{ip}:{port}/{SERVER_ENDPOINT}"
+        backup_file = "server_backup.json"
+        cls = ("AppUser", "Student", "Staff", "Department")
 
         backup_data = requests.get(server_url).json()
 
@@ -80,17 +80,23 @@ class NodeDataSynch:
             eval(c).objects.all().delete()
 
         # load the data into node's database
-        call_command('loaddata', backup_file)
+        call_command("loaddata", backup_file)
 
     @staticmethod
-    def node_register(ip: str, port: int, headers: dict, json_data: dict, protocol: str = "http", ):
+    def node_register(
+        ip: str,
+        port: int,
+        headers: dict,
+        json_data: dict,
+        protocol: str = "http",
+    ):
         endpoint = "api/v1/node-devices/"
-        url = f'{protocol}://{ip}:{port}/{endpoint}'
+        url = f"{protocol}://{ip}:{port}/{endpoint}"
 
         try:
-            res = requests.post(url, 
-            headers=headers, 
-            data=json.dumps(json_data))
+            res = requests.post(
+                url, headers=headers, data=json.dumps(json_data)
+            )
         except requests.exceptions.RequestException as e:
             raise HTTPError('{"detail": "Connection refused!"}')
 
@@ -109,8 +115,11 @@ class NodeDataSynch:
         auto increment integer primary key
         """
 
-        sessions = AttendanceSession.objects.filter(status=AttendanceSessionStatusChoices.ENDED)
+        sessions = AttendanceSession.objects.filter(
+            status=AttendanceSessionStatusChoices.ENDED
+        )
         records = AttendanceRecord.objects.filter(
-            attendance_session__status=AttendanceSessionStatusChoices.ENDED)
+            attendance_session__status=AttendanceSessionStatusChoices.ENDED
+        )
         print(sessions)
         print(records)

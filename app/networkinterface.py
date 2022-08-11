@@ -53,9 +53,9 @@ class WLANInterface:
     @staticmethod
     def connection_query():
         """
-        This method returns a list of detailed information about the 
+        This method returns a list of detailed information about the
         wireless interface of the device.
-        Returns an empty list if the WLAN interface is 
+        Returns an empty list if the WLAN interface is
         disabled/unavailable
         """
         interface_name = wlan_interface_name()
@@ -108,8 +108,8 @@ class WLANInterface:
     @classmethod
     def device_ip_address(cls):
         """
-        Returns the IP address assigned to currently assigned to the 
-        device's WLAN interface. 
+        Returns the IP address assigned to currently assigned to the
+        device's WLAN interface.
         Returns None if the device is not connected to a WLAN network.
         """
         if cls.is_connected():

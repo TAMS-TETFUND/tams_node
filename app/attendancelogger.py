@@ -20,7 +20,7 @@ class AttendanceLogger:
                     "current_attendance_session", "session_id"
                 ),
                 student_id=tmp_student["reg_number"],
-                defaults={"record_type": RecordTypesChoices.SIGN_IN}
+                defaults={"record_type": RecordTypesChoices.SIGN_IN},
             )
         except IntegrityError:
             cls.message = "Something went wrong. Please contact admin."
@@ -52,14 +52,14 @@ class AttendanceLogger:
 
         elif failed_attempts.getint(student_reg_number) >= 3:
             if (
-                    "blocked_reg_numbers"
-                    not in app_config["current_attendance_session"]
+                "blocked_reg_numbers"
+                not in app_config["current_attendance_session"]
             ):
                 app_config["current_attendance_session"][
                     "blocked_reg_numbers"
                 ] = ""
             app_config["current_attendance_session"]["blocked_reg_numbers"] += (
-                    "," + student_reg_number
+                "," + student_reg_number
             )
             app_config.save()
         else:
