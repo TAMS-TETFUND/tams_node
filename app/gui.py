@@ -2127,10 +2127,6 @@ class NodeDeviceRegistrationWindow(ValidationMixin, BaseGUIWindow):
                 sg.Text("Initial Password:", **field_label_props),
                 sg.InputText(key="password", password_char="*", **input_props),
             ],
-            # [
-            #     sg.Text("Initial ID:", **field_label_props),
-            #     sg.InputText(key="node_id", **input_props),
-            # ],
             [sg.Button("Submit", key="submit")],
             cls.navigation_pane(),
         ]
@@ -2153,8 +2149,6 @@ class NodeDeviceRegistrationWindow(ValidationMixin, BaseGUIWindow):
                 (values["admin_username"], "Admin Username"),
                 (values["password"], "Password"),
             ]
-
-            # TODO: not validating all required fields. Only validating the first field
             if (
                     cls.validate_required_fields(required_fields, window)
                     is not None
