@@ -1143,7 +1143,7 @@ class AttendanceSessionLandingWindow(
             )
             if confirm == "Yes":
                 att_session = AttendanceSession.objects.get(
-                    id=app_config.getint(
+                    id=app_config.get(
                         "current_attendance_session", "session_id"
                     )
                 )
@@ -1512,7 +1512,7 @@ class StudentRegNumInputWindow(
 
         tmp_student = app_config["tmp_student"]
         if AttendanceRecord.objects.filter(
-                attendance_session_id=app_config.getint(
+                attendance_session_id=app_config.get(
                     "current_attendance_session", "session_id"
                 ),
                 student_id=tmp_student["reg_number"],
@@ -1979,7 +1979,7 @@ class StudentBarcodeCameraWindow(
 
         tmp_student = app_config["tmp_student"]
         if AttendanceRecord.objects.filter(
-                attendance_session_id=app_config.getint(
+                attendance_session_id=app_config.get(
                     "current_attendance_session", "session_id"
                 ),
                 student_id=tmp_student["id"],
@@ -2126,8 +2126,6 @@ class NodeDeviceRegistrationWindow(ValidationMixin, BaseGUIWindow):
                 sg.InputText(key="node_id", **input_props),
             ],
             [sg.Button("Submit", key="submit")],
-            # todo: remove this button
-            [sg.Button("sync", key="sync")],
             cls.navigation_pane(),
         ]
 
@@ -2140,11 +2138,6 @@ class NodeDeviceRegistrationWindow(ValidationMixin, BaseGUIWindow):
     def loop(cls, window, event, values):
         if event in ("home", "back"):
             window_dispatch.open_window(HomeWindow)
-            return True
-
-        # todo: remove this condition
-        if event == 'sync':
-            NodeDataSynch.node_sync()
             return True
 
         if event in ("submit", "next"):
@@ -2206,6 +2199,7 @@ class EnrolmentMenuWindow(BaseGUIWindow):
             ],
             [sg.Button("Register Device", key="register_device")],
             [sg.Button("Synch Device", key="synch_device")],
+            [sg.Button("Synch Attendance", key="sync_attendance")],
             [sg.VPush()],
             cls.navigation_pane(next_icon="next_disabled"),
         ]
@@ -2228,6 +2222,16 @@ class EnrolmentMenuWindow(BaseGUIWindow):
             window_dispatch.open_window(NodeDeviceRegistrationWindow)
         if event == "synch_device":
             window_dispatch.open_window(ServerConnectionDetailsWindow)
+        if event == 'sync_attendance':
+            try:
+                NodeDataSynch.node_attendance_sync()
+                msg = "Attendance Successfully Synced!"
+            except Exception as e:
+                print(e)
+                err_msg = f"Error: {json.loads(str(e))['detail']}"
+                cls.popup_auto_close_error(message=err_msg, duration=5)
+                return True
+            cls.popup_auto_close_success(message=msg, duration=5)
         return True
 
 
@@ -2365,22 +2369,7 @@ class StaffEnrolmentWindow(ValidationMixin, BaseGUIWindow):
                 "sex": SexChoices.str_to_value(values["staff_sex"]),
             }
 
-            new_staff_dict = app_config.section_dict("new_staff")
-            department = Department.objects.get(
-                id=new_staff_dict.pop("department")
-            )
-
-            if Staff.objects.filter(
-                    staff_number=new_staff_dict["staff_number"]
-            ).exists():
-                staff = Staff.objects.filter(
-                    staff_number=new_staff_dict["staff_number"]
-                )
-                staff.update(**new_staff_dict)
-            else:
-                Staff.objects.create_user(
-                    department=department, **new_staff_dict
-                )
+            # new_staff_dict = app_config.section_dict("new_staff")
 
             cls.next_window()
         if event == "cancel":
@@ -2479,15 +2468,9 @@ class StaffPasswordSettingWindow(BaseGUIWindow):
 
         if event in ("cancel", "submit"):
             new_staff = app_config["new_staff"]
-            try:
-                staff = Staff.objects.get(
-                    staff_number=new_staff["staff_number"]
-                )
-            except Exception as e:
-                cls.display_message(e, window)
-                return True
 
             if event == "submit":
+                # todo: verify that password is the same on submit
                 for field in (
                         values["staff_password"],
                         values["staff_password_confirm"],
@@ -2497,8 +2480,8 @@ class StaffPasswordSettingWindow(BaseGUIWindow):
                             "Enter password and confirmation", window
                         )
                         return True
-                staff.set_password(values["staff_password"])
-                staff.save()
+
+                new_staff['password'] = values["staff_password"]
 
                 if not OperationalMode.check_camera():
                     cls.popup_auto_close_warn("Camera not connected.")
@@ -2523,7 +2506,7 @@ class StaffPasswordSettingWindow(BaseGUIWindow):
                     keep_on_top=True,
                 )
                 if confirm == "Yes":
-                    staff.delete()
+                    # todo: clear app config section 'new staff'
                     window_dispatch.open_window(StaffEnrolmentWindow)
                     return True
                 else:
@@ -2544,14 +2527,13 @@ class StaffFaceEnrolmentWindow(FaceCameraWindow):
             return
         new_staff = app_config["new_staff"]
 
-        try:
-            staff = Staff.objects.get(staff_number=new_staff["staff_number"])
-        except Exception as e:
-            cls.popup_auto_close_error(e)
-            return
+        # try:
+        #     staff = Staff.objects.get(staff_number=new_staff["staff_number"])
+        # except Exception as e:
+        #     cls.popup_auto_close_error(e)
+        #     return
 
-        staff.face_encodings = face_enc_to_str(captured_face_encodings)
-        staff.save()
+        new_staff['face_encodings'] = face_enc_to_str(captured_face_encodings)
 
         window_dispatch.open_window(StaffFingerprintEnrolmentWindow)
         cls.popup_auto_close_success("Biometric data saved")
@@ -3267,6 +3249,15 @@ class StaffFingerprintEnrolmentWindow(FingerprintEnrolmentWindow):
 
     @staticmethod
     def remove_enrolment_config():
+        try:
+            message = NodeDataSynch.staff_register(app_config['new_staff'])
+            BaseGUIWindow.popup_auto_close_success(message, duration=5)
+            # sync server data with the node device
+            NodeDataSynch.start_data_sync()
+        except Exception as e:
+            error = json.loads(str(e))['detail']
+            BaseGUIWindow.popup_auto_close_error(error, duration=5)
+
         app_config.remove_section("new_staff")
         return
 
@@ -3750,7 +3741,11 @@ class ServerConnectionDetailsWindow(ValidationMixin, BaseGUIWindow):
                         "WiFi network connection established"
                     )
                     time.sleep(1)
-                    NodeDataSynch.first_time_sync()
+                    try:
+                        NodeDataSynch.start_data_sync()
+                    except Exception as e:
+                        error = json.loads(str(e))['detail']
+                        cls.popup_auto_close_error(error, duration=5)
 
                 elif connect_result != 0:
                     cls.popup_auto_close_error(
