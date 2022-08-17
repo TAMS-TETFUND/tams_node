@@ -443,7 +443,7 @@ class AcademicSessionDetailsWindow(ValidationMixin, BaseGUIWindow):
                 ),
             ],
             [
-                sg.Text("Select Current SemesterChoices: "),
+                sg.Text("Select Current Semester: "),
                 sg.Combo(
                     SemesterChoices.labels,
                     default_value=SemesterChoices.labels[0],
@@ -838,7 +838,6 @@ class EventDetailWindow(ValidationMixin, BaseGUIWindow):
             app_config.remove_section("new_event")
             window_dispatch.open_window(HomeWindow)
         
-        print(event)
         return True
 
     @classmethod
@@ -2213,18 +2212,153 @@ class EnrolmentMenuWindow(BaseGUIWindow):
 
     @classmethod
     def window(cls):
+
+        column1 = [
+            [
+                sg.Push(),
+                sg.Button(
+                    image_data=cls.get_icon("add_user", 0.5),
+                    button_color=cls.ICON_BUTTON_COLOR,
+                    key="staff_enrolment",
+                    use_ttk_buttons=True,
+                ),
+                sg.Push(),
+            ],
+            [
+                sg.Push(),
+                sg.Text("Staff", key="staff_enrolment_txt", enable_events=True),
+                sg.Push(),
+            ],
+            [
+                sg.Push(),
+                sg.Text("Enrolment", key="staff_enrolment_txt_2", enable_events=True),
+                sg.Push(),
+            ],
+        ]
+        column2 = [
+            [
+                sg.Push(),
+                sg.Button(
+                    image_data=cls.get_icon("add_user", 0.5),
+                    button_color=cls.ICON_BUTTON_COLOR,
+                    key="student_enrolment",
+                    use_ttk_buttons=True,
+                ),
+                sg.Push(),
+            ],
+            [
+                sg.Push(),
+                sg.Text("Student", key="student_enrolment_txt", enable_events=True),
+                sg.Push(),
+            ],
+            [
+                sg.Push(),
+                sg.Text("Enrolment", key="student_enrolment_txt_2", enable_events=True),
+                sg.Push(),
+            ],
+        ]
+        column3 = [
+            [
+                sg.Push(),
+                sg.Button(
+                    image_data=cls.get_icon("edit_user", 0.5),
+                    button_color=cls.ICON_BUTTON_COLOR,
+                    key="staff_enrolment_update",
+                    use_ttk_buttons=True,
+                ),
+                sg.Push(),
+            ],
+            [
+                sg.Push(),
+                sg.Text("Staff", key="staff_enrolment_update_txt", enable_events=True),
+                sg.Push(),
+            ],
+            [
+                sg.Push(),
+                sg.Text("Enrolment", key="staff_enrolment_update_txt_2", enable_events=True),
+                sg.Push(),
+            ],
+            [
+                sg.Push(),
+                sg.Text("Update", key="staff_enrolment_update_txt_3", enable_events=True),
+                sg.Push(),
+            ],
+        ]
+        column4 = [
+            [
+                sg.Push(),
+                sg.Button(
+                    image_data=cls.get_icon("edit_user", 0.5),
+                    button_color=cls.ICON_BUTTON_COLOR,
+                    key="student_enrolment_update",
+                    use_ttk_buttons=True,
+                ),
+                sg.Push(),
+            ],
+            [
+                sg.Push(),
+                sg.Text("Student", key="student_enrolment_update_txt", enable_events=True),
+                sg.Push(),
+            ],
+            [
+                sg.Push(),
+                sg.Text("Enrolment", key="student_enrolment_update_txt_2", enable_events=True),
+                sg.Push(),
+            ],
+            [
+                sg.Push(),
+                sg.Text("Update", key="student_enrolment_update_txt_2", enable_events=True),
+                sg.Push(),
+            ],
+        ]
+        column5 = [
+            [
+                sg.Push(),
+                sg.Button(
+                    image_data=cls.get_icon("register_device", 0.5),
+                    button_color=cls.ICON_BUTTON_COLOR,
+                    key="register_device",
+                    use_ttk_buttons=True,
+                ),
+                sg.Push(),
+            ],
+            [
+                sg.Push(),
+                sg.Text("Register", key="register_device_txt", enable_events=True),
+                sg.Push(),
+            ],
+            [
+                sg.Push(),
+                sg.Text("Device", key="register_device_txt", enable_events=True),
+                sg.Push(),
+            ],
+        ]
+        column6 = [
+            [
+                sg.Push(),
+                sg.Button(
+                    image_data=cls.get_icon("synch", 0.5),
+                    button_color=cls.ICON_BUTTON_COLOR,
+                    key="synch_device",
+                    use_ttk_buttons=True,
+                ),
+                sg.Push(),
+            ],
+            [
+                sg.Push(),
+                sg.Text("Synch", key="synch_device_txt", enable_events=True),
+                sg.Push(),
+            ],
+            [
+                sg.Push(),
+                sg.Text("Device", key="synch_device_txt", enable_events=True),
+                sg.Push(),
+            ],
+        ]        
         layout = [
             [sg.VPush()],
-            [sg.Button("Staff Enrolment", key="staff_enrolment")],
-            [sg.Button("Student Enrolment", key="student_enrolment")],
-            [sg.Button("Staff Enrolment Update", key="staff_enrolment_update")],
-            [
-                sg.Button(
-                    "Student Enrolment Update", key="student_enrolment_update"
-                )
-            ],
-            [sg.Button("Register Device", key="register_device")],
-            [sg.Button("Synch Device", key="synch_device")],
+            [sg.Push(), sg.Column(column1), sg.Column(column2), sg.Column(column5), sg.Push()],
+            [sg.Push(), sg.Column(column3), sg.Column(column4), sg.Column(column6), sg.Push()],
             [sg.VPush()],
             cls.navigation_pane(next_icon="next_disabled"),
         ]
@@ -2235,17 +2369,17 @@ class EnrolmentMenuWindow(BaseGUIWindow):
     def loop(cls, window, event, values):
         if event in ("back", "home"):
             window_dispatch.open_window(HomeWindow)
-        if event == "staff_enrolment":
+        if event in ("staff_enrolment", "staff_enrolment_txt", "staff_enrolment_txt_2"):
             window_dispatch.open_window(StaffEnrolmentWindow)
-        if event == "student_enrolment":
+        if event in ("student_enrolment","student_enrolment_txt", "student_enrolment_txt_2"):
             window_dispatch.open_window(StudentEnrolmentWindow)
-        if event == "staff_enrolment_update":
+        if event in ("staff_enrolment_update", "staff_enrolment_update_txt", "staff_enrolment_update_txt_2", "staff_enrolment_update_txt_3"):
             window_dispatch.open_window(StaffEnrolmentUpdateIDSearch)
-        if event == "student_enrolment_update":
+        if event in ("student_enrolment_update", "student_enrolment_update_txt", "student_enrolment_update_txt_2", "student_enrolment_update_txt_3"):
             window_dispatch.open_window(StudentEnrolmentUpdateIDSearch)
-        if event == "register_device":
+        if event in ("register_device", "register_device_txt", "register_device_txt_2"):
             window_dispatch.open_window(NodeDeviceRegistrationWindow)
-        if event == "synch_device":
+        if event in ("synch_device", "synch_device_txt", "synch_device_txt_2"):
             window_dispatch.open_window(ServerConnectionDetailsWindow)
         return True
 
@@ -2972,7 +3106,7 @@ class StudentFingerprintVerificationWindow(
             cls.student_reg_number_input_window()
             return True
 
-        cls.display_message("Waiting for finger print...", window)
+        cls.display_message("Waiting for fingerprint...", window)
         try:
             fp_response = fp_scanner.fp_capture()
         except RuntimeError:
