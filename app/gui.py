@@ -179,7 +179,7 @@ class HomeWindow(BaseGUIWindow):
             [sg.Push(), sg.Text("TAMS© 2022"), sg.Push()],
         ]
 
-        window = sg.Window("Home Window", layout, **cls.window_init_dict())
+        window = sg.Window("Home Window", layout, return_keyboard_events=True, **cls.window_init_dict())
         return window
 
     @classmethod
@@ -256,6 +256,7 @@ class HomeWindow(BaseGUIWindow):
             window_dispatch.open_window(EnrolmentMenuWindow)
         if event == "quit":
             return HomeWindow.confirm_exit()
+
         return True
 
     @staticmethod
@@ -642,10 +643,11 @@ class NewAcademicSessionWindow(ValidationMixin, BaseGUIWindow):
 class EventDetailWindow(ValidationMixin, BaseGUIWindow):
     """Window to for user to specify event deatils like: course,
     start date, and event duration"""
-
+    
     @classmethod
     def window(cls):
-        field_label_props = {"size": 18}
+        combo_props = {"size":32}
+        field_label_props = {"size": 12}
         section1 = [
             [
                 sg.Text("Faculty:", **field_label_props),
@@ -655,7 +657,7 @@ class EventDetailWindow(ValidationMixin, BaseGUIWindow):
                     enable_events=True,
                     key="course_faculty",
                     expand_y=True,
-                    expand_x=True,
+                    **combo_props
                 ),
             ],
             [
@@ -666,16 +668,16 @@ class EventDetailWindow(ValidationMixin, BaseGUIWindow):
                     enable_events=True,
                     key="course_department",
                     expand_y=True,
-                    expand_x=True,
+                    **combo_props,
                 ),
             ],
         ]
-        layout = [
+        column1 = [
             [sg.Push(), sg.Text("Event Details"), sg.Push()],
             [sg.HorizontalSeparator()],
             [sg.VPush()],
+            [cls.message_display_field()],
             [
-                [cls.message_display_field()],
                 sg.Text("Select Course:", **field_label_props),
                 sg.Combo(
                     Course.get_courses(
@@ -685,6 +687,7 @@ class EventDetailWindow(ValidationMixin, BaseGUIWindow):
                     enable_events=True,
                     key="selected_course",
                     expand_y=True,
+                    size=32
                 ),
             ],
             [
@@ -711,14 +714,12 @@ class EventDetailWindow(ValidationMixin, BaseGUIWindow):
                 sg.Spin(
                     values=[str(a).zfill(2) for a in range(0, 24)],
                     initial_value="08",
-                    expand_x=True,
                     expand_y=True,
                     key="start_hour",
                 ),
                 sg.Spin(
                     values=[str(a).zfill(2) for a in range(0, 60)],
                     initial_value="00",
-                    expand_x=True,
                     expand_y=True,
                     key="start_minute",
                 ),
@@ -740,7 +741,6 @@ class EventDetailWindow(ValidationMixin, BaseGUIWindow):
                 sg.Spin(
                     values=[str(a).zfill(2) for a in range(0, 12)],
                     initial_value="01",
-                    expand_x=True,
                     expand_y=True,
                     key="duration",
                 ),
@@ -748,10 +748,25 @@ class EventDetailWindow(ValidationMixin, BaseGUIWindow):
             ],
             [sg.VPush()],
             [sg.Button("Submit", key="submit")],
+            [sg.VPush()],
             cls.navigation_pane(back_icon="back_disabled"),
         ]
 
-        window = sg.Window("Event Details", layout, **cls.window_init_dict())
+        scrolled_layout = [
+            [
+                sg.Column(
+                    column1,
+                    scrollable=True,
+                    vertical_scroll_only=True,
+                    expand_y=True,
+                    expand_x=True,
+                    pad=(0,0),
+                    key="main_column",
+                )
+            ]
+        ]
+
+        window = sg.Window("Event Details", scrolled_layout, return_keyboard_events=True, **cls.window_init_dict())
         return window
 
     @classmethod
@@ -761,6 +776,9 @@ class EventDetailWindow(ValidationMixin, BaseGUIWindow):
                 data=EventDetailWindow.get_icon("down_arrow", 0.25)
             )
             window["sec1"].update(visible=True)
+            window.refresh()
+            window["main_column"].contents_changed()
+
         if event == "course_faculty":
             if values["course_faculty"] in (cls.COMBO_DEFAULT, None):
                 window["course_department"].update(
@@ -795,7 +813,7 @@ class EventDetailWindow(ValidationMixin, BaseGUIWindow):
                     value=cls.COMBO_DEFAULT,
                 )
         if event == "pick_date":
-            event_date = sg.popup_get_date()
+            event_date = sg.popup_get_date(close_when_chosen=True,keep_on_top=False,modal=False)
             if event_date is None:
                 return True
             else:
@@ -805,6 +823,8 @@ class EventDetailWindow(ValidationMixin, BaseGUIWindow):
             window.force_focus()
         if event in ("next", "submit"):
             if cls.validate(values, window) is not None:
+                window.refresh()
+                window["main_column"].contents_changed()
                 return True
 
             app_config["new_event"]["course"] = values["selected_course"]
@@ -817,6 +837,8 @@ class EventDetailWindow(ValidationMixin, BaseGUIWindow):
         if event == "home":
             app_config.remove_section("new_event")
             window_dispatch.open_window(HomeWindow)
+        
+        print(event)
         return True
 
     @classmethod
@@ -3618,7 +3640,6 @@ class DeviceSetupWindow(BaseGUIWindow):
     """
     Window for setting up the node device.
     The window will handle synching data from the server."""
-
     @classmethod
     def window(cls):
         layout = [
@@ -3659,6 +3680,7 @@ class ServerConnectionDetailsWindow(ValidationMixin, BaseGUIWindow):
         layout = [
             [sg.Push(), sg.Text("Server Details"), sg.Push()],
             [cls.message_display_field()],
+            [sg.VPush()],
             [
                 sg.Text("Server IP adress:", **field_label_props),
                 sg.InputText(
@@ -3698,6 +3720,7 @@ class ServerConnectionDetailsWindow(ValidationMixin, BaseGUIWindow):
                 ),
             ],
             [sg.Button("Submit", key="submit")],
+            [sg.VPush()],
             cls.navigation_pane(),
         ]
 
