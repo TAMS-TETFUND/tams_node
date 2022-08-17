@@ -146,16 +146,15 @@ class BaseGUIWindow:
                             key="next",
                             use_ttk_buttons=True,
                         ),
-                        sg.Push(),
                         sg.Button(
                             image_data=cls.get_icon("home_grey", 0.4),
                             button_color=cls.ICON_BUTTON_COLOR,
                             key="home",
                             use_ttk_buttons=True,
                         ),
-                    ]
+                    ],
                 ],
-                expand_x=True,
+                # expand_x=True,
                 pad=(0, 0),
             )
         ]
