@@ -2106,14 +2106,6 @@ class NodeDeviceRegistrationWindow(ValidationMixin, BaseGUIWindow):
             [sg.Push(), sg.Text("Node Details"), sg.Push()],
             [cls.message_display_field()],
             [
-                sg.Text("Server IP adress:", **field_label_props),
-                sg.InputText(key="server_ip_address", default_text="127.0.0.1", **input_props),
-            ],
-            [
-                sg.Text("Server Port:", **field_label_props),
-                sg.InputText(key="server_port", default_text="8080", **input_props),
-            ],
-            [
                 sg.Text("Name:", **field_label_props),
                 sg.InputText(key="node_name", **input_props),
             ],
@@ -2142,8 +2134,8 @@ class NodeDeviceRegistrationWindow(ValidationMixin, BaseGUIWindow):
 
         if event in ("submit", "next"):
             required_fields = [
-                (values["server_ip_address"], "Server IP address"),
-                (values["server_port"], "Server port"),
+                (values["node_token"], "Administrative token"),
+                (values["node_id"], "Administrative token id"),
                 (values["node_name"], "Node name"),
             ]
 
