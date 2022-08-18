@@ -29,7 +29,7 @@ class StaffSerializer(serializers.Serializer):
     last_name = serializers.CharField(max_length=150, )
     other_names = serializers.CharField(max_length=255, allow_null=True, allow_blank=True, )
     sex = serializers.IntegerField()
-    password = serializers.CharField(max_length=128, )
+    password = serializers.CharField(max_length=128, required=False)
     face_encodings = serializers.CharField(allow_null=True, allow_blank=True)
     fingerprint_template = serializers.CharField(default='', allow_null=True, allow_blank=True)
     department = PrimaryKeyRelatedField(
@@ -49,5 +49,11 @@ class StaffSerializer(serializers.Serializer):
 
         instance = Staff(staff_number=staff_no, **validated_data)
         instance.set_password(validated_data.get('password'))
+        instance.save()
+        return instance
+
+    def update(self, instance, validated_data):
+        for key, value in validated_data.items():
+            setattr(instance, key, value)
         instance.save()
         return instance

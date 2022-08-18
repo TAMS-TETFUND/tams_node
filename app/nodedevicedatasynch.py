@@ -21,7 +21,7 @@ import requests
 from django.core.management import call_command
 from requests import HTTPError
 from __main__ import app_config
-from app.serializers import AttendanceRecordSerializer, AttendanceSessionSerializer, StaffSerializer
+from app.serializers import AttendanceRecordSerializer, AttendanceSessionSerializer, StaffSerializer, StudentSerializer
 from db.models import Student, Staff, AttendanceSession, AttendanceSessionStatusChoices, NodeDevice
 
 
@@ -116,10 +116,12 @@ class NodeDataSynch:
             session.save()
 
     @staticmethod
-    def sync_request(url, headers, sync_data=None, get=False):
+    def sync_request(url, headers, sync_data=None, get=False, put=False):
         try:
             if get:
                 res = requests.get(url, headers=headers)
+            elif put:
+                res = requests.put(url, headers=headers, json=sync_data)
             else:
                 res = requests.post(url, headers=headers, json=sync_data)
         except requests.exceptions.RequestException as e:
@@ -163,11 +165,46 @@ class NodeDataSynch:
 
     @classmethod
     def staff_register(cls, staff_dict):
-        ser_data = StaffSerializer(data=staff_dict)
-        if ser_data.is_valid():
+        staff_exist = Staff.objects.filter(staff_number=staff_dict['staff_number']).first()
+
+        if staff_exist:
+            ser_data = StaffSerializer(staff_exist, data=staff_dict)
+            endpoint = f'api/v1/staff/{staff_exist.staff_number}/'
+            put = True
+            return_text = "Staff Updated successfully!"
+        else:
+            ser_data = StaffSerializer(data=staff_dict)
             endpoint = "api/v1/staff/"
+            put = False
+            return_text = "Staff Registered successfully!"
+
+        if ser_data.is_valid():
             headers = cls.get_header()
             url = cls.get_url(endpoint, protocol='http')
-            cls.sync_request(url, headers, ser_data.data)
-            return "Staff Registered successfully!"
+            cls.sync_request(url, headers, staff_dict, put=put)
+            cls.start_data_sync()
+            return return_text
+        raise HTTPError('{"detail": "Device not registered!"}')
+
+    @classmethod
+    def student_register(cls, student_dict):
+        student_exist = Student.objects.filter(reg_number=student_dict['reg_number']).first()
+
+        if student_exist:
+            ser_data = StudentSerializer(student_exist, data=student_dict)
+            endpoint = f'api/v1/students/{student_exist.reg_number}/'
+            put = True
+            return_text = "Student Updated successfully!"
+        else:
+            ser_data = StudentSerializer(data=student_dict)
+            endpoint = "api/v1/students/"
+            put = False
+            return_text = "Student Registered successfully!"
+
+        if ser_data.is_valid():
+            headers = cls.get_header()
+            url = cls.get_url(endpoint, protocol='http')
+            cls.sync_request(url, headers, student_dict, put=put)
+            cls.start_data_sync()
+            return return_text
         raise HTTPError('{"detail": "Device not registered!"}')
