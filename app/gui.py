@@ -2529,6 +2529,9 @@ class StaffEnrolmentWindow(ValidationMixin, BaseGUIWindow):
                 staff = Staff.objects.filter(
                     staff_number=new_staff_dict["staff_number"]
                 )
+                # remove staff_number and username fields from dict for update
+                del new_staff_dict["username"]
+                del new_staff_dict["staff_number"]
                 staff.update(**new_staff_dict)
             else:
                 Staff.objects.create_user(
