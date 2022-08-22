@@ -103,7 +103,7 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 #use custom user model
-AUTH_USER_MODEL = 'db.AppUser'
+AUTH_USER_MODEL = 'db.Staff'
 
 # Internationalization
 # https://docs.djangoproject.com/en/4.0/topics/i18n/
