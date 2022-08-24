@@ -1,9 +1,11 @@
-from app.windowdispatch import WindowDispatch
+from app.appconfigparser import AppConfigParser
+from app.windowdispatch import WindowDispatch, WindowDispatched
 from app.initialloadingwindow import LoadingWindow
 
 
-window_dispatch = WindowDispatch()
+window_dispatch = WindowDispatched()
 window_dispatch.open_window(LoadingWindow)
+app_config = AppConfigParser()
 
 
 # trying to speed up applicaton startup
@@ -18,3 +20,5 @@ django_setup()
 sys.path.append(".")
 
 main()
+
+

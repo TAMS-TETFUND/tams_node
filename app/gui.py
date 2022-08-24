@@ -1,10 +1,8 @@
 import json
-
-from datetime import datetime, timedelta
 import time
-
 import PySimpleGUI as sg
-import requests
+import __main__
+from datetime import datetime, timedelta
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.utils import IntegrityError
 from django.utils import timezone
@@ -21,7 +19,6 @@ from app.gui_utils import (
     update_device_op_mode,
 )
 from app.camerafacerec import CamFaceRec
-from app.appconfigparser import AppConfigParser
 from app.basegui import BaseGUIWindow
 from app.fingerprint import FingerprintScanner
 from app.attendancelogger import AttendanceLogger
@@ -58,7 +55,7 @@ from db.models import (
 )
 
 # initializing the configparser object
-app_config = AppConfigParser()
+app_config = __main__.app_config
 
 # initializing WindowDispatch object
 # window_dispatch = WindowDispatch()
@@ -2381,6 +2378,16 @@ class EnrolmentMenuWindow(BaseGUIWindow):
             window_dispatch.open_window(NodeDeviceRegistrationWindow)
         if event in ("synch_device", "synch_device_txt", "synch_device_txt_2"):
             window_dispatch.open_window(ServerConnectionDetailsWindow)
+        if event == 'sync_attendance':
+            try:
+                NodeDataSynch.node_attendance_sync()
+                msg = "Attendance Successfully Synced!"
+            except Exception as e:
+                print(e)
+                err_msg = f"Error: {json.loads(str(e))['detail']}"
+                cls.popup_auto_close_error(message=err_msg, duration=5)
+                return True
+            cls.popup_auto_close_success(message=msg, duration=5)
         return True
 
 
@@ -2635,15 +2642,9 @@ class StaffPasswordSettingWindow(BaseGUIWindow):
 
         if event in ("cancel", "submit"):
             new_staff = app_config["new_staff"]
-            try:
-                staff = Staff.objects.get(
-                    staff_number=new_staff["staff_number"]
-                )
-            except Exception as e:
-                cls.display_message(e, window)
-                return True
 
             if event == "submit":
+                # todo: verify that password is the same on submit
                 for field in (
                     values["staff_password"],
                     values["staff_password_confirm"],
@@ -2653,8 +2654,8 @@ class StaffPasswordSettingWindow(BaseGUIWindow):
                             "Enter password and confirmation", window
                         )
                         return True
-                staff.set_password(values["staff_password"])
-                staff.save()
+
+                new_staff['password'] = values["staff_password"]
 
                 if not OperationalMode.check_camera():
                     cls.popup_auto_close_warn("Camera not connected.")
@@ -2679,7 +2680,7 @@ class StaffPasswordSettingWindow(BaseGUIWindow):
                     keep_on_top=True,
                 )
                 if confirm == "Yes":
-                    staff.delete()
+                    # todo: clear app config section 'new staff'
                     window_dispatch.open_window(StaffEnrolmentWindow)
                     return True
                 else:
@@ -2700,14 +2701,13 @@ class StaffFaceEnrolmentWindow(FaceCameraWindow):
             return
         new_staff = app_config["new_staff"]
 
-        try:
-            staff = Staff.objects.get(staff_number=new_staff["staff_number"])
-        except Exception as e:
-            cls.popup_auto_close_error(e)
-            return
+        # try:
+        #     staff = Staff.objects.get(staff_number=new_staff["staff_number"])
+        # except Exception as e:
+        #     cls.popup_auto_close_error(e)
+        #     return
 
-        staff.face_encodings = face_enc_to_str(captured_face_encodings)
-        staff.save()
+        new_staff['face_encodings'] = face_enc_to_str(captured_face_encodings)
 
         window_dispatch.open_window(StaffFingerprintEnrolmentWindow)
         cls.popup_auto_close_success("Biometric data saved")
@@ -2901,7 +2901,7 @@ class StudentEnrolmentWindow(ValidationMixin, BaseGUIWindow):
                 time.sleep(1)
                 if not OperationalMode.check_fingerprint():
                     cls.popup_auto_close_error(
-                        "Fingerprit scanner not connected"
+                        "Fingerprint scanner not connected"
                     )
                     window_dispatch.open_window(HomeWindow)
                     return True
@@ -2978,16 +2978,16 @@ class StudentFaceEnrolmentWindow(FaceCameraWindow):
                 "Error. Image must have exactly one face"
             )
             return
-        new_student = app_config["new_student"]
+        # new_student = app_config["new_student"]
 
-        try:
-            student = Student.objects.get(reg_number=new_student["reg_number"])
-        except Exception as e:
-            cls.popup_auto_close_error(e)
-            return
+        # try:
+        #     student = Student.objects.get(reg_number=new_student["reg_number"])
+        # except Exception as e:
+        #     cls.popup_auto_close_error(e)
+        #     return
 
-        student.face_encodings = face_enc_to_str(captured_face_encodings)
-        student.save()
+        app_config["new_student"]['face_encodings'] = face_enc_to_str(captured_face_encodings)
+        # student.save()
         cls.popup_auto_close_success("Biometric data saved")
         window_dispatch.open_window(StudentFingerprintEnrolmentWindow)
         return
@@ -3355,16 +3355,16 @@ class StudentFingerprintEnrolmentWindow(FingerprintEnrolmentWindow):
 
     @classmethod
     def process_fingerprint(cls, fingerprint_data):
-        new_student = app_config["new_student"]
+        # new_student = app_config["new_student"]
 
-        try:
-            student = Student.objects.get(reg_number=new_student["reg_number"])
-        except Exception as e:
-            cls.popup_auto_close_error(e)
-            return
-        student.fingerprint_template = str(fingerprint_data)
-        student.save()
-        app_config.remove_section("new_student")
+        # try:
+        #     student = Student.objects.get(reg_number=new_student["reg_number"])
+        # except Exception as e:
+        #     cls.popup_auto_close_error(e)
+        #     return
+        app_config["new_student"]['fingerprint_template'] = str(fingerprint_data)
+        # student.save()
+        # app_config.remove_section("new_student")
         cls.popup_auto_close_success("Student enrolment successful")
         window_dispatch.open_window(StudentEnrolmentWindow)
         return
@@ -3382,6 +3382,16 @@ class StudentFingerprintEnrolmentWindow(FingerprintEnrolmentWindow):
 
     @staticmethod
     def remove_enrolment_config():
+        try:
+            message = NodeDataSynch.student_register(app_config.section_dict('new_student'))
+            BaseGUIWindow.popup_auto_close_success(message, duration=5)
+            app_config.remove_section("new_staff")
+            # sync server data with the node device
+
+        except Exception as e:
+            error = json.loads(str(e))['detail']
+            BaseGUIWindow.popup_auto_close_error(error, duration=5)
+
         app_config.remove_section("new_student")
         return
 
@@ -3423,6 +3433,16 @@ class StaffFingerprintEnrolmentWindow(FingerprintEnrolmentWindow):
 
     @staticmethod
     def remove_enrolment_config():
+        try:
+            message = NodeDataSynch.staff_register(app_config.section_dict('new_staff'))
+            BaseGUIWindow.popup_auto_close_success(message, duration=5)
+            app_config.remove_section("new_staff")
+            # sync server data with the node device
+
+        except Exception as e:
+            error = json.loads(str(e))['detail']
+            BaseGUIWindow.popup_auto_close_error(error, duration=5)
+
         app_config.remove_section("new_staff")
         return
 
@@ -3950,21 +3970,6 @@ def main():
 
     if window is not None:
         window.close()
-
-
-# def main():
-#     window = HomeWindow.window()
-#     loop_exit_code = True
-
-#     while loop_exit_code:
-#         # window = window_dispatch.current_window
-#         event, values = window.read(timeout=500)
-#         # current_window = window_dispatch.find_window(window)
-#         loop_exit_code = HomeWindow.loop(window, event, values)
-
-#         if event == sg.WIN_CLOSED:
-#             break
-#     window.close()
 
 
 if __name__ == "__main__":
