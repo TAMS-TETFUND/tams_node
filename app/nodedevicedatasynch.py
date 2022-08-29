@@ -21,8 +21,19 @@ import requests
 from django.core.management import call_command
 from requests import HTTPError
 from __main__ import app_config
-from app.serializers import AttendanceRecordSerializer, AttendanceSessionSerializer, StaffSerializer, StudentSerializer
-from db.models import Student, Staff, AttendanceSession, AttendanceSessionStatusChoices, NodeDevice
+from app.serializers import (
+    AttendanceRecordSerializer,
+    AttendanceSessionSerializer,
+    StaffSerializer,
+    StudentSerializer,
+)
+from db.models import (
+    Student,
+    Staff,
+    AttendanceSession,
+    AttendanceSessionStatusChoices,
+    NodeDevice,
+)
 
 
 class NodeDataSynch:
@@ -36,16 +47,18 @@ class NodeDataSynch:
             :param port: the port the server is running
             :param protocol: the protocol used to access the server
         """
-        server_endpoint = 'api/v1/node-devices/backup/'
+        server_endpoint = "api/v1/node-devices/backup/"
 
         server_url = cls.get_url(server_endpoint, protocol=protocol)
-        backup_file = 'server_backup.json'
+        backup_file = "server_backup.json"
 
         backup_data = cls.sync_request(server_url, cls.get_header(), get=True)
 
         response = requests.get(server_url)
         if response.status_code != 200:
-            raise RuntimeError("Synch not successful (%d)" % response.status_code)
+            raise RuntimeError(
+                "Synch not successful (%d)" % response.status_code
+            )
         # backup_data = requests.get(server_url).json()
         backup_data = response.json()
         # Serializing json response
@@ -66,7 +79,12 @@ class NodeDataSynch:
         Staff.objects.filter(is_active=False).delete()
 
     @classmethod
-    def node_register(cls, headers: dict, json_data: dict, protocol: str = "http", ):
+    def node_register(
+        cls,
+        headers: dict,
+        json_data: dict,
+        protocol: str = "http",
+    ):
         endpoint = "api/v1/node-devices/"
         url = cls.get_url(endpoint, protocol=protocol)
 
@@ -156,25 +174,27 @@ class NodeDataSynch:
 
         headers = {
             "Content-Type": "application/json",
-            "Authorization": f"Token  {node.token} {node.id}"
+            "Authorization": f"Token  {node.token} {node.id}",
         }
         return headers
 
     @classmethod
-    def get_url(cls, endpoint, protocol='http', ip=None, port=None):
+    def get_url(cls, endpoint, protocol="http", ip=None, port=None):
         if ip is None or port is None:
             ip, port = cls.get_server_details()
 
-        url = f'{protocol}://{ip}:{port}/{endpoint}'
+        url = f"{protocol}://{ip}:{port}/{endpoint}"
         return url
 
     @classmethod
     def staff_register(cls, staff_dict):
-        staff_exist = Staff.objects.filter(staff_number=staff_dict['staff_number']).first()
+        staff_exist = Staff.objects.filter(
+            staff_number=staff_dict["staff_number"]
+        ).first()
 
         if staff_exist:
             ser_data = StaffSerializer(staff_exist, data=staff_dict)
-            endpoint = f'api/v1/staff/{staff_exist.staff_number}/'
+            endpoint = f"api/v1/staff/{staff_exist.staff_number}/"
             put = True
             return_text = "Staff Updated successfully!"
         else:
@@ -185,7 +205,7 @@ class NodeDataSynch:
 
         if ser_data.is_valid():
             headers = cls.get_header()
-            url = cls.get_url(endpoint, protocol='http')
+            url = cls.get_url(endpoint, protocol="http")
             cls.sync_request(url, headers, staff_dict, put=put)
             cls.start_data_sync()
             return return_text
@@ -193,11 +213,13 @@ class NodeDataSynch:
 
     @classmethod
     def student_register(cls, student_dict):
-        student_exist = Student.objects.filter(reg_number=student_dict['reg_number']).first()
+        student_exist = Student.objects.filter(
+            reg_number=student_dict["reg_number"]
+        ).first()
 
         if student_exist:
             ser_data = StudentSerializer(student_exist, data=student_dict)
-            endpoint = f'api/v1/students/{student_exist.reg_number}/'
+            endpoint = f"api/v1/students/{student_exist.reg_number}/"
             put = True
             return_text = "Student Updated successfully!"
         else:
@@ -208,7 +230,7 @@ class NodeDataSynch:
 
         if ser_data.is_valid():
             headers = cls.get_header()
-            url = cls.get_url(endpoint, protocol='http')
+            url = cls.get_url(endpoint, protocol="http")
             cls.sync_request(url, headers, student_dict, put=put)
             cls.start_data_sync()
             return return_text

@@ -20,5 +20,3 @@ django_setup()
 sys.path.append(".")
 
 main()
-
-

@@ -176,7 +176,12 @@ class HomeWindow(BaseGUIWindow):
             [sg.Push(), sg.Text("TAMS© 2022"), sg.Push()],
         ]
 
-        window = sg.Window("Home Window", layout, return_keyboard_events=True, **cls.window_init_dict())
+        window = sg.Window(
+            "Home Window",
+            layout,
+            return_keyboard_events=True,
+            **cls.window_init_dict(),
+        )
         return window
 
     @classmethod
@@ -640,10 +645,10 @@ class NewAcademicSessionWindow(ValidationMixin, BaseGUIWindow):
 class EventDetailWindow(ValidationMixin, BaseGUIWindow):
     """Window to for user to specify event deatils like: course,
     start date, and event duration"""
-    
+
     @classmethod
     def window(cls):
-        combo_props = {"size":32}
+        combo_props = {"size": 32}
         field_label_props = {"size": 12}
         section1 = [
             [
@@ -654,7 +659,7 @@ class EventDetailWindow(ValidationMixin, BaseGUIWindow):
                     enable_events=True,
                     key="course_faculty",
                     expand_y=True,
-                    **combo_props
+                    **combo_props,
                 ),
             ],
             [
@@ -684,7 +689,7 @@ class EventDetailWindow(ValidationMixin, BaseGUIWindow):
                     enable_events=True,
                     key="selected_course",
                     expand_y=True,
-                    size=32
+                    size=32,
                 ),
             ],
             [
@@ -757,13 +762,18 @@ class EventDetailWindow(ValidationMixin, BaseGUIWindow):
                     vertical_scroll_only=True,
                     expand_y=True,
                     expand_x=True,
-                    pad=(0,0),
+                    pad=(0, 0),
                     key="main_column",
                 )
             ]
         ]
 
-        window = sg.Window("Event Details", scrolled_layout, return_keyboard_events=True, **cls.window_init_dict())
+        window = sg.Window(
+            "Event Details",
+            scrolled_layout,
+            return_keyboard_events=True,
+            **cls.window_init_dict(),
+        )
         return window
 
     @classmethod
@@ -810,7 +820,9 @@ class EventDetailWindow(ValidationMixin, BaseGUIWindow):
                     value=cls.COMBO_DEFAULT,
                 )
         if event == "pick_date":
-            event_date = sg.popup_get_date(close_when_chosen=True,keep_on_top=False,modal=False)
+            event_date = sg.popup_get_date(
+                close_when_chosen=True, keep_on_top=False, modal=False
+            )
             if event_date is None:
                 return True
             else:
@@ -834,7 +846,7 @@ class EventDetailWindow(ValidationMixin, BaseGUIWindow):
         if event == "home":
             app_config.remove_section("new_event")
             window_dispatch.open_window(HomeWindow)
-        
+
         return True
 
     @classmethod
@@ -2228,7 +2240,9 @@ class EnrolmentMenuWindow(BaseGUIWindow):
             ],
             [
                 sg.Push(),
-                sg.Text("Enrolment", key="staff_enrolment_txt_2", enable_events=True),
+                sg.Text(
+                    "Enrolment", key="staff_enrolment_txt_2", enable_events=True
+                ),
                 sg.Push(),
             ],
         ]
@@ -2245,12 +2259,18 @@ class EnrolmentMenuWindow(BaseGUIWindow):
             ],
             [
                 sg.Push(),
-                sg.Text("Student", key="student_enrolment_txt", enable_events=True),
+                sg.Text(
+                    "Student", key="student_enrolment_txt", enable_events=True
+                ),
                 sg.Push(),
             ],
             [
                 sg.Push(),
-                sg.Text("Enrolment", key="student_enrolment_txt_2", enable_events=True),
+                sg.Text(
+                    "Enrolment",
+                    key="student_enrolment_txt_2",
+                    enable_events=True,
+                ),
                 sg.Push(),
             ],
         ]
@@ -2267,17 +2287,29 @@ class EnrolmentMenuWindow(BaseGUIWindow):
             ],
             [
                 sg.Push(),
-                sg.Text("Staff", key="staff_enrolment_update_txt", enable_events=True),
+                sg.Text(
+                    "Staff",
+                    key="staff_enrolment_update_txt",
+                    enable_events=True,
+                ),
                 sg.Push(),
             ],
             [
                 sg.Push(),
-                sg.Text("Enrolment", key="staff_enrolment_update_txt_2", enable_events=True),
+                sg.Text(
+                    "Enrolment",
+                    key="staff_enrolment_update_txt_2",
+                    enable_events=True,
+                ),
                 sg.Push(),
             ],
             [
                 sg.Push(),
-                sg.Text("Update", key="staff_enrolment_update_txt_3", enable_events=True),
+                sg.Text(
+                    "Update",
+                    key="staff_enrolment_update_txt_3",
+                    enable_events=True,
+                ),
                 sg.Push(),
             ],
         ]
@@ -2294,17 +2326,29 @@ class EnrolmentMenuWindow(BaseGUIWindow):
             ],
             [
                 sg.Push(),
-                sg.Text("Student", key="student_enrolment_update_txt", enable_events=True),
+                sg.Text(
+                    "Student",
+                    key="student_enrolment_update_txt",
+                    enable_events=True,
+                ),
                 sg.Push(),
             ],
             [
                 sg.Push(),
-                sg.Text("Enrolment", key="student_enrolment_update_txt_2", enable_events=True),
+                sg.Text(
+                    "Enrolment",
+                    key="student_enrolment_update_txt_2",
+                    enable_events=True,
+                ),
                 sg.Push(),
             ],
             [
                 sg.Push(),
-                sg.Text("Update", key="student_enrolment_update_txt_2", enable_events=True),
+                sg.Text(
+                    "Update",
+                    key="student_enrolment_update_txt_2",
+                    enable_events=True,
+                ),
                 sg.Push(),
             ],
         ]
@@ -2321,12 +2365,16 @@ class EnrolmentMenuWindow(BaseGUIWindow):
             ],
             [
                 sg.Push(),
-                sg.Text("Register", key="register_device_txt", enable_events=True),
+                sg.Text(
+                    "Register", key="register_device_txt", enable_events=True
+                ),
                 sg.Push(),
             ],
             [
                 sg.Push(),
-                sg.Text("Device", key="register_device_txt", enable_events=True),
+                sg.Text(
+                    "Device", key="register_device_txt", enable_events=True
+                ),
                 sg.Push(),
             ],
         ]
@@ -2351,11 +2399,23 @@ class EnrolmentMenuWindow(BaseGUIWindow):
                 sg.Text("Device", key="synch_device_txt", enable_events=True),
                 sg.Push(),
             ],
-        ]        
+        ]
         layout = [
             [sg.VPush()],
-            [sg.Push(), sg.Column(column1), sg.Column(column2), sg.Column(column5), sg.Push()],
-            [sg.Push(), sg.Column(column3), sg.Column(column4), sg.Column(column6), sg.Push()],
+            [
+                sg.Push(),
+                sg.Column(column1),
+                sg.Column(column2),
+                sg.Column(column5),
+                sg.Push(),
+            ],
+            [
+                sg.Push(),
+                sg.Column(column3),
+                sg.Column(column4),
+                sg.Column(column6),
+                sg.Push(),
+            ],
             [sg.VPush()],
             cls.navigation_pane(next_icon="next_disabled"),
         ]
@@ -2366,19 +2426,41 @@ class EnrolmentMenuWindow(BaseGUIWindow):
     def loop(cls, window, event, values):
         if event in ("back", "home"):
             window_dispatch.open_window(HomeWindow)
-        if event in ("staff_enrolment", "staff_enrolment_txt", "staff_enrolment_txt_2"):
+        if event in (
+            "staff_enrolment",
+            "staff_enrolment_txt",
+            "staff_enrolment_txt_2",
+        ):
             window_dispatch.open_window(StaffEnrolmentWindow)
-        if event in ("student_enrolment","student_enrolment_txt", "student_enrolment_txt_2"):
+        if event in (
+            "student_enrolment",
+            "student_enrolment_txt",
+            "student_enrolment_txt_2",
+        ):
             window_dispatch.open_window(StudentEnrolmentWindow)
-        if event in ("staff_enrolment_update", "staff_enrolment_update_txt", "staff_enrolment_update_txt_2", "staff_enrolment_update_txt_3"):
+        if event in (
+            "staff_enrolment_update",
+            "staff_enrolment_update_txt",
+            "staff_enrolment_update_txt_2",
+            "staff_enrolment_update_txt_3",
+        ):
             window_dispatch.open_window(StaffEnrolmentUpdateIDSearch)
-        if event in ("student_enrolment_update", "student_enrolment_update_txt", "student_enrolment_update_txt_2", "student_enrolment_update_txt_3"):
+        if event in (
+            "student_enrolment_update",
+            "student_enrolment_update_txt",
+            "student_enrolment_update_txt_2",
+            "student_enrolment_update_txt_3",
+        ):
             window_dispatch.open_window(StudentEnrolmentUpdateIDSearch)
-        if event in ("register_device", "register_device_txt", "register_device_txt_2"):
+        if event in (
+            "register_device",
+            "register_device_txt",
+            "register_device_txt_2",
+        ):
             window_dispatch.open_window(NodeDeviceRegistrationWindow)
         if event in ("synch_device", "synch_device_txt", "synch_device_txt_2"):
             window_dispatch.open_window(ServerConnectionDetailsWindow)
-        if event == 'sync_attendance':
+        if event == "sync_attendance":
             try:
                 NodeDataSynch.node_attendance_sync()
                 msg = "Attendance Successfully Synced!"
@@ -2655,7 +2737,7 @@ class StaffPasswordSettingWindow(BaseGUIWindow):
                         )
                         return True
 
-                new_staff['password'] = values["staff_password"]
+                new_staff["password"] = values["staff_password"]
 
                 if not OperationalMode.check_camera():
                     cls.popup_auto_close_warn("Camera not connected.")
@@ -2707,7 +2789,7 @@ class StaffFaceEnrolmentWindow(FaceCameraWindow):
         #     cls.popup_auto_close_error(e)
         #     return
 
-        new_staff['face_encodings'] = face_enc_to_str(captured_face_encodings)
+        new_staff["face_encodings"] = face_enc_to_str(captured_face_encodings)
 
         window_dispatch.open_window(StaffFingerprintEnrolmentWindow)
         cls.popup_auto_close_success("Biometric data saved")
@@ -2986,7 +3068,9 @@ class StudentFaceEnrolmentWindow(FaceCameraWindow):
         #     cls.popup_auto_close_error(e)
         #     return
 
-        app_config["new_student"]['face_encodings'] = face_enc_to_str(captured_face_encodings)
+        app_config["new_student"]["face_encodings"] = face_enc_to_str(
+            captured_face_encodings
+        )
         # student.save()
         cls.popup_auto_close_success("Biometric data saved")
         window_dispatch.open_window(StudentFingerprintEnrolmentWindow)
@@ -3362,7 +3446,9 @@ class StudentFingerprintEnrolmentWindow(FingerprintEnrolmentWindow):
         # except Exception as e:
         #     cls.popup_auto_close_error(e)
         #     return
-        app_config["new_student"]['fingerprint_template'] = str(fingerprint_data)
+        app_config["new_student"]["fingerprint_template"] = str(
+            fingerprint_data
+        )
         # student.save()
         # app_config.remove_section("new_student")
         cls.popup_auto_close_success("Student enrolment successful")
@@ -3383,13 +3469,15 @@ class StudentFingerprintEnrolmentWindow(FingerprintEnrolmentWindow):
     @staticmethod
     def remove_enrolment_config():
         try:
-            message = NodeDataSynch.student_register(app_config.section_dict('new_student'))
+            message = NodeDataSynch.student_register(
+                app_config.section_dict("new_student")
+            )
             BaseGUIWindow.popup_auto_close_success(message, duration=5)
             app_config.remove_section("new_staff")
             # sync server data with the node device
 
         except Exception as e:
-            error = json.loads(str(e))['detail']
+            error = json.loads(str(e))["detail"]
             BaseGUIWindow.popup_auto_close_error(error, duration=5)
 
         app_config.remove_section("new_student")
@@ -3434,13 +3522,15 @@ class StaffFingerprintEnrolmentWindow(FingerprintEnrolmentWindow):
     @staticmethod
     def remove_enrolment_config():
         try:
-            message = NodeDataSynch.staff_register(app_config.section_dict('new_staff'))
+            message = NodeDataSynch.staff_register(
+                app_config.section_dict("new_staff")
+            )
             BaseGUIWindow.popup_auto_close_success(message, duration=5)
             app_config.remove_section("new_staff")
             # sync server data with the node device
 
         except Exception as e:
-            error = json.loads(str(e))['detail']
+            error = json.loads(str(e))["detail"]
             BaseGUIWindow.popup_auto_close_error(error, duration=5)
 
         app_config.remove_section("new_staff")
@@ -3797,6 +3887,7 @@ class DeviceSetupWindow(BaseGUIWindow):
     """
     Window for setting up the node device.
     The window will handle synching data from the server."""
+
     @classmethod
     def window(cls):
         layout = [
