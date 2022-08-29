@@ -4030,10 +4030,7 @@ class ServerConnectionDetailsWindow(ValidationMixin, BaseGUIWindow):
                         "WiFi network connection established"
                     )
                     time.sleep(1)
-                    NodeDataSynch.first_time_sync(
-                        server_details["server_ip_address"],
-                        int(server_details["server_port"]),
-                    )
+                    NodeDataSynch.start_data_sync()
 
                 elif connect_result != 0:
                     cls.popup_auto_close_error(

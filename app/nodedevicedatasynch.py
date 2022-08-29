@@ -53,14 +53,14 @@ class NodeDataSynch:
         backup_file = "server_backup.json"
 
         backup_data = cls.sync_request(server_url, cls.get_header(), get=True)
-
-        response = requests.get(server_url)
-        if response.status_code != 200:
-            raise RuntimeError(
-                "Synch not successful (%d)" % response.status_code
-            )
-        # backup_data = requests.get(server_url).json()
-        backup_data = response.json()
+        #
+        # response = requests.get(server_url)
+        # if response.status_code != 200:
+        #     raise RuntimeError(
+        #         "Synch not successful (%d)" % response.status_code
+        #     )
+        # # backup_data = requests.get(server_url).json()
+        # backup_data = response.json()
         # Serializing json response
         json_object = json.dumps(backup_data.json(), indent=2)
 
