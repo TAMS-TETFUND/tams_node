@@ -2727,16 +2727,18 @@ class StaffPasswordSettingWindow(BaseGUIWindow):
 
             if event == "submit":
                 # todo: verify that password is the same on submit
-                for field in (
-                    values["staff_password"],
+                password_fields = (
+                    values["staff_password"], 
                     values["staff_password_confirm"],
-                ):
+                )
+                for field in password_fields:
                     if field in (None, ""):
                         cls.display_message(
                             "Enter password and confirmation", window
                         )
                         return True
-
+                    
+                
                 new_staff["password"] = values["staff_password"]
 
                 if not OperationalMode.check_camera():
