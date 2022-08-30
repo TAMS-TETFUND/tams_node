@@ -2612,20 +2612,20 @@ class StaffEnrolmentWindow(ValidationMixin, BaseGUIWindow):
                 id=new_staff_dict.pop("department")
             )
 
-            if Staff.objects.filter(
-                staff_number=new_staff_dict["staff_number"]
-            ).exists():
-                staff = Staff.objects.filter(
-                    staff_number=new_staff_dict["staff_number"]
-                )
-                # remove staff_number and username fields from dict for update
-                del new_staff_dict["username"]
-                del new_staff_dict["staff_number"]
-                staff.update(**new_staff_dict)
-            else:
-                Staff.objects.create_user(
-                    department=department, **new_staff_dict
-                )
+            # if Staff.objects.filter(
+            #     staff_number=new_staff_dict["staff_number"]
+            # ).exists():
+            #     staff = Staff.objects.filter(
+            #         staff_number=new_staff_dict["staff_number"]
+            #     )
+            #     # remove staff_number and username fields from dict for update
+            #     del new_staff_dict["username"]
+            #     del new_staff_dict["staff_number"]
+            #     staff.update(**new_staff_dict)
+            # else:
+            #     Staff.objects.create_user(
+            #         department=department, **new_staff_dict
+            #     )
 
             cls.next_window()
         if event == "cancel":
