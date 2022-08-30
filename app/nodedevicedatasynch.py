@@ -174,7 +174,7 @@ class NodeDataSynch:
 
         headers = {
             "Content-Type": "application/json",
-            "Authorization": f"Token  {node.token} {node.id}",
+            "Authorization": f"NodeToken  {node.token} {node.id}",
         }
         return headers
 
