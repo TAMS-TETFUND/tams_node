@@ -2478,6 +2478,7 @@ class StaffEnrolmentWindow(ValidationMixin, BaseGUIWindow):
 
     @classmethod
     def window(cls):
+        # cls.enroll_update = True
         field_label_props = {"size": 16}
         combo_props = {"size": 28}
         input_props = {"size": 29}
@@ -2608,20 +2609,12 @@ class StaffEnrolmentWindow(ValidationMixin, BaseGUIWindow):
             }
 
             new_staff_dict = app_config.section_dict("new_staff")
-            department = Department.objects.get(
-                id=new_staff_dict.pop("department")
-            )
 
-            # if Staff.objects.filter(
-            #     staff_number=new_staff_dict["staff_number"]
-            # ).exists():
-            #     staff = Staff.objects.filter(
-            #         staff_number=new_staff_dict["staff_number"]
-            #     )
-            #     # remove staff_number and username fields from dict for update
-            #     del new_staff_dict["username"]
-            #     del new_staff_dict["staff_number"]
-            #     staff.update(**new_staff_dict)
+            if cls.__name__ == "StaffEnrolmentWindow" and Staff.objects.filter(
+                    staff_number=new_staff_dict["staff_number"]
+                ).exists():
+                cls.display_message("Staff already exist!", window)
+                return True
             # else:
             #     Staff.objects.create_user(
             #         department=department, **new_staff_dict
@@ -3750,9 +3743,11 @@ class StaffEnrolmentUpdateIDSearch(StaffNumberInputWindow):
 
 class StaffEnrolmentUpdateWindow(StaffEnrolmentWindow):
     """A window for updating biodata of existing staff."""
+    enroll_update = "update"
 
     @classmethod
     def window(cls):
+        # cls.enroll_update = False
         staff = app_config["edit_staff"]
 
         try:
