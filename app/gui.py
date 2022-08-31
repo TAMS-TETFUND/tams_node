@@ -1518,7 +1518,7 @@ class StudentRegNumInputWindow(
 
         elif event == "clear":
             window["reg_num_input"].update("")
-            cls.hide_message_display_field()
+            cls.hide_message_display_field(window)
             cls.resize_column(window)
             return True
 
