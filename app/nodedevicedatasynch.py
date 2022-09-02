@@ -151,7 +151,7 @@ class NodeDataSynch:
             raise HTTPError('{"detail": "Connection refused!"}')
 
         if res.status_code not in (201, 200):
-            raise HTTPError(res.text)
+            raise HTTPError('{"detail": "Connection error!"}')
 
         return res
 
