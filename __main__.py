@@ -1,21 +1,19 @@
-from app.appconfigparser import AppConfigParser
-import app.windowdispatch
-from app.initialloadingwindow import LoadingWindow
-
-
-# window_dispatch = app.windowdispatch.WindowDispatch()
-# window_dispatch.dispatch.open_window("LoadingWindow")
-# app_config = AppConfigParser()
-
-# trying to speed up applicaton startup
-# time by displaying a loading window as quickly as possible
 import sys
 
-from app.main import main
 from manage import django_setup
+
+from app.main import main_loop
+import app.appconfigparser
+from app.gui_utils import update_device_op_mode
 
 
 django_setup()
 sys.path.append(".")
 
-main()
+# setting the operational mode of device
+app_config = app.appconfigparser.AppConfigParser()
+app_config.cp["tmp_settings"] = {}
+update_device_op_mode()
+
+
+main_loop()
