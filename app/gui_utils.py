@@ -1,7 +1,7 @@
 import PySimpleGUI as sg
 
-import app
-import app.gui as main_gui
+import app.appconfigparser
+import app.windowdispatch
 from app.opmodes import OperationalMode, OpModes
 
 from manage import django_setup
@@ -19,14 +19,18 @@ from db.models import (
 )
 
 
+app_config = app.appconfigparser.AppConfigParser()
+window_dispatch = app.windowdispatch.WindowDispatch()
+
+
 def update_device_op_mode():
-    main_gui.app_config.remove_option("tmp_settings", "op_mode")
+    app_config.cp.remove_option("tmp_settings", "op_mode")
     try:
         device_op_mode = OperationalMode.check_all_modes()
     except RuntimeError as e:
         sg.popup(e, title="Error", keep_on_top=True)
     else:
-        main_gui.app_config["tmp_settings"]["op_mode"] = str(device_op_mode)
+        app_config.cp["tmp_settings"]["op_mode"] = str(device_op_mode)
 
 
 class StaffBiometricVerificationRouterMixin:
@@ -34,28 +38,28 @@ class StaffBiometricVerificationRouterMixin:
     def staff_verification_window(cls):
         """Mixin for routing staff verification task to appropriate window."""
         update_device_op_mode()
-        if "op_mode" not in app.gui.app_config["tmp_settings"]:
-            app.gui.window_dispatch.open_window(app.gui.HomeWindow)
+        if "op_mode" not in app_config.cp["tmp_settings"]:
+            window_dispatch.dispatch.open_window("HomeWindow")
             return
 
-        tmp_staff = app.gui.app_config["tmp_staff"]
-        device_op_mode = app.gui.app_config.getint("tmp_settings", "op_mode")
+        tmp_staff = app_config.cp["tmp_staff"]
+        device_op_mode = app_config.cp.getint("tmp_settings", "op_mode")
         if device_op_mode == OpModes.FINGERPRINT.value:
             if tmp_staff["fingerprint_template"] in (None, "None", ""):
                 cls.popup_auto_close_error(
                     "No fingerprint registration data found"
                 )
             else:
-                app.gui.window_dispatch.open_window(
-                    app.gui.StaffFingerprintVerificationWindow
+                window_dispatch.dispatch.open_window(
+                    "StaffFingerprintVerificationWindow"
                 )
             return
         if device_op_mode == OpModes.FACE.value:
             if tmp_staff["face_encodings"] in (None, "None", ""):
                 cls.popup_auto_close_error("No facial registration data found")
             else:
-                app.gui.window_dispatch.open_window(
-                    app.gui.StaffFaceVerificationWindow
+                window_dispatch.dispatch.open_window(
+                    "StaffFaceVerificationWindow"
                 )
             return
         if device_op_mode == OpModes.BIMODAL.value:
@@ -66,13 +70,13 @@ class StaffBiometricVerificationRouterMixin:
                     )
                     return
                 else:
-                    app.gui.window_dispatch.open_window(
-                        app.gui.StaffFaceVerificationWindow
+                    window_dispatch.dispatch.open_window(
+                        "StaffFaceVerificationWindow"
                     )
                     return
             else:
-                app.gui.window_dispatch.open_window(
-                    app.gui.StaffFingerprintVerificationWindow
+                window_dispatch.dispatch.open_window(
+                    "StaffFingerprintVerificationWindow"
                 )
                 return
 
@@ -84,19 +88,19 @@ class StaffIDInputRouterMixin:
     @staticmethod
     def staff_id_input_window():
         update_device_op_mode()
-        if "op_mode" not in app.gui.app_config["tmp_settings"]:
-            app.gui.window_dispatch.open_window(app.gui.HomeWindow)
+        if "op_mode" not in app_config.cp["tmp_settings"]:
+            window_dispatch.dispatch.open_window("HomeWindow")
             return
 
-        if app.gui.app_config.getint("tmp_settings", "op_mode") in (
+        if app_config.cp.getint("tmp_settings", "op_mode") in (
             OpModes.FACE.value,
             OpModes.BIMODAL.value,
         ):
-            app.gui.window_dispatch.open_window(
-                app.gui.StaffBarcodeCameraWindow
+            window_dispatch.dispatch.open_window(
+                "StaffBarcodeCameraWindow"
             )
         else:
-            app.gui.window_dispatch.open_window(app.gui.StaffNumberInputWindow)
+            window_dispatch.dispatch.open_window("StaffNumberInputWindow")
         return
 
 
@@ -106,28 +110,28 @@ class StudentBiometricVerificationRouterMixin:
     @classmethod
     def student_verification_window(cls):
         update_device_op_mode()
-        if "op_mode" not in app.gui.app_config["tmp_settings"]:
-            app.gui.window_dispatch.open_window(app.gui.HomeWindow)
+        if "op_mode" not in app_config.cp["tmp_settings"]:
+            window_dispatch.dispatch.open_window("HomeWindow")
             return
 
-        tmp_student = app.gui.app_config["tmp_student"]
-        device_op_mode = app.gui.app_config.getint("tmp_settings", "op_mode")
+        tmp_student = app_config.cp["tmp_student"]
+        device_op_mode = app_config.cp.getint("tmp_settings", "op_mode")
         if device_op_mode == OpModes.FINGERPRINT.value:
             if tmp_student["fingerprint_template"] in (None, "None", ""):
                 cls.popup_auto_close_error(
                     "No fingerprint registration data found"
                 )
             else:
-                app.gui.window_dispatch.open_window(
-                    app.gui.StudentFingerprintVerificationWindow
+                window_dispatch.dispatch.open_window(
+                    "StudentFingerprintVerificationWindow"
                 )
             return
         if device_op_mode == OpModes.FACE.value:
             if tmp_student["face_encodings"] in (None, "None", ""):
                 cls.popup_auto_close_error("No facial registration data found")
             else:
-                app.gui.window_dispatch.open_window(
-                    app.gui.StudentFaceVerificationWindow
+                window_dispatch.dispatch.open_window(
+                    "StudentFaceVerificationWindow"
                 )
             return
         if device_op_mode == OpModes.BIMODAL.value:
@@ -138,13 +142,13 @@ class StudentBiometricVerificationRouterMixin:
                     )
                     return
                 else:
-                    app.gui.window_dispatch.open_window(
-                        app.gui.StudentFaceVerificationWindow
+                    window_dispatch.dispatch.open_window(
+                        "StudentFaceVerificationWindow"
                     )
                     return
             else:
-                app.gui.window_dispatch.open_window(
-                    app.gui.StudentFingerprintVerificationWindow
+                window_dispatch.dispatch.open_window(
+                    "StudentFingerprintVerificationWindow"
                 )
                 return
 
@@ -156,20 +160,20 @@ class StudentRegNumberInputRouterMixin:
     @staticmethod
     def student_reg_number_input_window():
         update_device_op_mode()
-        if "op_mode" not in app.gui.app_config["tmp_settings"]:
-            app.gui.window_dispatch.open_window(app.gui.HomeWindow)
+        if "op_mode" not in app_config.cp["tmp_settings"]:
+            window_dispatch.dispatch.open_window("HomeWindow")
             return
 
-        if app.gui.app_config.getint("tmp_settings", "op_mode") in (
+        if app_config.cp.getint("tmp_settings", "op_mode") in (
             OpModes.FACE.value,
             OpModes.BIMODAL.value,
         ):
-            app.gui.window_dispatch.open_window(
-                app.gui.StudentBarcodeCameraWindow
+            window_dispatch.dispatch.open_window(
+                "StudentBarcodeCameraWindow"
             )
         else:
-            app.gui.window_dispatch.open_window(
-                app.gui.StudentRegNumInputWindow
+            window_dispatch.dispatch.open_window(
+                "StudentRegNumInputWindow"
             )
         return
 
