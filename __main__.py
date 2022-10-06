@@ -1,18 +1,17 @@
 from app.appconfigparser import AppConfigParser
-from app.windowdispatch import WindowDispatch, WindowDispatched
+import app.windowdispatch
 from app.initialloadingwindow import LoadingWindow
 
 
-window_dispatch = WindowDispatched()
-window_dispatch.open_window(LoadingWindow)
-app_config = AppConfigParser()
-
+# window_dispatch = app.windowdispatch.WindowDispatch()
+# window_dispatch.dispatch.open_window("LoadingWindow")
+# app_config = AppConfigParser()
 
 # trying to speed up applicaton startup
 # time by displaying a loading window as quickly as possible
 import sys
 
-from app.gui import main
+from app.main import main
 from manage import django_setup
 
 
