@@ -175,9 +175,12 @@ class StudentEnrolmentWindow(ValidationMixin, BaseGUIWindow):
             }
             new_student_dict = app_config.cp.section_dict("new_student")
 
-            if cls.__name__ == "StudentEnrolmentWindow" and Student.objects.filter(
+            if (
+                cls.__name__ == "StudentEnrolmentWindow"
+                and Student.objects.filter(
                     reg_number=new_student_dict["reg_number"]
-            ).exists():
+                ).exists()
+            ):
                 cls.display_message("Student already exist!", window)
                 return True
 
@@ -196,7 +199,9 @@ class StudentEnrolmentWindow(ValidationMixin, BaseGUIWindow):
                     )
                     return True
             else:
-                window_dispatch.dispatch.open_window("StudentFaceEnrolmentWindow")
+                window_dispatch.dispatch.open_window(
+                    "StudentFaceEnrolmentWindow"
+                )
                 return True
         if event == "cancel":
             window_dispatch.dispatch.open_window("HomeWindow")
@@ -224,17 +229,17 @@ class StudentEnrolmentWindow(ValidationMixin, BaseGUIWindow):
                 return True
 
         for criteria in (
-                cls.validate_student_reg_number(values["student_reg_number_input"]),
-                cls.validate_sex(values["student_sex"]),
-                cls.validate_faculty(values["student_faculty"]),
-                cls.validate_department(values["student_department"]),
-                cls.validate_int_field(
-                    values["student_level_of_study"], "level of study"
-                ),
-                cls.validate_int_field(
-                    values["student_possible_grad_yr"],
-                    "possible year of graduation",
-                ),
+            cls.validate_student_reg_number(values["student_reg_number_input"]),
+            cls.validate_sex(values["student_sex"]),
+            cls.validate_faculty(values["student_faculty"]),
+            cls.validate_department(values["student_department"]),
+            cls.validate_int_field(
+                values["student_level_of_study"], "level of study"
+            ),
+            cls.validate_int_field(
+                values["student_possible_grad_yr"],
+                "possible year of graduation",
+            ),
         ):
             if criteria is not None:
                 cls.display_message(criteria, window)
@@ -276,7 +281,9 @@ class StudentFaceEnrolmentWindow(FaceCameraWindow):
         )
         # student.save()
         cls.popup_auto_close_success("Biometric data saved")
-        window_dispatch.dispatch.open_window("StudentFingerprintEnrolmentWindow")
+        window_dispatch.dispatch.open_window(
+            "StudentFingerprintEnrolmentWindow"
+        )
         return
 
     @staticmethod
@@ -507,4 +514,3 @@ class StudentEnrolmentUpdateIDSearch(StudentRegNumInputWindow):
         )
         window_dispatch.dispatch.open_window("StudentEnrolmentUpdateWindow")
         return
-

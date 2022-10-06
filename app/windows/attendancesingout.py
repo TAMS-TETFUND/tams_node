@@ -11,6 +11,7 @@ window_dispatch = app.windowdispatch.WindowDispatch()
 
 class AttendanceSignOutWindow(BaseGUIWindow):
     """Window for students to sign out from an active event."""
+
     @classmethod
     def window(cls):
         event_dict = dict(app_config.cp["current_attendance_session"])
@@ -66,7 +67,8 @@ class AttendanceSignOutWindow(BaseGUIWindow):
             return True
         if event == "sign_out":
             # TODO: implement this
-            window_dispatch.dispatch.open_window("StudentFaceVerificationWindow")
+            window_dispatch.dispatch.open_window(
+                "StudentFaceVerificationWindow"
+            )
 
         return True
-

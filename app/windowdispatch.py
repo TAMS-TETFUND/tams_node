@@ -6,26 +6,28 @@ import PySimpleGUI as sg
 from app.basegui import BaseGUIWindow
 from app.windows.settings import APP_WINDOWS
 
+
 class WindowDispatch:
     """A singleton that holds the currently open window."""
+
     __instance = None
     __initalized = False
 
-    def __new__(cls) -> 'WindowDispatch':
+    def __new__(cls) -> "WindowDispatch":
         if cls.__instance is None:
             cls.__instance = super().__new__(cls)
         return cls.__instance
 
     def __init__(self) -> None:
         if type(self).__initalized:
-            return 
+            return
         type(self).__initalized = True
         self.dispatch = WindowDict()
+
 
 class WindowDict(UserDict):
     _current_window: Callable
     _current_window_class: BaseGUIWindow
-
 
     def __init__(self, *args, **kwargs):
         super(WindowDict, self).__init__(*args, **kwargs)
@@ -37,7 +39,9 @@ class WindowDict(UserDict):
         try:
             win_reg = APP_WINDOWS[window_class_name]
         except KeyError:
-            BaseGUIWindow.popup_auto_close_error(f"{window_class_name} not found in APP_WINDOWS")
+            BaseGUIWindow.popup_auto_close_error(
+                f"{window_class_name} not found in APP_WINDOWS"
+            )
             return None
 
         win_path = win_reg.rsplit(".", 1)
@@ -48,7 +52,7 @@ class WindowDict(UserDict):
         for key in open_windows.keys():
             if key != window_class.__name__:
                 self.close_window(key)
-        
+
         self.current_window_class = window_class
         self.current_window = self[window_class.__name__]
 
@@ -69,12 +73,12 @@ class WindowDict(UserDict):
 
     @property
     def current_window_class(self):
-        return self._current_window_class    
+        return self._current_window_class
 
     @current_window_class.setter
     def current_window_class(self, value):
         self._current_window_class = value
-    
+
 
 class WindowDispatched:
     _current_window: sg.Window

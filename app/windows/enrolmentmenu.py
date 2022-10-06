@@ -221,39 +221,43 @@ class EnrolmentMenuWindow(BaseGUIWindow):
         if event in ("back", "home"):
             window_dispatch.dispatch.open_window("HomeWindow")
         if event in (
-                "staff_enrolment",
-                "staff_enrolment_txt",
-                "staff_enrolment_txt_2",
+            "staff_enrolment",
+            "staff_enrolment_txt",
+            "staff_enrolment_txt_2",
         ):
             window_dispatch.dispatch.open_window("StaffEnrolmentWindow")
         if event in (
-                "student_enrolment",
-                "student_enrolment_txt",
-                "student_enrolment_txt_2",
+            "student_enrolment",
+            "student_enrolment_txt",
+            "student_enrolment_txt_2",
         ):
             window_dispatch.dispatch.open_window("StudentEnrolmentWindow")
         if event in (
-                "staff_enrolment_update",
-                "staff_enrolment_update_txt",
-                "staff_enrolment_update_txt_2",
-                "staff_enrolment_update_txt_3",
+            "staff_enrolment_update",
+            "staff_enrolment_update_txt",
+            "staff_enrolment_update_txt_2",
+            "staff_enrolment_update_txt_3",
         ):
             window_dispatch.dispatch.open_window("StaffEnrolmentUpdateIDSearch")
         if event in (
-                "student_enrolment_update",
-                "student_enrolment_update_txt",
-                "student_enrolment_update_txt_2",
-                "student_enrolment_update_txt_3",
+            "student_enrolment_update",
+            "student_enrolment_update_txt",
+            "student_enrolment_update_txt_2",
+            "student_enrolment_update_txt_3",
         ):
-            window_dispatch.dispatch.open_window("StudentEnrolmentUpdateIDSearch")
+            window_dispatch.dispatch.open_window(
+                "StudentEnrolmentUpdateIDSearch"
+            )
         if event in (
-                "register_device",
-                "register_device_txt",
-                "register_device_txt_2",
+            "register_device",
+            "register_device_txt",
+            "register_device_txt_2",
         ):
             window_dispatch.dispatch.open_window("NodeDeviceRegistrationWindow")
         if event in ("synch_device", "synch_device_txt", "synch_device_txt_2"):
-            window_dispatch.dispatch.open_window("ServerConnectionDetailsWindow")
+            window_dispatch.dispatch.open_window(
+                "ServerConnectionDetailsWindow"
+            )
         if event == "sync_attendance":
             try:
                 NodeDataSynch.node_attendance_sync()

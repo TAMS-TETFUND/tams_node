@@ -2,7 +2,10 @@ import PySimpleGUI as sg
 
 from app.fingerprint import FingerprintScanner
 from app.windows.basefingerprint import FingerprintGenericWindow
-from app.gui_utils import StaffBiometricVerificationRouterMixin, StaffIDInputRouterMixin
+from app.gui_utils import (
+    StaffBiometricVerificationRouterMixin,
+    StaffIDInputRouterMixin,
+)
 import app.appconfigparser
 import app.windowdispatch
 from app.opmodes import OperationalMode
@@ -11,6 +14,7 @@ from db.models import AttendanceSession
 
 app_config = app.appconfigparser.AppConfigParser()
 window_dispatch = app.windowdispatch.WindowDispatch()
+
 
 class StaffFingerprintVerificationWindow(
     StaffIDInputRouterMixin,
@@ -24,7 +28,7 @@ class StaffFingerprintVerificationWindow(
     def loop(cls, window, event, values):
         if event == "cancel":
             if app_config.cp.has_option(
-                    "current_attendance_session", "initiator_id"
+                "current_attendance_session", "initiator_id"
             ):
                 window_dispatch.dispatch.open_window("ActiveEventSummaryWindow")
             else:
@@ -38,7 +42,9 @@ class StaffFingerprintVerificationWindow(
             if not OperationalMode.check_camera():
                 cls.popup_auto_close_error("Camera not connected")
             else:
-                window_dispatch.dispatch.open_window("StaffFaceVerificationWindow")
+                window_dispatch.dispatch.open_window(
+                    "StaffFaceVerificationWindow"
+                )
             return True
 
         tmp_staff = app_config.cp["tmp_staff"]
@@ -91,7 +97,9 @@ class StaffFingerprintVerificationWindow(
             cls.popup_auto_close_error(
                 "Error processing registration data. Contact admin", duration=5
             )
-            window_dispatch.dispatch.open_window("AttendanceSessionLandingWindow")
+            window_dispatch.dispatch.open_window(
+                "AttendanceSessionLandingWindow"
+            )
             return True
 
         if fp_scanner.verify_match():
@@ -110,7 +118,9 @@ class StaffFingerprintVerificationWindow(
             )
 
             app_config.cp.remove_section("tmp_staff")
-            window_dispatch.dispatch.open_window("AttendanceSessionLandingWindow")
+            window_dispatch.dispatch.open_window(
+                "AttendanceSessionLandingWindow"
+            )
             return True
         elif not fp_scanner.verify_match():
             cls.popup_auto_close_error(

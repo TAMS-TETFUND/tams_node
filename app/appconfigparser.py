@@ -7,7 +7,7 @@ class AppConfigParser:
     __instance = None
     __initialized = False
 
-    def __new__(cls) -> 'AppConfigParser':
+    def __new__(cls) -> "AppConfigParser":
         if cls.__instance is None:
             cls.__instance = super().__new__(cls)
         return cls.__instance

@@ -2,7 +2,11 @@ import PySimpleGUI as sg
 
 from app.windows.basecamera import BarcodeCameraWindow
 import app.appconfigparser
-from app.gui_utils import StudentRegNumberInputRouterMixin, StudentBiometricVerificationRouterMixin, ValidationMixin
+from app.gui_utils import (
+    StudentRegNumberInputRouterMixin,
+    StudentBiometricVerificationRouterMixin,
+    ValidationMixin,
+)
 import app.windowdispatch
 from db.models import Student, AttendanceRecord
 
@@ -63,10 +67,10 @@ class StudentBarcodeCameraWindow(
 
         tmp_student = app_config.cp["tmp_student"]
         if AttendanceRecord.objects.filter(
-                attendance_session_id=app_config.cp.get(
-                    "current_attendance_session", "session_id"
-                ),
-                student_id=tmp_student["reg_number"],
+            attendance_session_id=app_config.cp.get(
+                "current_attendance_session", "session_id"
+            ),
+            student_id=tmp_student["reg_number"],
         ).exists():
             cls.popup_auto_close_warn(
                 f"{tmp_student['first_name']} {tmp_student['last_name']} "
@@ -83,7 +87,9 @@ class StudentBarcodeCameraWindow(
 
     @classmethod
     def window_title(cls):
-        course = app_config.cp["current_attendance_session"]["course"].split(":")
+        course = app_config.cp["current_attendance_session"]["course"].split(
+            ":"
+        )
         event = app_config.cp["current_attendance_session"]["type"]
         return [
             [

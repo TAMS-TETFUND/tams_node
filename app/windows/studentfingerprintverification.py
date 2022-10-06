@@ -20,13 +20,17 @@ class StudentFingerprintVerificationWindow(
     @classmethod
     def loop(cls, window, event, values):
         if event == "cancel":
-            window_dispatch.dispatch.open_window("AttendanceSessionLandingWindow")
+            window_dispatch.dispatch.open_window(
+                "AttendanceSessionLandingWindow"
+            )
             return True
         if event == "camera":
             if not OperationalMode.check_camera():
                 cls.popup_auto_close_error("Camera not connected")
             else:
-                window_dispatch.dispatch.open_window("StudentFaceVerificationWindow")
+                window_dispatch.dispatch.open_window(
+                    "StudentFaceVerificationWindow"
+                )
             return True
 
         tmp_student = app_config.cp["tmp_student"]

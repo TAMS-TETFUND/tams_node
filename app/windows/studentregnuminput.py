@@ -3,7 +3,10 @@ import PySimpleGUI as sg
 from app.basegui import BaseGUIWindow
 import app.appconfigparser
 import app.windowdispatch
-from app.gui_utils import ValidationMixin, StudentBiometricVerificationRouterMixin
+from app.gui_utils import (
+    ValidationMixin,
+    StudentBiometricVerificationRouterMixin,
+)
 from db.models import AttendanceRecord, Student, RecordTypesChoices
 
 app_config = app.appconfigparser.AppConfigParser()
@@ -136,10 +139,10 @@ class StudentRegNumInputWindow(
 
         tmp_student = app_config.cp["tmp_student"]
         if AttendanceRecord.objects.filter(
-                attendance_session_id=app_config.cp.get(
-                    "current_attendance_session", "session_id"
-                ),
-                student_id=tmp_student["reg_number"],
+            attendance_session_id=app_config.cp.get(
+                "current_attendance_session", "session_id"
+            ),
+            student_id=tmp_student["reg_number"],
         ).exists():
             record = AttendanceRecord.objects.get(
                 student_id=tmp_student["reg_number"],
@@ -160,10 +163,10 @@ class StudentRegNumInputWindow(
     @classmethod
     def validate(cls, values, window):
         for val_check in (
-                cls.validate_required_field(
-                    (values["reg_num_input"], "registration number")
-                ),
-                cls.validate_student_reg_number(values["reg_num_input"]),
+            cls.validate_required_field(
+                (values["reg_num_input"], "registration number")
+            ),
+            cls.validate_student_reg_number(values["reg_num_input"]),
         ):
             if val_check is not None:
                 cls.display_message(val_check, window)

@@ -9,5 +9,4 @@ django_setup()
 sys.path.append(".")
 
 
-
 main_loop()

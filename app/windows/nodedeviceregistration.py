@@ -69,8 +69,8 @@ class NodeDeviceRegistrationWindow(ValidationMixin, BaseGUIWindow):
                 (values["password"], "Password"),
             ]
             if (
-                    cls.validate_required_fields(required_fields, window)
-                    is not None
+                cls.validate_required_fields(required_fields, window)
+                is not None
             ):
                 return True
 

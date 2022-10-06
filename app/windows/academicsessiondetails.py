@@ -103,7 +103,7 @@ class AcademicSessionDetailsWindow(ValidationMixin, BaseGUIWindow):
             return True
 
         if not AcademicSession.objects.filter(
-                session=values["current_session"]
+            session=values["current_session"]
         ).exists():
             cls.display_message(
                 "Academic Session has not been registered.", window

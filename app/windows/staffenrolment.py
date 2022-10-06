@@ -17,6 +17,7 @@ from db.models import Staff, SexChoices, Faculty, Department, face_enc_to_str
 app_config = app.appconfigparser.AppConfigParser()
 window_dispatch = app.windowdispatch.WindowDispatch()
 
+
 class StaffEnrolmentWindow(ValidationMixin, BaseGUIWindow):
     """The GUI window for enrolment of staff biodata"""
 
@@ -154,9 +155,12 @@ class StaffEnrolmentWindow(ValidationMixin, BaseGUIWindow):
 
             new_staff_dict = app_config.cp.section_dict("new_staff")
 
-            if cls.__name__ == "StaffEnrolmentWindow" and Staff.objects.filter(
+            if (
+                cls.__name__ == "StaffEnrolmentWindow"
+                and Staff.objects.filter(
                     staff_number=new_staff_dict["staff_number"]
-            ).exists():
+                ).exists()
+            ):
                 cls.display_message("Staff already exist!", window)
                 return True
             # else:
@@ -191,10 +195,10 @@ class StaffEnrolmentWindow(ValidationMixin, BaseGUIWindow):
                 return True
 
         for criteria in (
-                cls.validate_staff_number(values["staff_number_input"]),
-                cls.validate_sex(values["staff_sex"]),
-                cls.validate_faculty(values["staff_faculty"]),
-                cls.validate_department(values["staff_department"]),
+            cls.validate_staff_number(values["staff_number_input"]),
+            cls.validate_sex(values["staff_sex"]),
+            cls.validate_faculty(values["staff_faculty"]),
+            cls.validate_department(values["staff_department"]),
         ):
             if criteria is not None:
                 cls.display_message(criteria, window)
@@ -290,7 +294,9 @@ class StaffPasswordSettingWindow(BaseGUIWindow):
                             "StaffFingerprintEnrolmentWindow"
                         )
                 else:
-                    window_dispatch.dispatch.open_window("StaffFaceEnrolmentWindow")
+                    window_dispatch.dispatch.open_window(
+                        "StaffFaceEnrolmentWindow"
+                    )
                 return True
 
             if event in ("cancel", "home"):
@@ -350,7 +356,9 @@ class StaffFingerprintEnrolmentWindow(FingerprintEnrolmentWindow):
 
     @classmethod
     def process_fingerprint(cls, fingerprint_data):
-        app_config.cp["new_staff"]['fingerprint_template'] = str(fingerprint_data)
+        app_config.cp["new_staff"]["fingerprint_template"] = str(
+            fingerprint_data
+        )
         cls.post_process_enrolment_config()
         cls.popup_auto_close_success("Staff enrolment successful")
         window_dispatch.dispatch.open_window("StaffEnrolmentWindow")
@@ -424,6 +432,7 @@ class StaffEnrolmentUpdateIDSearch(StaffNumberInputWindow):
 
 class StaffEnrolmentUpdateWindow(StaffEnrolmentWindow):
     """A window for updating biodata of existing staff."""
+
     enroll_update = "update"
 
     @classmethod
@@ -556,6 +565,8 @@ class StaffEnrolmentUpdateWindow(StaffEnrolmentWindow):
                 cls.popup_auto_close_warn("Fingerprint scanner not connected")
                 window_dispatch.dispatch.open_window("HomeWindow")
             else:
-                window_dispatch.dispatch.open_window("StaffFingerprintEnrolmentWindow")
+                window_dispatch.dispatch.open_window(
+                    "StaffFingerprintEnrolmentWindow"
+                )
         else:
             window_dispatch.dispatch.open_window("StaffFaceEnrolmentWindow")

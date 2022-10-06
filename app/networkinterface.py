@@ -1,6 +1,5 @@
 """This module will handle the connection of node devices
 to networks: wifi, LORA, etc.
-
 """
 import os
 import subprocess
@@ -9,9 +8,7 @@ from app.device import wlan_interface_name
 
 
 def connect_to_wifi(ssid, network_password):
-    """
-    This function will handle establishment connection to WiFi networks
-
+    """Establish connection to a WiFi network.
 
     returns:
         0 on successful connection

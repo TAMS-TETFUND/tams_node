@@ -26,6 +26,5 @@ APP_WINDOWS = {
     "StaffFingerprintVerificationWindow": "app.windows.stafffingerprintverification.StaffFingerprintVerificationWindow",
     "StaffFingerprintEnrolmentWindow": "app.windows.staffenrolment.StaffFingerprintEnrolmentWindow",
     "StaffEnrolmentUpdateIDSearch": "app.windows.staffenrolment.StaffEnrolmentUpdateIDSearch",
-    "StaffEnrolmentUpdateWindow": "app.windows.staffenrolment.StaffEnrolmentUpdateWindow"
-
+    "StaffEnrolmentUpdateWindow": "app.windows.staffenrolment.StaffEnrolmentUpdateWindow",
 }

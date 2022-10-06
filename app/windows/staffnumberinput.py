@@ -9,6 +9,7 @@ from db.models import Staff
 app_config = app.appconfigparser.AppConfigParser()
 window_dispatch = app.windowdispatch.WindowDispatch()
 
+
 class StaffNumberInputWindow(
     ValidationMixin, StaffBiometricVerificationRouterMixin, BaseGUIWindow
 ):
@@ -122,10 +123,10 @@ class StaffNumberInputWindow(
     @classmethod
     def validate(cls, values, window):
         for val_check in (
-                cls.validate_required_field(
-                    (values["staff_number_input"], "staff number")
-                ),
-                cls.validate_staff_number("SS." + values["staff_number_input"]),
+            cls.validate_required_field(
+                (values["staff_number_input"], "staff number")
+            ),
+            cls.validate_staff_number("SS." + values["staff_number_input"]),
         ):
             if val_check is not None:
                 cls.display_message(val_check, window)

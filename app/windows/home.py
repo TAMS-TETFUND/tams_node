@@ -141,12 +141,14 @@ class HomeWindow(BaseGUIWindow):
                 return True
             window_dispatch.dispatch.open_window("EventMenuWindow")
         if event in (
-                "continue_attendance",
-                "continue_attendance_txt",
-                "continue_attendance_txt_2",
+            "continue_attendance",
+            "continue_attendance_txt",
+            "continue_attendance_txt_2",
         ):
             if app_config.cp.has_section("current_attendance_session"):
-                current_att_session = app_config.cp["current_attendance_session"]
+                current_att_session = app_config.cp[
+                    "current_attendance_session"
+                ]
                 session_strt_time = datetime.strptime(
                     f"{current_att_session['start_date']} {current_att_session['start_time']} +0100",
                     "%d-%m-%Y %H:%M %z",
@@ -162,7 +164,9 @@ class HomeWindow(BaseGUIWindow):
                         cls.popup_auto_close_error(
                             "Invalid session. Create new session."
                         )
-                        app_config.cp.remove_section("current_attendance_session")
+                        app_config.cp.remove_section(
+                            "current_attendance_session"
+                        )
                         app_config.cp.remove_section("failed_attempts")
                         app_config.cp.remove_section("tmp_student")
                         app_config.cp.remove_section("tmp_staff")
@@ -187,14 +191,18 @@ class HomeWindow(BaseGUIWindow):
                     return True
 
                 if app_config.cp.has_option(
-                        "current_attendance_session", "initiator_id"
+                    "current_attendance_session", "initiator_id"
                 ):
-                    window_dispatch.dispatch.open_window("ActiveEventSummaryWindow")
+                    window_dispatch.dispatch.open_window(
+                        "ActiveEventSummaryWindow"
+                    )
                 else:
                     app_config.cp["new_event"] = app_config.cp[
                         "current_attendance_session"
                     ]
-                    window_dispatch.dispatch.open_window("NewEventSummaryWindow")
+                    window_dispatch.dispatch.open_window(
+                        "NewEventSummaryWindow"
+                    )
             else:
                 sg.popup(
                     "No active attendance-taking session found.",

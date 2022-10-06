@@ -96,9 +96,7 @@ class StaffIDInputRouterMixin:
             OpModes.FACE.value,
             OpModes.BIMODAL.value,
         ):
-            window_dispatch.dispatch.open_window(
-                "StaffBarcodeCameraWindow"
-            )
+            window_dispatch.dispatch.open_window("StaffBarcodeCameraWindow")
         else:
             window_dispatch.dispatch.open_window("StaffNumberInputWindow")
         return
@@ -168,13 +166,9 @@ class StudentRegNumberInputRouterMixin:
             OpModes.FACE.value,
             OpModes.BIMODAL.value,
         ):
-            window_dispatch.dispatch.open_window(
-                "StudentBarcodeCameraWindow"
-            )
+            window_dispatch.dispatch.open_window("StudentBarcodeCameraWindow")
         else:
-            window_dispatch.dispatch.open_window(
-                "StudentRegNumInputWindow"
-            )
+            window_dispatch.dispatch.open_window("StudentRegNumInputWindow")
         return
 
 

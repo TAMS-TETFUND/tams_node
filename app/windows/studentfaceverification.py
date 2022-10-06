@@ -34,10 +34,10 @@ class StudentFaceVerificationWindow(
             return
 
         if FaceRecognition.face_match(
-                known_face_encodings=[
-                    str_to_face_enc(tmp_student["face_encodings"])
-                ],
-                face_encoding_to_check=captured_face_encodings,
+            known_face_encodings=[
+                str_to_face_enc(tmp_student["face_encodings"])
+            ],
+            face_encoding_to_check=captured_face_encodings,
         ):
             if AttendanceLogger.log_attendance(app_config.cp):
                 cls.popup_auto_close_success(AttendanceLogger.message)
@@ -65,7 +65,9 @@ class StudentFaceVerificationWindow(
 
     @classmethod
     def window_title(cls):
-        course = app_config.cp["current_attendance_session"]["course"].split(":")
+        course = app_config.cp["current_attendance_session"]["course"].split(
+            ":"
+        )
         event = app_config.cp["current_attendance_session"]["type"]
         student_fname = app_config.cp["tmp_student"]["first_name"]
         student_lname = app_config.cp["tmp_student"]["last_name"]
@@ -88,5 +90,7 @@ class StudentFaceVerificationWindow(
 
     @staticmethod
     def open_fingerprint():
-        window_dispatch.dispatch.open_window("StudentFingerprintVerificationWindow")
+        window_dispatch.dispatch.open_window(
+            "StudentFingerprintVerificationWindow"
+        )
         return

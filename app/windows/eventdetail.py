@@ -208,7 +208,7 @@ class EventDetailWindow(ValidationMixin, BaseGUIWindow):
 
             app_config.cp["new_event"]["course"] = values["selected_course"]
             app_config.cp["new_event"]["start_time"] = (
-                    values["start_hour"] + ":" + values["start_minute"]
+                values["start_hour"] + ":" + values["start_minute"]
             )
             app_config.cp["new_event"]["start_date"] = values["start_date"]
             app_config.cp["new_event"]["duration"] = values["duration"]
@@ -237,16 +237,16 @@ class EventDetailWindow(ValidationMixin, BaseGUIWindow):
             return True
 
         for val_check in (
-                cls.validate_int_field(values["start_hour"], "start time"),
-                cls.validate_int_field(values["start_minute"], "start time"),
+            cls.validate_int_field(values["start_hour"], "start time"),
+            cls.validate_int_field(values["start_minute"], "start time"),
         ):
             if val_check is not None:
                 cls.display_message(val_check, window)
                 return True
 
         if (
-                cls.validate_int_field(values["duration"], "duration") is not None
-                or int(values["duration"]) <= 0
+            cls.validate_int_field(values["duration"], "duration") is not None
+            or int(values["duration"]) <= 0
         ):
             cls.display_message("Invalid value in duration", window)
             return True

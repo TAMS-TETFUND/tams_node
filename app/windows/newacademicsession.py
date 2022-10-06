@@ -82,9 +82,9 @@ class NewAcademicSessionWindow(ValidationMixin, BaseGUIWindow):
                     return True
 
                 new_session = (
-                        str(values["session_start"])
-                        + "/"
-                        + str(values["session_end"])
+                    str(values["session_start"])
+                    + "/"
+                    + str(values["session_end"])
                 )
                 is_current_session = values["is_current_session"]
                 val_check = cls.validate_academic_session(new_session)

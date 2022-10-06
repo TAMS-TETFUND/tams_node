@@ -2,10 +2,21 @@ import PySimpleGUI as sg
 from datetime import datetime, timedelta
 
 from app.basegui import BaseGUIWindow
-from app.gui_utils import StaffIDInputRouterMixin, StaffBiometricVerificationRouterMixin
+from app.gui_utils import (
+    StaffIDInputRouterMixin,
+    StaffBiometricVerificationRouterMixin,
+)
 import app.appconfigparser
 import app.windowdispatch
-from db.models import Course, AcademicSession, EventTypeChoices, AttendanceSession, AttendanceSessionStatusChoices, NodeDevice, Staff
+from db.models import (
+    Course,
+    AcademicSession,
+    EventTypeChoices,
+    AttendanceSession,
+    AttendanceSessionStatusChoices,
+    NodeDevice,
+    Staff,
+)
 
 app_config = app.appconfigparser.AppConfigParser()
 window_dispatch = app.windowdispatch.WindowDispatch()
@@ -96,18 +107,18 @@ class NewEventSummaryWindow(StaffIDInputRouterMixin, BaseGUIWindow):
                     return True
                 cls.popup_auto_close_warn("Event has already been created")
 
-            app_config.cp["current_attendance_session"] = app_config.cp.section_dict(
-                "new_event"
-            )
+            app_config.cp[
+                "current_attendance_session"
+            ] = app_config.cp.section_dict("new_event")
             app_config.cp["current_attendance_session"]["session_id"] = str(
                 att_session.id
             )
             app_config.cp.remove_section("new_event")
 
             if att_session.initiator:
-                app_config.cp["current_attendance_session"]["initiator_id"] = str(
-                    att_session.initiator.id
-                )
+                app_config.cp["current_attendance_session"][
+                    "initiator_id"
+                ] = str(att_session.initiator.id)
                 window_dispatch.dispatch.open_window(ActiveEventSummaryWindow)
                 return True
 

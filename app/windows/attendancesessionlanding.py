@@ -4,7 +4,12 @@ from app.basegui import BaseGUIWindow
 from app.gui_utils import StudentRegNumberInputRouterMixin
 import app.appconfigparser
 import app.windowdispatch
-from db.models import RecordTypesChoices, AttendanceRecord, AttendanceSession, AttendanceSessionStatusChoices
+from db.models import (
+    RecordTypesChoices,
+    AttendanceRecord,
+    AttendanceSession,
+    AttendanceSessionStatusChoices,
+)
 
 
 app_config = app.appconfigparser.AppConfigParser()

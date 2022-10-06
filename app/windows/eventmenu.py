@@ -118,14 +118,14 @@ class EventMenuWindow(BaseGUIWindow):
         if event in (sg.WIN_CLOSED, "back", "cancel", "home"):
             window_dispatch.dispatch.open_window("HomeWindow")
         if event in (
-                "lecture",
-                "examination",
-                "lab",
-                "quiz",
-                "lecture_txt",
-                "examination_txt",
-                "lab_txt",
-                "quiz_txt",
+            "lecture",
+            "examination",
+            "lab",
+            "quiz",
+            "lecture_txt",
+            "examination_txt",
+            "lab_txt",
+            "quiz_txt",
         ):
             event = event.split("_")[0]
             app_config.cp["new_event"] = {}

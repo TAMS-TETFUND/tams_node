@@ -1,4 +1,3 @@
-
 import PySimpleGUI as sg
 
 from app.windows.basecamera import FaceCameraWindow
@@ -21,10 +20,10 @@ class StaffFaceVerificationWindow(FaceCameraWindow):
             return
         tmp_staff = app_config.cp["tmp_staff"]
         if FaceRecognition.face_match(
-                known_face_encodings=[
-                    str_to_face_enc(app_config.cp["tmp_staff"]["face_encodings"])
-                ],
-                face_encoding_to_check=captured_face_encodings,
+            known_face_encodings=[
+                str_to_face_enc(app_config.cp["tmp_staff"]["face_encodings"])
+            ],
+            face_encoding_to_check=captured_face_encodings,
         ):
             att_session = AttendanceSession.objects.get(
                 id=app_config.cp.get("current_attendance_session", "session_id")
@@ -41,7 +40,9 @@ class StaffFaceVerificationWindow(FaceCameraWindow):
             )
 
             app_config.cp.remove_section("tmp_staff")
-            window_dispatch.dispatch.open_window("AttendanceSessionLandingWindow")
+            window_dispatch.dispatch.open_window(
+                "AttendanceSessionLandingWindow"
+            )
             return
         else:
             cls.popup_auto_close_error(
@@ -52,16 +53,22 @@ class StaffFaceVerificationWindow(FaceCameraWindow):
     @staticmethod
     def cancel_camera():
 
-        if app_config.cp.has_option("current_attendance_session", "initiator_id"):
+        if app_config.cp.has_option(
+            "current_attendance_session", "initiator_id"
+        ):
             window_dispatch.dispatch.open_window("ActiveEventSummaryWindow")
         else:
-            app_config.cp["new_event"] = app_config.cp["current_attendance_session"]
+            app_config.cp["new_event"] = app_config.cp[
+                "current_attendance_session"
+            ]
             window_dispatch.dispatch.open_window("NewEventSummaryWindow")
         return
 
     @classmethod
     def window_title(cls):
-        course = app_config.cp["current_attendance_session"]["course"].split(":")
+        course = app_config.cp["current_attendance_session"]["course"].split(
+            ":"
+        )
         event = app_config.cp["current_attendance_session"]["type"]
         staff_fname = app_config.cp["tmp_staff"]["first_name"]
         staff_lname = app_config.cp["tmp_staff"]["last_name"]
@@ -85,5 +92,7 @@ class StaffFaceVerificationWindow(FaceCameraWindow):
 
     @staticmethod
     def open_fingerprint():
-        window_dispatch.dispatch.open_window("StaffFingerprintVerificationWindow")
+        window_dispatch.dispatch.open_window(
+            "StaffFingerprintVerificationWindow"
+        )
         return

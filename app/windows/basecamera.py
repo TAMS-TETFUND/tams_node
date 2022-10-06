@@ -10,6 +10,7 @@ from app.opmodes import OperationalMode
 
 window_dispatch = app.windowdispatch.WindowDispatch()
 
+
 class CameraWindow(BaseGUIWindow):
     """A base class. This window provides the general camera window
     layout."""
@@ -120,8 +121,8 @@ class FaceCameraWindow(CameraWindow):
                     return True
 
                 if (
-                        event in ("capture", "image_display")
-                        and cam_facerec.deque_not_empty()
+                    event in ("capture", "image_display")
+                    and cam_facerec.deque_not_empty()
                 ):
                     cam_facerec.load_facerec_attrs()
                     if cam_facerec.face_count > 1:
@@ -224,4 +225,3 @@ class BarcodeCameraWindow(CameraWindow):
                 sg.Push(),
             ],
         ]
-

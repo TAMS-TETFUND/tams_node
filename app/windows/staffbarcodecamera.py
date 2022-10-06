@@ -10,6 +10,7 @@ from db.models import Staff
 app_config = app.appconfigparser.AppConfigParser()
 window_dispatch = app.windowdispatch.WindowDispatch()
 
+
 class StaffBarcodeCameraWindow(
     ValidationMixin, StaffBiometricVerificationRouterMixin, BarcodeCameraWindow
 ):
@@ -49,7 +50,9 @@ class StaffBarcodeCameraWindow(
 
     @classmethod
     def window_title(cls):
-        course = app_config.cp["current_attendance_session"]["course"].split(":")
+        course = app_config.cp["current_attendance_session"]["course"].split(
+            ":"
+        )
         event = app_config.cp["current_attendance_session"]["type"]
         return [
             [
@@ -72,4 +75,3 @@ class StaffBarcodeCameraWindow(
     def launch_keypad(cls):
         window_dispatch.dispatch.open_window("StaffNumberInputWindow")
         return
-
