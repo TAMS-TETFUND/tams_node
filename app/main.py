@@ -2,6 +2,7 @@ import PySimpleGUI as sg
 
 import app.appconfigparser
 import app.windowdispatch
+from app.gui_utils import update_device_op_mode
 
 
 app_config = app.appconfigparser.AppConfigParser()
@@ -10,6 +11,9 @@ window_dispatch = app.windowdispatch.WindowDispatch()
 
 def main_loop():
     window_dispatch.dispatch.open_window("HomeWindow")
+    # setting the operational mode of device
+    app_config.cp["tmp_settings"] = {}
+    update_device_op_mode()
     continue_loop = True
     window = None
 
