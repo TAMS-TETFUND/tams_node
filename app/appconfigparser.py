@@ -3,7 +3,23 @@ import os
 from pathlib import Path
 
 
-class AppConfigParser(configparser.ConfigParser):
+class AppConfigParser:
+    __instance = None
+    __initialized = False
+
+    def __new__(cls) -> 'AppConfigParser':
+        if cls.__instance is None:
+            cls.__instance = super().__new__(cls)
+        return cls.__instance
+
+    def __init__(self) -> None:
+        if type(self).__initialized:
+            return
+        type(self).__initialized = True
+        self.cp = ModifiedConfigParser()
+
+
+class ModifiedConfigParser(configparser.ConfigParser):
     """An extension of the standard library's ConfigParser class for
     the project.
     """
@@ -14,7 +30,7 @@ class AppConfigParser(configparser.ConfigParser):
     )
 
     def __init__(self, file_path=None):
-        super(AppConfigParser, self).__init__()
+        super(ModifiedConfigParser, self).__init__()
         self.config_file = file_path or self.CONFIG_FILE
         self.read(self.config_file)
 
