@@ -20,7 +20,7 @@ import os
 import requests
 from django.core.management import call_command
 from requests import HTTPError
-from __main__ import app_config
+from app.appconfigparser import AppConfigParser
 from app.serializers import (
     AttendanceRecordSerializer,
     AttendanceSessionSerializer,
@@ -34,6 +34,8 @@ from db.models import (
     AttendanceSessionStatusChoices,
     NodeDevice,
 )
+
+app_config = AppConfigParser()
 
 
 class NodeDataSynch:
@@ -158,8 +160,8 @@ class NodeDataSynch:
     @classmethod
     def get_server_details(cls):
         try:
-            ip = str(app_config.get("server_details", "server_ip_address"))
-            port = app_config.getint("server_details", "server_port")
+            ip = str(app_config.cp.get("server_details", "server_ip_address"))
+            port = app_config.cp.getint("server_details", "server_port")
         except Exception:
             raise HTTPError('{"detail": "Server IP and port not set!"}')
 
