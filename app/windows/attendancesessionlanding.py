@@ -1,3 +1,4 @@
+from typing import Any, Dict
 import PySimpleGUI as sg
 
 from app.basegui import BaseGUIWindow
@@ -22,7 +23,8 @@ class AttendanceSessionLandingWindow(
     """This is the landing window for the active attendance session."""
 
     @classmethod
-    def window(cls):
+    def window(cls) -> sg.Window:
+        """Construct layout/appearance of window."""
         event_dict = dict(app_config.cp["current_attendance_session"])
         layout = [
             [sg.VPush()],
@@ -67,7 +69,8 @@ class AttendanceSessionLandingWindow(
         return window
 
     @classmethod
-    def loop(cls, window, event, values):
+    def loop(cls, window: sg.Window, event: str, values: Dict[str, Any]) -> bool:
+        """Track user interaction with window"""
         if event == "home":
             confirm = sg.popup_yes_no(
                 "Leaving attendance-taking. Do you wish to continue?",
@@ -104,7 +107,8 @@ class AttendanceSessionLandingWindow(
         return True
 
     @staticmethod
-    def valid_check_in_count():
+    def valid_check_in_count() -> int:
+        """Count of students that have logged attendance for current event."""
         return AttendanceRecord.objects.filter(
             attendance_session=app_config.cp.get(
                 "current_attendance_session", "session_id"

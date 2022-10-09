@@ -1,3 +1,4 @@
+from typing import Any, List
 import PySimpleGUI as sg
 
 from app.windows.basecamera import BarcodeCameraWindow
@@ -25,7 +26,8 @@ class StudentBarcodeCameraWindow(
     from qr code during attendance marking"""
 
     @classmethod
-    def process_barcode(cls, identification_num, window):
+    def process_barcode(cls, identification_num: str, window: sg.Window) -> None:
+        """Process a decoded identification number."""
         val_check = cls.validate_student_reg_number(identification_num)
         if val_check is not None:
             cls.popup_auto_close_error(val_check)
@@ -82,11 +84,13 @@ class StudentBarcodeCameraWindow(
         return
 
     @staticmethod
-    def cancel_camera():
+    def cancel_camera() -> None:
+        """Logic to execute when cancel button is pressed."""
         window_dispatch.dispatch.open_window("AttendanceSessionLandingWindow")
 
     @classmethod
-    def window_title(cls):
+    def window_title(cls) -> List[Any]:
+        """Title of GUI window."""
         course = app_config.cp["current_attendance_session"]["course"].split(
             ":"
         )
@@ -108,6 +112,7 @@ class StudentBarcodeCameraWindow(
         ]
 
     @classmethod
-    def launch_keypad(cls):
+    def launch_keypad(cls) -> None:
+        """Open window when Keyboard icon is pressed."""
         window_dispatch.dispatch.open_window("StudentRegNumInputWindow")
         return

@@ -1,3 +1,4 @@
+from typing import Dict
 from django.db.utils import IntegrityError
 from django.utils import timezone
 
@@ -6,15 +7,17 @@ from db.models import AttendanceRecord, RecordTypesChoices
 
 
 class AttendanceLogger:
-    message = ""
+    message: str = ""
 
     @classmethod
-    def log_attendance(cls, app_config: AppConfigParser):
-        """This method handles student attendance logging.
+    def log_attendance(cls, app_config: AppConfigParser) -> bool:
+        """Log student attendance.
+
         Returns True if attendance logging is successful
         False if attendance logging is unsuccessful
         """
-        tmp_student = app_config["tmp_student"]
+        tmp_student: Dict[str, str] = app_config["tmp_student"]
+
         try:
             obj, created = AttendanceRecord.objects.update_or_create(
                 attendance_session_id=app_config.get(
@@ -37,10 +40,8 @@ class AttendanceLogger:
             return True
 
     @classmethod
-    def log_failed_attempt(cls, app_config: AppConfigParser):
-        """This method will block a student after they attempt to
-        log attendance 4 times unsuccessfully.
-        """
+    def log_failed_attempt(cls, app_config: AppConfigParser) -> None:
+        """Block a student after 4 unsuccessful attendance logging attempts."""
 
         if "failed_attempts" not in app_config:
             app_config["failed_attempts"] = {}

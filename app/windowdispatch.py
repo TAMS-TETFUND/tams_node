@@ -1,5 +1,6 @@
 from collections import UserDict
-from typing import Type, Callable
+from importlib import import_module
+from typing import Any, Optional, Type, Callable
 
 import PySimpleGUI as sg
 
@@ -26,27 +27,31 @@ class WindowDispatch:
 
 
 class WindowDict(UserDict):
-    _current_window: Callable
+    """Class for handling transitions between windows."""
+    _current_window: Callable[..., Any]
     _current_window_class: BaseGUIWindow
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         super(WindowDict, self).__init__(*args, **kwargs)
 
     def open_window(
         self,
         window_class_name: str,
     ) -> None:
+        """Open a GUI window."""
         try:
-            win_reg = APP_WINDOWS[window_class_name]
+            window_path = APP_WINDOWS[window_class_name]
         except KeyError:
             BaseGUIWindow.popup_auto_close_error(
                 f"{window_class_name} not found in APP_WINDOWS"
             )
             return None
 
-        win_path = win_reg.rsplit(".", 1)
-        exec(f"from {win_path[0]} import {window_class_name}")
-        window_class = eval(window_class_name)
+        window_module = import_module(window_path)
+
+        if not hasattr(window_module, window_class_name):
+            raise RuntimeError("%s not found in specified path." % window_class_name)
+        window_class = getattr(window_module, window_class_name)
         self.update({window_class.__name__: window_class.window()})
         open_windows = self.copy()
         for key in open_windows.keys():
@@ -56,27 +61,32 @@ class WindowDict(UserDict):
         self.current_window_class = window_class
         self.current_window = self[window_class.__name__]
 
-    def close_window(self, window_name: str):
-        return self.pop(window_name).close()
+    def close_window(self, window_name: str) -> None:
+        """Close a window."""
+        self.pop(window_name).close()
 
-    def find_window_name(self, window_object: sg.Window):
+    def find_window_name(self, window_object: sg.Window) -> Optional[str]:
+        """Find name of a given window object if it exists in WindowDict."""
         return next((k for k, v in self.items() if v == window_object), None)
 
     @property
-    def current_window(self):
+    def current_window(self) -> Callable[..., Any]:
+        """Name of the currently open window."""
         return self._current_window
 
     @current_window.setter
-    def current_window(self, value):
-        # if isinstance(value, BaseGUIWindow):
+    def current_window(self, value: Callable[..., Any]) -> None:
+        """Set current_window property."""
         self._current_window = value
 
     @property
-    def current_window_class(self):
+    def current_window_class(self) -> BaseGUIWindow:
+        """Class of currently open window."""
         return self._current_window_class
 
     @current_window_class.setter
-    def current_window_class(self, value):
+    def current_window_class(self, value: BaseGUIWindow) -> None:
+        """Set current_window_class property."""
         self._current_window_class = value
 
 

@@ -3,11 +3,12 @@ to networks: wifi, LORA, etc.
 """
 import os
 import subprocess
+from typing import Any, List, Optional, Tuple, Union
 
 from app.device import wlan_interface_name
 
 
-def connect_to_wifi(ssid, network_password):
+def connect_to_wifi(ssid: str, network_password: str) -> Union[int, Tuple[Any, ...]]:
     """Establish connection to a WiFi network.
 
     returns:
@@ -28,14 +29,14 @@ def connect_to_wifi(ssid, network_password):
         return message
 
 
-def connect_to_LORA():
+def connect_to_LORA() -> None:
     """This function will handle connection to LORA."""
     pass
 
 
 class WLANInterface:
     @staticmethod
-    def available_networks():
+    def available_networks() -> List[str]:
         """Checks for available WiFi networks."""
         network_query = subprocess.run(
             "iwlist scan", shell=True, capture_output=True
@@ -48,12 +49,12 @@ class WLANInterface:
         return available_networks
 
     @staticmethod
-    def connection_query():
-        """
-        This method returns a list of detailed information about the
-        wireless interface of the device.
-        Returns an empty list if the WLAN interface is
-        disabled/unavailable
+    def connection_query() -> List[str]:
+        """Get information about the wireless interface of the device.
+
+        Returns a list of detailed information about the wireless 
+        interface of the device. Method returns an empty list if 
+        the WLAN interface is disabled/unavailable.
         """
         interface_name = wlan_interface_name()
         connection_state_query = (
@@ -68,7 +69,7 @@ class WLANInterface:
         return connection_state_query
 
     @classmethod
-    def find_parameter(cls, parameter):
+    def find_parameter(cls, parameter: str) -> Optional[str]:
         """
         This method will search the result of the connection_query
         method for a specified parameter.
@@ -81,7 +82,7 @@ class WLANInterface:
         return None
 
     @classmethod
-    def is_connected(cls):
+    def is_connected(cls) -> bool:
         """Checks if the device is currently connected to a WLAN network"""
         connection_state = cls.find_parameter("GENERAL.STATE")
 
@@ -91,8 +92,9 @@ class WLANInterface:
             return False
 
     @classmethod
-    def current_network_name(cls):
-        """
+    def current_network_name(cls) -> Optional[str]:
+        """Check name of network the device is currently connected to.
+
         Returns name of network device is currently connected to.
         Returns None if the device is not connected.
         """
@@ -103,8 +105,9 @@ class WLANInterface:
             return network_name
 
     @classmethod
-    def device_ip_address(cls):
-        """
+    def device_ip_address(cls) -> Optional[str]:
+        """Check IP address currently assigned to device's WLAN interface.
+
         Returns the IP address assigned to currently assigned to the
         device's WLAN interface.
         Returns None if the device is not connected to a WLAN network.

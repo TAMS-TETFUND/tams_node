@@ -1,15 +1,13 @@
 import json
+from typing import Optional
 import urllib3
 
 
 class ServerConnection:
-    """
-    This class will be responsible for establishing connection to the
-    TAMS server.
-    """
+    """Class responsible for managing connection to the TAMS server."""
 
-    def __init__(self):
-        self.token = None
+    def __init__(self) -> None:
+        self.token: Optional[str] = None
 
     def token_authentication(
         self,
@@ -18,13 +16,13 @@ class ServerConnection:
         username: str,
         password: str,
         login_url: str = "api/v1/token/login",
-    ):
-        """This method will be responsible for authenticating the
-        the node device on the server.
+    ) -> bool:
+        """Authenticate the node device on the server.
 
-        Returns: true if authentication is successful and saves obtained
-            token to self.token
-        else: raise error
+        Returns: 
+            true if authentication is successful and saves obtained
+                token to self.token
+            else, raise error
         """
         response = urllib3.PoolManager().request(
             "POST",
@@ -41,12 +39,14 @@ class ServerConnection:
         else:
             raise ConnectionError("Connection error (%s)." % response.status)
 
-    def get_token(self):
+    def get_token(self) -> str:
+        """Get auth token."""
         if self.token is None:
             raise RuntimeError("Unathenticated Request")
         return self.token
 
-    def is_authenticated(self):
+    def is_authenticated(self) -> bool:
+        """Check if node device has been authenticated."""
         if self.token:
             return True
         else:

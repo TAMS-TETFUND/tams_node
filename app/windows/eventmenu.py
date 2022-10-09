@@ -1,3 +1,4 @@
+from typing import Any, Dict
 import PySimpleGUI as sg
 from app.basegui import BaseGUIWindow
 import app.appconfigparser
@@ -15,7 +16,8 @@ class EventMenuWindow(BaseGUIWindow):
     """
 
     @classmethod
-    def window(cls):
+    def window(cls) -> sg.Window:
+        """Construct layout/appearance of window."""
         column1 = [
             [
                 sg.Push(),
@@ -114,7 +116,8 @@ class EventMenuWindow(BaseGUIWindow):
         return window
 
     @classmethod
-    def loop(cls, window, event, values):
+    def loop(cls, window: sg.Window, event: str, values: Dict[str, Any]) -> bool:
+        """Track user interaction with window."""
         if event in (sg.WIN_CLOSED, "back", "cancel", "home"):
             window_dispatch.dispatch.open_window("HomeWindow")
         if event in (

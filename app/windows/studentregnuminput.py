@@ -1,3 +1,4 @@
+from typing import Any, Dict, Optional
 import PySimpleGUI as sg
 
 from app.basegui import BaseGUIWindow
@@ -20,7 +21,8 @@ class StudentRegNumInputWindow(
     numbers by button clicks."""
 
     @classmethod
-    def window(cls):
+    def window(cls) -> sg.Window:
+        """Construct layout/appearance of window."""
         INPUT_BUTTON_SIZE = (8, 2)
         column1 = [
             [
@@ -84,7 +86,8 @@ class StudentRegNumInputWindow(
         return window
 
     @classmethod
-    def loop(cls, window, event, values):
+    def loop(cls, window: sg.Window, event: str, values: Dict[str, Any]) -> bool:
+        """Track user interaction with window."""
         if event == "back":
             cls.back_nav_key_handler()
             return True
@@ -123,7 +126,8 @@ class StudentRegNumInputWindow(
         return True
 
     @classmethod
-    def process_student(cls, student, window):
+    def process_student(cls, student: Student, window: sg.Window) -> None:
+        """Process staff info for update."""
         app_config.cp["tmp_student"] = app_config.cp.dict_vals_to_str(
             student.values(
                 "reg_number",
@@ -154,14 +158,15 @@ class StudentRegNumInputWindow(
             if record.record_type == RecordTypesChoices.SIGN_OUT:
                 cls.display_message("Student already signed out!", window)
                 cls.resize_column(window)
-                return True
+                return
 
             window_dispatch.dispatch.open_window("AttendanceSignOutWindow")
-            return True
+            return
         cls.student_verification_window()
 
     @classmethod
-    def validate(cls, values, window):
+    def validate(cls, values: Dict[str, Any], window: sg.Window) -> Optional[bool]:
+        """Validate values supplied by user in the window input fields."""
         for val_check in (
             cls.validate_required_field(
                 (values["reg_num_input"], "registration number")
@@ -174,11 +179,13 @@ class StudentRegNumInputWindow(
         return None
 
     @staticmethod
-    def resize_column(window):
+    def resize_column(window: sg.Window) -> None:
+        """Refresh GUI when adding/removing message display field."""
         window.refresh()
         window["main_column"].contents_changed()
 
     @staticmethod
-    def back_nav_key_handler():
+    def back_nav_key_handler() -> None:
+        """Handle user pressing back button in nav pane."""
         window_dispatch.dispatch.open_window("AttendanceSessionLandingWindow")
         return

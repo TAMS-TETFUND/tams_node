@@ -1,3 +1,4 @@
+from typing import Any, List
 import PySimpleGUI as sg
 
 from app.windows.basecamera import FaceCameraWindow
@@ -14,7 +15,8 @@ class StaffFaceVerificationWindow(FaceCameraWindow):
     """This class is responsible for staff face verification and initiates attendance session."""
 
     @classmethod
-    def process_image(cls, captured_face_encodings, window):
+    def process_image(cls, captured_face_encodings: Any, window: sg.Window) -> None:
+        """Process detected face."""
         if captured_face_encodings is None:
             cls.popup_auto_close_error("Eror. Image must have exactly one face")
             return
@@ -51,8 +53,8 @@ class StaffFaceVerificationWindow(FaceCameraWindow):
             return
 
     @staticmethod
-    def cancel_camera():
-
+    def cancel_camera() -> None:
+        """"Logic for when cancel button is pressed in camera window."""
         if app_config.cp.has_option(
             "current_attendance_session", "initiator_id"
         ):
@@ -65,7 +67,8 @@ class StaffFaceVerificationWindow(FaceCameraWindow):
         return
 
     @classmethod
-    def window_title(cls):
+    def window_title(cls) -> List[Any]:
+        """Title to GUI window."""
         course = app_config.cp["current_attendance_session"]["course"].split(
             ":"
         )
@@ -91,7 +94,8 @@ class StaffFaceVerificationWindow(FaceCameraWindow):
         ]
 
     @staticmethod
-    def open_fingerprint():
+    def open_fingerprint() -> None:
+        """Open window when fingerprint button is pressed in camera window."""
         window_dispatch.dispatch.open_window(
             "StaffFingerprintVerificationWindow"
         )

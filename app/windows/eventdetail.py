@@ -1,3 +1,4 @@
+from typing import Any, Dict, Optional
 import PySimpleGUI as sg
 from datetime import datetime, timedelta
 
@@ -17,7 +18,8 @@ class EventDetailWindow(ValidationMixin, BaseGUIWindow):
     start date, and event duration"""
 
     @classmethod
-    def window(cls):
+    def window(cls) -> sg.Window:
+        """Construct layout/appearance of window."""
         combo_props = {"size": 32}
         field_label_props = {"size": 12}
         section1 = [
@@ -147,7 +149,8 @@ class EventDetailWindow(ValidationMixin, BaseGUIWindow):
         return window
 
     @classmethod
-    def loop(cls, window, event, values):
+    def loop(cls, window: sg.Window, event: str, values: Dict[str, Any]) -> bool:
+        """Track user interaction with window."""
         if event.startswith("filter_courses"):
             window["filter_courses_img"].update(
                 data=EventDetailWindow.get_icon("down_arrow", 0.25)
@@ -220,7 +223,8 @@ class EventDetailWindow(ValidationMixin, BaseGUIWindow):
         return True
 
     @classmethod
-    def validate(cls, values, window):
+    def validate(cls, values: Dict[str, Any], window: sg.Window) -> Optional[bool]:
+        """Validate values supplied by user in the window input fields."""
 
         required_fields = [
             (values["selected_course"], "selected course"),

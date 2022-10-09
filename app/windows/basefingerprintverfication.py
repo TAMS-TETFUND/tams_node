@@ -1,4 +1,7 @@
 import time
+from typing import Any, Dict, List
+
+import PySimpleGUI as sg
 
 from app.windows.basefingerprint import FingerprintGenericWindow
 from app.fingerprint import FingerprintScanner
@@ -15,7 +18,8 @@ class FingerprintEnrolmentWindow(FingerprintGenericWindow):
     """
 
     @classmethod
-    def loop(cls, window, event, values):
+    def loop(cls, window: sg.Window, event: str, values: Dict[str, Any]) -> bool:
+        """Track user interaction with window."""
 
         if event == "cancel":
             cls.cancel_fp_enrolment()
@@ -72,13 +76,18 @@ class FingerprintEnrolmentWindow(FingerprintGenericWindow):
         return True
 
     @classmethod
-    def process_fingerprint(cls, fingerprint_data):
+    def process_fingerprint(cls, fingerprint_data: List[int]) -> None:
         raise NotImplementedError
 
     @staticmethod
-    def cancel_fp_enrolment():
+    def cancel_fp_enrolment() -> None:
+        """Next window when user presses cancel button on GUI window."""
         raise NotImplementedError
 
     @staticmethod
-    def post_process_enrolment_config():
+    def post_process_enrolment_config() -> None:
+        """Method to call when staff registration data has been validated.
+        
+        Typically contains logic for synching collected data to the server.
+        """
         raise NotImplementedError

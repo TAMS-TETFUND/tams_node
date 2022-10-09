@@ -1,5 +1,6 @@
 import time
 import json
+from typing import Any, Dict, List, Optional
 
 import PySimpleGUI as sg
 
@@ -23,7 +24,8 @@ class StudentEnrolmentWindow(ValidationMixin, BaseGUIWindow):
     """The GUI window for enrolment of student biodata."""
 
     @classmethod
-    def window(cls):
+    def window(cls) -> sg.Window:
+        """Construct layout/appearance of window."""
         field_label_props = {"size": 22}
         combo_props = {"size": 22}
         input_props = {"size": 23}
@@ -143,7 +145,8 @@ class StudentEnrolmentWindow(ValidationMixin, BaseGUIWindow):
         return window
 
     @classmethod
-    def loop(cls, window, event, values):
+    def loop(cls, window: sg.Window, event: str, values: Dict[str, Any]) -> bool:
+        """Track user interaction with window."""
         if event == "student_faculty":
             if values["student_faculty"] in (cls.COMBO_DEFAULT, None):
                 window["student_faculty"].update(
@@ -208,7 +211,8 @@ class StudentEnrolmentWindow(ValidationMixin, BaseGUIWindow):
         return True
 
     @classmethod
-    def validate(cls, values, window):
+    def validate(cls, values: Dict[str, Any], window: sg.Window) -> Optional[bool]:
+        """Validate values supplied by user in the window input fields."""
         req_fields = [
             (values["student_reg_number_input"], "registration number"),
             (values["student_first_name"], "first name"),
@@ -262,7 +266,8 @@ class StudentFaceEnrolmentWindow(FaceCameraWindow):
     being enrolled."""
 
     @classmethod
-    def process_image(cls, captured_face_encodings, window):
+    def process_image(cls, captured_face_encodings: Any, window: sg.Window) -> None:
+        """Process detected face."""
         if captured_face_encodings is None:
             cls.popup_auto_close_error(
                 "Error. Image must have exactly one face"
@@ -287,7 +292,8 @@ class StudentFaceEnrolmentWindow(FaceCameraWindow):
         return
 
     @staticmethod
-    def cancel_camera():
+    def cancel_camera() -> None:
+        """"Logic for when cancel button is pressed in camera window."""
         confirm = sg.popup_yes_no(
             "Student details will be saved with no biometric data. Continue?",
             keep_on_top=True,
@@ -302,7 +308,8 @@ class StudentFingerprintEnrolmentWindow(FingerprintEnrolmentWindow):
     """This class provides methods tailored to student fingerprint enrolment."""
 
     @classmethod
-    def process_fingerprint(cls, fingerprint_data):
+    def process_fingerprint(cls, fingerprint_data: List[int]) -> None:
+        """Process captured fingerprint template."""
         app_config.cp["new_student"]["fingerprint_template"] = str(
             fingerprint_data
         )
@@ -312,7 +319,8 @@ class StudentFingerprintEnrolmentWindow(FingerprintEnrolmentWindow):
         return
 
     @staticmethod
-    def cancel_fp_enrolment():
+    def cancel_fp_enrolment() -> None:
+        """Next window when user presses cancel button on GUI window."""
         confirm = sg.popup_yes_no(
             "Student details will be saved with no fingerprint biometric data. Continue?",
             keep_on_top=True,
@@ -323,7 +331,11 @@ class StudentFingerprintEnrolmentWindow(FingerprintEnrolmentWindow):
         return
 
     @staticmethod
-    def post_process_enrolment_config():
+    def post_process_enrolment_config() -> None:
+        """Method to call when staff registration data has been validated.
+        
+        Typically contains logic for synching collected data to the server.
+        """
         try:
             message = NodeDataSynch.student_register(
                 app_config.cp.section_dict("new_student")
@@ -340,7 +352,8 @@ class StudentFingerprintEnrolmentWindow(FingerprintEnrolmentWindow):
         return
 
     @classmethod
-    def window_title(cls):
+    def window_title(cls) -> str:
+        """Title of the GUI window."""
         return "Student Fingerprint Enrolment"
 
 
@@ -348,7 +361,8 @@ class StudentEnrolmentUpdateWindow(StudentEnrolmentWindow):
     """A window for updating biodata of existing student."""
 
     @classmethod
-    def window(cls):
+    def window(cls) -> sg.Window:
+        """Construct layout/appearance of window."""
         student = app_config.cp["edit_student"]
 
         try:
@@ -482,21 +496,26 @@ class StudentEnrolmentUpdateWindow(StudentEnrolmentWindow):
         return window
 
     @classmethod
-    def loop(cls, window, event, values):
+    def loop(cls, window: sg.Window, event: str, values: Dict[str, Any]) -> bool:
+        """Track user interaction with window."""
         return super().loop(window, event, values)
 
 
 class StudentEnrolmentUpdateIDSearch(StudentRegNumInputWindow):
+    """Window for finding student by reg number for bio data update."""
     @classmethod
-    def window(cls):
+    def window(cls) -> sg.Window:
+        """Construct layout/appearance of window."""
         return super().window()
 
     @classmethod
-    def loop(cls, window, event, values):
+    def loop(cls, window: sg.Window, event: str, values: Dict[str, Any]) -> bool:
+        """Track user interaction with window."""
         return super().loop(window, event, values)
 
     @classmethod
-    def process_student(cls, student, window):
+    def process_student(cls, student: Student) -> None:
+        """Process staff info for update."""
         app_config.cp["edit_student"] = app_config.cp.dict_vals_to_str(
             student.values(
                 "reg_number",

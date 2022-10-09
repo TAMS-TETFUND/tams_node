@@ -1,3 +1,4 @@
+from typing import Any, List, Dict, Optional
 import PySimpleGUI as sg
 
 import app.windowdispatch
@@ -16,7 +17,8 @@ class CameraWindow(BaseGUIWindow):
     layout."""
 
     @classmethod
-    def window(cls):
+    def window(cls) -> sg.Window:
+        """Construct layout/appearance of window."""
         layout = [
             [sg.Push(), sg.Column(cls.window_title()), sg.Push()],
             [
@@ -47,7 +49,11 @@ class CameraWindow(BaseGUIWindow):
         return window
 
     @classmethod
-    def get_keyboard_button(cls):
+    def get_keyboard_button(cls) -> Any:
+        """Return keyboard button for GUI window layout.
+        
+        Will be hidden when a keyboard window is open. Will be
+        visible if a barcode window is open."""
         if issubclass(cls, BarcodeCameraWindow):
             return sg.pin(
                 sg.Button(
@@ -70,7 +76,10 @@ class CameraWindow(BaseGUIWindow):
             )
 
     @classmethod
-    def get_fingerprint_button(cls):
+    def get_fingerprint_button(cls) -> Any:
+        """Return fingerprint button for GUI window layout.
+        
+        Will be visible if a verification window is open."""
         if "verification" in cls.__name__.lower():
             return sg.pin(
                 sg.Button(
@@ -94,7 +103,8 @@ class CameraWindow(BaseGUIWindow):
             )
 
     @classmethod
-    def window_title(cls):
+    def window_title(cls) -> Optional[List[Any]]:
+        """Add title to GUI window."""
         raise NotImplementedError
 
 
@@ -102,7 +112,8 @@ class FaceCameraWindow(CameraWindow):
     """This is a base class. Implements facial recognition with camera."""
 
     @classmethod
-    def loop(cls, window, event, values):
+    def loop(cls, window: sg.Window, event: str, values: Dict[str, Any]) -> bool:
+        """Track user interaction with window."""
         with CamFaceRec() as cam_facerec:
             while True:
                 event, values = window.read(timeout=20)
@@ -144,19 +155,23 @@ class FaceCameraWindow(CameraWindow):
                 )
 
     @classmethod
-    def process_image(cls, captured_face_encodings, window):
+    def process_image(cls, captured_face_encodings: Any, window: sg.Window) -> None:
+        """Process detected face."""
         raise NotImplementedError
 
     @staticmethod
-    def cancel_camera():
+    def cancel_camera() -> None:
+        """"Logic for when cancel button is pressed in camera window."""
         raise NotImplementedError
 
     @staticmethod
-    def open_fingerprint():
+    def open_fingerprint() -> None:
+        """Open window when fingerprint button is pressed in camera window."""
         raise NotImplementedError
 
     @classmethod
-    def window_title(cls):
+    def window_title(cls) -> List[Any]:
+        """Title of GUI window."""
         return [
             [
                 sg.Push(),
@@ -171,7 +186,8 @@ class BarcodeCameraWindow(CameraWindow):
     """Base class. This implements Barcode decoding with camera."""
 
     @classmethod
-    def loop(cls, window, event, values):
+    def loop(cls, window: sg.Window, event: str, values: Dict[str, Any]) -> bool:
+        """Track user interaction with window"""
         with Camera() as cam:
             while True:
                 img = cam.feed()
@@ -204,19 +220,23 @@ class BarcodeCameraWindow(CameraWindow):
         return True
 
     @classmethod
-    def process_barcode(cls, identification_num, window):
+    def process_barcode(cls, identification_num: str, window: sg.Window) -> None:
+        """Process a decoded identification number."""
         raise NotImplementedError
 
     @classmethod
-    def launch_keypad(cls):
+    def launch_keypad(cls) -> None:
+        """Window to open when the keyboard icon is pressed in GUI window."""
         raise NotImplementedError
 
     @staticmethod
-    def cancel_camera():
+    def cancel_camera() -> None:
+        """Window to open when the cancel icon is pressed in GUI window."""
         window_dispatch.dispatch.open_window("HomeWindow")
 
     @classmethod
-    def window_title(cls):
+    def window_title(cls) -> List[Any]:
+        """Title of GUI window."""
         return [
             [
                 sg.Push(),

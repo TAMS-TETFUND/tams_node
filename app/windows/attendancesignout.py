@@ -1,3 +1,4 @@
+from typing import Any, Dict
 import PySimpleGUI as sg
 
 from app.basegui import BaseGUIWindow
@@ -13,7 +14,8 @@ class AttendanceSignOutWindow(BaseGUIWindow):
     """Window for students to sign out from an active event."""
 
     @classmethod
-    def window(cls):
+    def window(cls) -> sg.Window:
+        """Construct layout/appearance of window."""
         event_dict = dict(app_config.cp["current_attendance_session"])
         student_dict = dict(app_config.cp["tmp_student"])
         student_attendance = AttendanceRecord.objects.filter(
@@ -61,7 +63,8 @@ class AttendanceSignOutWindow(BaseGUIWindow):
         return window
 
     @classmethod
-    def loop(cls, window, event, values):
+    def loop(cls, window: sg.Window, event: str, values: Dict[str, Any]) -> bool:
+        """Track user interaction with window"""
         if event in ("home", "back"):
             window_dispatch.dispatch.open_window("HomeWindow")
             return True

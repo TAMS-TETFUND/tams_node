@@ -1,26 +1,15 @@
-"""
-This module will handle the synching of data from the server to the db of 
+"""This module handles the synching of data from the server to the db of 
 node devices.
-
-Could be designed as a class with methods to access the server API and SEQUENIALLY
-populate the database of the node device. The sequence of the population is given 
-below (This is to handle issue that may arise from foreign key relationships
-between certain models.)
-Due to the foreign key relationships, it may also be better to stop/restart the 
-synching if any problem is encountered with an API point. 
-
-The address of the api point will be appended to the address of the server.
-
-The address of the server will be entered by the user on the GUI. (the method will
-have provision for this address to be passed to method performing the request.)
 """
 import json
 import os
+from typing import Any, Dict, Optional, Tuple
 
 import requests
 from django.core.management import call_command
-from requests import HTTPError
+from requests import HTTPError, Response
 from app.appconfigparser import AppConfigParser
+from app.nodedeviceinit import DeviceRegistration
 from app.serializers import (
     AttendanceRecordSerializer,
     AttendanceSessionSerializer,
@@ -40,10 +29,8 @@ app_config = AppConfigParser()
 
 class NodeDataSynch:
     @classmethod
-    def start_data_sync(cls, protocol: str = "http"):
-        """
-        method to be called to sync the server data with the node device
-        on initial setup when connection has been made to the server
+    def start_data_sync(cls, protocol: str = "http") -> None:
+        """Sync server data to node device on completion of initial setup.
 
             :param ip:  the ip of the server when connection has been made
             :param port: the port the server is running
@@ -63,6 +50,7 @@ class NodeDataSynch:
         #     )
         # # backup_data = requests.get(server_url).json()
         # backup_data = response.json()
+        
         # Serializing json response
         json_object = json.dumps(backup_data.json(), indent=2)
 
@@ -83,10 +71,10 @@ class NodeDataSynch:
     @classmethod
     def node_register(
         cls,
-        headers: dict,
-        json_data: dict,
+        headers: Dict[str, str],
+        json_data: Dict[str, Any],
         protocol: str = "http",
-    ):
+    ) -> Any:
         endpoint = "api/v1/node-devices/"
         url = cls.get_url(endpoint, protocol=protocol)
 
@@ -95,13 +83,12 @@ class NodeDataSynch:
         return response.json()
 
     @classmethod
-    def node_attendance_sync(cls, protocol: str = "http"):
-        """
-        method sends attendance session and the attendance record of the node device
-        to the server
-        @required attendance session has to be sent first before attendance record
-        there is need to have a unique identifier of the attendance record that is not the
-        auto increment integer primary key
+    def node_attendance_sync(cls, protocol: str = "http") -> None:
+        """Send attendance session/record from the node device to server.
+
+        Attendance session is sent first before attendance records because of a 
+        foreign key relationship between the attendance records and attendance 
+        sessions.
         """
 
         endpoint = "api/v1/attendance/"
@@ -141,7 +128,8 @@ class NodeDataSynch:
             session.save()
 
     @staticmethod
-    def sync_request(url, headers, sync_data=None, get=False, put=False):
+    def sync_request(url: str, headers: Dict[str, str], sync_data: Optional[Any] = None, get: bool = False, put: bool = False) -> Response:
+        """Construct actual server request."""
         try:
             if get:
                 res = requests.get(url, headers=headers)
@@ -158,7 +146,8 @@ class NodeDataSynch:
         return res
 
     @classmethod
-    def get_server_details(cls):
+    def get_server_details(cls) -> Tuple[str, int]:
+        """Get IP address and port number of server."""
         try:
             ip = str(app_config.cp.get("server_details", "server_ip_address"))
             port = app_config.cp.getint("server_details", "server_port")
@@ -168,7 +157,8 @@ class NodeDataSynch:
         return ip, port
 
     @classmethod
-    def get_header(cls):
+    def get_header(cls) -> Dict[str, str]:
+        """Construct header to be passed to every node device request."""
         node = NodeDevice.objects.all().first()
 
         if node is None:
@@ -181,7 +171,8 @@ class NodeDataSynch:
         return headers
 
     @classmethod
-    def get_url(cls, endpoint, protocol="http", ip=None, port=None):
+    def get_url(cls, endpoint: str, protocol: str = "http", ip: str = None, port: int = None) -> str:
+        """Construct full URL for sending request to an API endpoint."""
         if ip is None or port is None:
             ip, port = cls.get_server_details()
 
@@ -189,14 +180,19 @@ class NodeDataSynch:
         return url
 
     @classmethod
-    def staff_register(cls, staff_dict):
-        staff_exist = Staff.objects.filter(
+    def staff_register(cls, staff_dict: Dict[str, Any]) -> str:
+        """Synch registration data of staff to server.
+        
+        Method handles both initial initial staff registration and
+        update of existing staff.
+        """
+        staff = Staff.objects.filter(
             staff_number=staff_dict["staff_number"]
         ).first()
 
-        if staff_exist:
-            ser_data = StaffSerializer(staff_exist, data=staff_dict)
-            endpoint = f"api/v1/staff/{staff_exist.staff_number}/"
+        if staff:
+            ser_data = StaffSerializer(staff, data=staff_dict)
+            endpoint = f"api/v1/staff/{staff.staff_number}/"
             put = True
             return_text = "Staff Updated successfully!"
         else:
@@ -214,14 +210,22 @@ class NodeDataSynch:
         raise HTTPError('{"detail": "Device not registered!"}')
 
     @classmethod
-    def student_register(cls, student_dict):
-        student_exist = Student.objects.filter(
+    def student_register(cls, student_dict: Dict[str, Any]) -> str:
+        """Synch registration data of student to server.
+        
+        Method handles both initial student registration and update
+        of existing student.
+        """
+        if not DeviceRegistration.is_registered():
+            raise HTTPError('{"detail": "Device not registered!"}')    
+        
+        student = Student.objects.filter(
             reg_number=student_dict["reg_number"]
         ).first()
 
-        if student_exist:
-            ser_data = StudentSerializer(student_exist, data=student_dict)
-            endpoint = f"api/v1/students/{student_exist.reg_number}/"
+        if student:
+            ser_data = StudentSerializer(student, data=student_dict)
+            endpoint = f"api/v1/students/{student.reg_number}/"
             put = True
             return_text = "Student Updated successfully!"
         else:
@@ -236,4 +240,4 @@ class NodeDataSynch:
             cls.sync_request(url, headers, student_dict, put=put)
             cls.start_data_sync()
             return return_text
-        raise HTTPError('{"detail": "Device not registered!"}')
+        raise HTTPError('{"detail": "Something went wrong!"}')

@@ -1,3 +1,4 @@
+from typing import Any, Dict, Optional
 import PySimpleGUI as sg
 
 from app.basegui import BaseGUIWindow
@@ -17,7 +18,8 @@ class StaffNumberInputWindow(
     their staff id/number by button clicks."""
 
     @classmethod
-    def window(cls):
+    def window(cls) -> sg.Window:
+        """Construct layout/appearance of window."""
         INPUT_BUTTON_SIZE = (8, 2)
         column1 = [
             [
@@ -81,7 +83,8 @@ class StaffNumberInputWindow(
         return window
 
     @classmethod
-    def loop(cls, window, event, values):
+    def loop(cls, window: sg.Window, event: str, values: Dict[str, Any]) -> bool:
+        """Track user interaction with window."""
         if event in ("back", "home"):
             cls.back_nav_key_handler()
             return True
@@ -121,7 +124,8 @@ class StaffNumberInputWindow(
         return True
 
     @classmethod
-    def validate(cls, values, window):
+    def validate(cls, values: Dict[str, Any], window: sg.Window) -> Optional[bool]:
+        """Validate values supplied by user in the window input fields."""
         for val_check in (
             cls.validate_required_field(
                 (values["staff_number_input"], "staff number")
@@ -134,12 +138,14 @@ class StaffNumberInputWindow(
         return None
 
     @staticmethod
-    def resize_column(window):
+    def resize_column(window: sg.Window) -> None:
+        """Refresh GUI when adding/removing message display field."""
         window.refresh()
         window["main_column"].contents_changed()
 
     @classmethod
-    def process_staff(cls, staff):
+    def process_staff(cls, staff: Staff) -> None:
+        """Process staff info for update."""
         app_config.cp["tmp_staff"] = app_config.cp.dict_vals_to_str(
             staff.values(
                 "staff_number",
@@ -155,7 +161,8 @@ class StaffNumberInputWindow(
         return
 
     @staticmethod
-    def back_nav_key_handler():
+    def back_nav_key_handler() -> None:
+        """Handle user pressing back button in nav pane."""
         window_dispatch.dispatch.open_window("HomeWindow")
         sg.popup(
             "Event details saved.",

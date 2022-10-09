@@ -1,5 +1,6 @@
 import json
 import time
+from typing import Any, Dict, List, Optional
 
 import PySimpleGUI as sg
 
@@ -22,8 +23,8 @@ class StaffEnrolmentWindow(ValidationMixin, BaseGUIWindow):
     """The GUI window for enrolment of staff biodata"""
 
     @classmethod
-    def window(cls):
-        # cls.enroll_update = True
+    def window(cls) -> sg.Window:
+        """Construct layout/appearance of window."""
         field_label_props = {"size": 16}
         combo_props = {"size": 28}
         input_props = {"size": 29}
@@ -121,7 +122,8 @@ class StaffEnrolmentWindow(ValidationMixin, BaseGUIWindow):
         return window
 
     @classmethod
-    def loop(cls, window, event, values):
+    def loop(cls, window: sg.Window, event: str, values: Dict[str, Any]) -> bool:
+        """Track user interaction with window."""
         if event == "staff_faculty":
             if values["staff_faculty"] in (cls.COMBO_DEFAULT, None):
                 window["staff_faculty"].update(
@@ -175,7 +177,8 @@ class StaffEnrolmentWindow(ValidationMixin, BaseGUIWindow):
         return True
 
     @classmethod
-    def validate(cls, values, window):
+    def validate(cls, values: Dict[str, Any], window: sg.Window) -> Optional[bool]:
+        """Validate values supplied by user in the window input fields."""
         req_fields = [
             (values["staff_number_input"], "staff number"),
             (values["staff_first_name"], "first name"),
@@ -206,7 +209,8 @@ class StaffEnrolmentWindow(ValidationMixin, BaseGUIWindow):
         return None
 
     @classmethod
-    def next_window(cls):
+    def next_window(cls) -> None:
+        """Open next window when processing of submitted data is complete."""
         window_dispatch.dispatch.open_window("StaffPasswordSettingWindow")
 
 
@@ -215,7 +219,8 @@ class StaffPasswordSettingWindow(BaseGUIWindow):
     enrolled."""
 
     @classmethod
-    def window(cls):
+    def window(cls) -> sg.Window:
+        """Construct layout/appearance of window."""
         field_label_props = {"size": 25}
         layout = [
             [sg.Text("Set Password")],
@@ -253,7 +258,8 @@ class StaffPasswordSettingWindow(BaseGUIWindow):
         return window
 
     @classmethod
-    def loop(cls, window, event, values):
+    def loop(cls, window: sg.Window, event: str, values: Dict[str, Any]) -> bool:
+        """Track user interaction with window"""
         if event in ("staff_password", "staff_password_confirm"):
             if values["staff_password"] != values["staff_password_confirm"]:
                 cls.display_message(
@@ -319,7 +325,8 @@ class StaffFaceEnrolmentWindow(FaceCameraWindow):
     being enrolled."""
 
     @classmethod
-    def process_image(cls, captured_face_encodings, window):
+    def process_image(cls, captured_face_encodings: Any, window: sg.Window) -> None:
+        """Process detected face."""
         if captured_face_encodings is None:
             cls.popup_auto_close_error(
                 "Error. Image must have exactly one face"
@@ -340,7 +347,8 @@ class StaffFaceEnrolmentWindow(FaceCameraWindow):
         return
 
     @staticmethod
-    def cancel_camera():
+    def cancel_camera() -> None:
+        """"Logic for when cancel button is pressed in camera window."""
         confirm = sg.popup_yes_no(
             "Staff details will be saved with no biometric data. Continue?",
             keep_on_top=True,
@@ -355,7 +363,8 @@ class StaffFingerprintEnrolmentWindow(FingerprintEnrolmentWindow):
     """This class provides methods tailored to staff fingerprint enrolement."""
 
     @classmethod
-    def process_fingerprint(cls, fingerprint_data):
+    def process_fingerprint(cls, fingerprint_data: List[int]) -> None:
+        """Process captured fingerprint template."""
         app_config.cp["new_staff"]["fingerprint_template"] = str(
             fingerprint_data
         )
@@ -365,7 +374,8 @@ class StaffFingerprintEnrolmentWindow(FingerprintEnrolmentWindow):
         return
 
     @staticmethod
-    def cancel_fp_enrolment():
+    def cancel_fp_enrolment() -> None:
+        """Next window when user presses cancel button on GUI window."""
         confirm = sg.popup_yes_no(
             "Staff details will be saved with no biometric data. Continue?",
             keep_on_top=True,
@@ -376,7 +386,11 @@ class StaffFingerprintEnrolmentWindow(FingerprintEnrolmentWindow):
         return
 
     @staticmethod
-    def post_process_enrolment_config():
+    def post_process_enrolment_config() -> None:
+        """Method to call when staff registration data has been validated.
+        
+        Typically contains logic for synching collected data to the server.
+        """
         try:
             message = NodeDataSynch.staff_register(
                 app_config.cp.section_dict("new_staff")
@@ -393,21 +407,26 @@ class StaffFingerprintEnrolmentWindow(FingerprintEnrolmentWindow):
         return
 
     @classmethod
-    def window_title(cls):
+    def window_title(cls) -> str:
+        """Title of the GUI window."""
         return "Student Fingerprint Verification"
 
 
 class StaffEnrolmentUpdateIDSearch(StaffNumberInputWindow):
+    """Window for finding staff by id for bio data update."""
     @classmethod
-    def window(cls):
+    def window(cls) -> sg.Window:
+        """Construct layout/appearance of window."""
         return super().window()
 
     @classmethod
-    def loop(cls, window, event, values):
+    def loop(cls, window: sg.Window, event: str, values: Dict[str, Any]) -> bool:
+        """Track user interaction with window."""
         return super().loop(window, event, values)
 
     @classmethod
-    def process_staff(cls, staff):
+    def process_staff(cls, staff: Staff) -> None:
+        """Process staff info for update."""
         app_config.cp["edit_staff"] = app_config.cp.dict_vals_to_str(
             staff.values(
                 "staff_number",
@@ -425,7 +444,8 @@ class StaffEnrolmentUpdateIDSearch(StaffNumberInputWindow):
         return
 
     @staticmethod
-    def back_nav_key_handler():
+    def back_nav_key_handler() -> None:
+        """Handle user pressing back button in nav pane."""
         window_dispatch.dispatch.open_window("HomeWindow")
         return
 
@@ -436,8 +456,8 @@ class StaffEnrolmentUpdateWindow(StaffEnrolmentWindow):
     enroll_update = "update"
 
     @classmethod
-    def window(cls):
-        # cls.enroll_update = False
+    def window(cls) -> sg.Window:
+        """Construct layout/appearance of window."""
         staff = app_config.cp["edit_staff"]
 
         try:
@@ -553,11 +573,13 @@ class StaffEnrolmentUpdateWindow(StaffEnrolmentWindow):
         return window
 
     @classmethod
-    def loop(cls, window, event, values):
+    def loop(cls, window: sg.Window, event: str, values: Dict[str, Any]) -> bool:
+        """Track user interaction with window."""
         return super().loop(window, event, values)
 
     @classmethod
-    def next_window(cls):
+    def next_window(cls) -> None:
+        """Open next window when processing of submitted data is complete."""
         if not OperationalMode.check_camera():
             cls.popup_auto_close_warn("Camera not connected.")
             time.sleep(2)

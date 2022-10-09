@@ -1,3 +1,5 @@
+from typing import Any
+
 import PySimpleGUI as sg
 
 from app.basegui import BaseGUIWindow
@@ -8,7 +10,8 @@ class FingerprintGenericWindow(BaseGUIWindow):
     window for the application."""
 
     @classmethod
-    def window(cls):
+    def window(cls) -> sg.Window:
+        """Construct layout/appearance of window."""
         layout = [
             [sg.Push(), sg.Text(cls.window_title()), sg.Push()],
             [sg.Push(), cls.message_display_field(), sg.Push()],
@@ -37,7 +40,11 @@ class FingerprintGenericWindow(BaseGUIWindow):
         return window
 
     @classmethod
-    def get_camera_button(cls):
+    def get_camera_button(cls) -> Any:
+        """Return camera button for GUI window layout.
+        
+        Will be visible if only if a verification window is open.
+        """
         if "verification" in cls.__name__.lower():
             return sg.pin(
                 sg.Button(
@@ -60,5 +67,6 @@ class FingerprintGenericWindow(BaseGUIWindow):
             )
 
     @classmethod
-    def window_title(cls):
+    def window_title(cls) -> str:
+        """Title of GUI window."""
         return "Fingerprint Scan"

@@ -1,3 +1,6 @@
+from typing import Any, Dict
+import PySimpleGUI as sg
+
 from app.attendancelogger import AttendanceLogger
 from app.fingerprint import FingerprintScanner
 from app.windows.basefingerprint import FingerprintGenericWindow
@@ -18,7 +21,8 @@ class StudentFingerprintVerificationWindow(
     during attendance logging."""
 
     @classmethod
-    def loop(cls, window, event, values):
+    def loop(cls, window: sg.Window, event: str, values: Dict[str, Any]) -> bool:
+        """Track user interaction with window."""
         if event == "cancel":
             window_dispatch.dispatch.open_window(
                 "AttendanceSessionLandingWindow"
@@ -103,5 +107,6 @@ class StudentFingerprintVerificationWindow(
         return True
 
     @classmethod
-    def window_title(cls):
+    def window_title(cls) -> str:
+        """Title of GUI window."""
         return "Student Fingerprint Verification"

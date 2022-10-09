@@ -1,4 +1,5 @@
 import json
+from typing import Any, Dict
 
 import PySimpleGUI as sg
 
@@ -14,7 +15,8 @@ class EnrolmentMenuWindow(BaseGUIWindow):
     """This window provides links to student and staff enrolment."""
 
     @classmethod
-    def window(cls):
+    def window(cls) -> sg.Window:
+        """Construct layout/appearance of window."""
 
         column1 = [
             [
@@ -217,7 +219,8 @@ class EnrolmentMenuWindow(BaseGUIWindow):
         return window
 
     @classmethod
-    def loop(cls, window, event, values):
+    def loop(cls, window: sg.Window, event: str, values: Dict[str, Any]) -> bool:
+        """Track user interaction with window."""
         if event in ("back", "home"):
             window_dispatch.dispatch.open_window("HomeWindow")
         if event in (

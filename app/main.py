@@ -1,3 +1,5 @@
+"""This module contains the function that starts the GUI application."""
+
 import PySimpleGUI as sg
 
 import app.appconfigparser
@@ -9,7 +11,8 @@ app_config = app.appconfigparser.AppConfigParser()
 window_dispatch = app.windowdispatch.WindowDispatch()
 
 
-def main_loop():
+def main_loop() -> None:
+    """Function that starts the application."""
     window_dispatch.dispatch.open_window("HomeWindow")
     # setting the operational mode of device
     app_config.cp["tmp_settings"] = {}

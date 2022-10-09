@@ -1,3 +1,4 @@
+from typing import Any, Dict
 import PySimpleGUI as sg
 
 from app.fingerprint import FingerprintScanner
@@ -25,7 +26,8 @@ class StaffFingerprintVerificationWindow(
     fingerprint during attendance initiation."""
 
     @classmethod
-    def loop(cls, window, event, values):
+    def loop(cls, window: sg.Window, event: str, values: Dict[str, Any]) -> bool:
+        """Track user interaction with window."""
         if event == "cancel":
             if app_config.cp.has_option(
                 "current_attendance_session", "initiator_id"
@@ -135,5 +137,6 @@ class StaffFingerprintVerificationWindow(
         return True
 
     @classmethod
-    def window_title(cls):
+    def window_title(cls) -> str:
+        """Title of GUI window."""
         return "Staff Fingerprint Verification"

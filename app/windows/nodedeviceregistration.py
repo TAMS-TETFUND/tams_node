@@ -1,3 +1,4 @@
+from typing import Any, Dict
 import PySimpleGUI as sg
 
 import app.appconfigparser
@@ -17,7 +18,8 @@ class NodeDeviceRegistrationWindow(ValidationMixin, BaseGUIWindow):
     """
 
     @classmethod
-    def window(cls):
+    def window(cls) -> sg.Window:
+        """Construct layout/appearance of window."""
         field_label_props = {"size": (22, 1)}
         input_props = {"size": (23, 1)}
         combo_props = {"size": 22}
@@ -56,7 +58,8 @@ class NodeDeviceRegistrationWindow(ValidationMixin, BaseGUIWindow):
         return window
 
     @classmethod
-    def loop(cls, window, event, values):
+    def loop(cls, window: sg.Window, event: str, values: Dict[str, Any]) -> bool:
+        """Track user interaction with window."""
         if event in ("home", "back"):
             window_dispatch.dispatch.open_window("HomeWindow")
             return True

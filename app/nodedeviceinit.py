@@ -8,15 +8,12 @@ from db.models import NodeDevice
 
 
 class DeviceRegistration:
-    """This class will be responsible for initial configuration of the node device.
+    """Class responsible for initial configuration of the node device.
+
     It will connect the device to the server and obtain a device ID and token to be
     used for subsequent operations like synching to/from the server.
-    It will also be appended to the every attendance info that will be sent to the server
-    - Connect the device to the server = handled by the networkinterface.py module
-    - access the registraton api point on the server: This api point will require
-        authentication to be accessed.
-    - obtain the device details: token and id
-    - log obtained device details in a config file
+    The obtained token will also be appended to the every attendance info that will 
+    be sent to the server.
     """
 
     config_file = os.path.join(
@@ -27,9 +24,14 @@ class DeviceRegistration:
     def register_device(
         cls,
         server_connection: ServerConnection,
-        registration_url="api/v1/node-devices/",
-    ):
-        """This method will be responsible for registering device on the server."""
+        registration_url: str = "api/v1/node-devices/",
+    ) -> bool:
+        """Register a node device on the server.
+        
+        Returns:
+            True if device registration was successful.
+            False if device registration fails.
+        """
         if cls.is_registered():
             raise RuntimeError("Device is already registered.")
 
@@ -52,7 +54,8 @@ class DeviceRegistration:
         return False
 
     @classmethod
-    def is_registered(cls):
+    def is_registered(cls) -> bool:
+        """Confirm a node devices has been registered to the server."""
         device_registration = NodeDevice.objects.all()
 
         if device_registration.exists():

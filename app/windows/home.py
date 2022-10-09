@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+from typing import Any, Dict
 
 import PySimpleGUI as sg
 from django.utils import timezone
@@ -17,7 +18,8 @@ class HomeWindow(BaseGUIWindow):
     """GUI Home Window for node devices."""
 
     @classmethod
-    def window(cls):
+    def window(cls) -> sg.Window:
+        """Construct layout/appearance of window."""
         column1 = [
             [
                 sg.Push(),
@@ -132,7 +134,8 @@ class HomeWindow(BaseGUIWindow):
         return window
 
     @classmethod
-    def loop(cls, window, event, values):
+    def loop(cls, window: sg.Window, event: str, values: Dict[str, Any]) -> bool:
+        """Track user interaction with window."""
         if event in ("new_event", "new_event_txt"):
             if not DeviceRegistration.is_registered():
                 cls.popup_auto_close_warn(
@@ -217,7 +220,8 @@ class HomeWindow(BaseGUIWindow):
         return True
 
     @staticmethod
-    def confirm_exit():
+    def confirm_exit() -> bool:
+        """Confirm user wants to exit application."""
         clicked = sg.popup_ok_cancel(
             "System will shutdown. Do you want to continue?",
             title="Shutdown",

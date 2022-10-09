@@ -1,3 +1,4 @@
+from typing import Any, Dict, Optional
 import PySimpleGUI as sg
 
 from app.basegui import BaseGUIWindow
@@ -16,7 +17,8 @@ class AcademicSessionDetailsWindow(ValidationMixin, BaseGUIWindow):
     new attendance event."""
 
     @classmethod
-    def window(cls):
+    def window(cls) -> sg.Window:
+        """Construct layout/appearance of window."""
         all_academic_sessions = AcademicSession.get_all_academic_sessions()
         layout = [
             [sg.Push(), sg.Text("Academic Session Details"), sg.Push()],
@@ -65,7 +67,8 @@ class AcademicSessionDetailsWindow(ValidationMixin, BaseGUIWindow):
         return window
 
     @classmethod
-    def loop(cls, window, event, values):
+    def loop(cls, window: sg.Window, event: str, values: Dict[str, Any]) -> bool:
+        """Track user interaction with window."""
         if event == "next":
             if cls.validate(values, window) is not None:
                 return True
@@ -82,7 +85,8 @@ class AcademicSessionDetailsWindow(ValidationMixin, BaseGUIWindow):
         return True
 
     @classmethod
-    def validate(cls, values, window):
+    def validate(cls, values: Dict[str, Any], window: sg.Window) -> Optional[bool]:
+        """Validate values supplied by user in the window input fields."""
         required_fields = [
             (values["current_semester"], "current semester"),
             (values["current_session"], "current session"),

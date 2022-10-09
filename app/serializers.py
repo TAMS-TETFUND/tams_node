@@ -1,3 +1,5 @@
+from typing import Any, Dict
+
 from rest_framework import serializers
 from rest_framework.relations import PrimaryKeyRelatedField
 from rest_framework.serializers import ModelSerializer
@@ -12,24 +14,28 @@ from db.models import (
 
 
 class AttendanceSessionSerializer(ModelSerializer):
+    """Serializer for the AttendanceSession model."""
     class Meta:
         model = AttendanceSession
         fields = "__all__"
 
 
 class AttendanceRecordSerializer(ModelSerializer):
+    """Serializer for the AttendanceRecord model."""
     class Meta:
         model = AttendanceRecord
         fields = "__all__"
 
 
 class StudentSerializer(ModelSerializer):
+    """Serializer for the Student model."""
     class Meta:
         model = Student
         fields = "__all__"
 
 
 class StaffSerializer(serializers.Serializer):
+    """Serializer for the StaffSerializer model."""
     username = serializers.CharField(
         max_length=150,
     )
@@ -58,7 +64,7 @@ class StaffSerializer(serializers.Serializer):
     #     queryset=StaffTitle.objects.all(), many=True
     # )
 
-    def create(self, validated_data):
+    def create(self, validated_data: Dict[str, Any]) -> Staff:
         staff_no = validated_data.get("username")
         instance = Staff.objects.filter(staff_number=staff_no).first()
 
@@ -70,7 +76,7 @@ class StaffSerializer(serializers.Serializer):
         instance.save()
         return instance
 
-    def update(self, instance, validated_data):
+    def update(self, instance, validated_data: Dict[str, Any]) -> Staff:
         for key, value in validated_data.items():
             setattr(instance, key, value)
         instance.save()

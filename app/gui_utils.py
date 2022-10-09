@@ -1,6 +1,8 @@
+from typing import Iterable, Optional
 import PySimpleGUI as sg
 
 import app.appconfigparser
+from app.basegui import BaseGUIWindow
 import app.windowdispatch
 from app.opmodes import OperationalMode, OpModes
 
@@ -23,7 +25,19 @@ app_config = app.appconfigparser.AppConfigParser()
 window_dispatch = app.windowdispatch.WindowDispatch()
 
 
-def update_device_op_mode():
+def update_device_op_mode() -> None:
+    """Update operational mode of node device in app's configparser.
+    
+    Node device can operate in 3 different modes. The mode
+    a given node device is running would depend on available 
+    biometric verification devices. The 3 modes, defined in app.opmodes 
+    are: FACE, FINGERPRINT, BIMODAL.    
+    If only a camera connection is detected, the app's operational mode
+    would be FACE mode. If only a fingerprint scanner connection is 
+    detected, the app's operational mode would be FINGERPRINT mode. If  
+    both fingerprint scanner and camera is detected, the operational mode
+    would be BIMODAL.
+    """
     app_config.cp.remove_option("tmp_settings", "op_mode")
     try:
         device_op_mode = OperationalMode.check_all_modes()
@@ -34,8 +48,8 @@ def update_device_op_mode():
 
 
 class StaffBiometricVerificationRouterMixin:
-    @classmethod
-    def staff_verification_window(cls):
+    @staticmethod
+    def staff_verification_window() -> None:
         """Mixin for routing staff verification task to appropriate window."""
         update_device_op_mode()
         if "op_mode" not in app_config.cp["tmp_settings"]:
@@ -46,7 +60,7 @@ class StaffBiometricVerificationRouterMixin:
         device_op_mode = app_config.cp.getint("tmp_settings", "op_mode")
         if device_op_mode == OpModes.FINGERPRINT.value:
             if tmp_staff["fingerprint_template"] in (None, "None", ""):
-                cls.popup_auto_close_error(
+                BaseGUIWindow.popup_auto_close_error(
                     "No fingerprint registration data found"
                 )
             else:
@@ -56,7 +70,7 @@ class StaffBiometricVerificationRouterMixin:
             return
         if device_op_mode == OpModes.FACE.value:
             if tmp_staff["face_encodings"] in (None, "None", ""):
-                cls.popup_auto_close_error("No facial registration data found")
+                BaseGUIWindow.popup_auto_close_error("No facial registration data found")
             else:
                 window_dispatch.dispatch.open_window(
                     "StaffFaceVerificationWindow"
@@ -65,7 +79,7 @@ class StaffBiometricVerificationRouterMixin:
         if device_op_mode == OpModes.BIMODAL.value:
             if tmp_staff["fingerprint_template"] in (None, "None", ""):
                 if tmp_staff["face_encodings"] in (None, "None", ""):
-                    cls.popup_auto_close_error(
+                    BaseGUIWindow.popup_auto_close_error(
                         "No biometric data found for staff"
                     )
                     return
@@ -86,7 +100,13 @@ class StaffIDInputRouterMixin:
     Routing will depend on presence/absence of camera module in device."""
 
     @staticmethod
-    def staff_id_input_window():
+    def staff_id_input_window() -> None:
+        """Set staff ID input window based on current operational mode.
+        
+        Will open the StaffBarcodeCameraWindow if a camera is connected.
+        If camera is not detected, the StaffNumberInputWindow (keypad-based)
+        will be opened.
+        """
         update_device_op_mode()
         if "op_mode" not in app_config.cp["tmp_settings"]:
             window_dispatch.dispatch.open_window("HomeWindow")
@@ -105,8 +125,15 @@ class StaffIDInputRouterMixin:
 class StudentBiometricVerificationRouterMixin:
     """Mixin for routing student verification task to appropriate window."""
 
-    @classmethod
-    def student_verification_window(cls):
+    @staticmethod
+    def student_verification_window() -> None:
+        """Open valid student verification window for attendance logging.
+        
+        The logic is to open a verification window which the current 
+        device operational mode supports. The logic also has to confirm 
+        that the student being verified has valid biometric data that
+        would be required by the verification window. 
+        """
         update_device_op_mode()
         if "op_mode" not in app_config.cp["tmp_settings"]:
             window_dispatch.dispatch.open_window("HomeWindow")
@@ -116,7 +143,7 @@ class StudentBiometricVerificationRouterMixin:
         device_op_mode = app_config.cp.getint("tmp_settings", "op_mode")
         if device_op_mode == OpModes.FINGERPRINT.value:
             if tmp_student["fingerprint_template"] in (None, "None", ""):
-                cls.popup_auto_close_error(
+                BaseGUIWindow.popup_auto_close_error(
                     "No fingerprint registration data found"
                 )
             else:
@@ -126,7 +153,7 @@ class StudentBiometricVerificationRouterMixin:
             return
         if device_op_mode == OpModes.FACE.value:
             if tmp_student["face_encodings"] in (None, "None", ""):
-                cls.popup_auto_close_error("No facial registration data found")
+                BaseGUIWindow.popup_auto_close_error("No facial registration data found")
             else:
                 window_dispatch.dispatch.open_window(
                     "StudentFaceVerificationWindow"
@@ -135,7 +162,7 @@ class StudentBiometricVerificationRouterMixin:
         if device_op_mode == OpModes.BIMODAL.value:
             if tmp_student["fingerprint_template"] in (None, "None", ""):
                 if tmp_student["face_encodings"] in (None, "None", ""):
-                    cls.popup_auto_close_error(
+                    BaseGUIWindow.popup_auto_close_error(
                         "No biometric data found for student"
                     )
                     return
@@ -156,7 +183,13 @@ class StudentRegNumberInputRouterMixin:
     reg number input. Routing will depend on presence/absence of camera module in device"""
 
     @staticmethod
-    def student_reg_number_input_window():
+    def student_reg_number_input_window() -> None:
+        """Set student reg number input window based on current operational mode.
+        
+        Will open the StudentBarcodeCameraWindow if a camera is connected.
+        If camera is not detected, the StudentRegNumInputWindow (keypad-based)
+        will be opened.
+        """
         update_device_op_mode()
         if "op_mode" not in app_config.cp["tmp_settings"]:
             window_dispatch.dispatch.open_window("HomeWindow")
@@ -176,7 +209,8 @@ class ValidationMixin:
     """Mixin to handle input field validations."""
 
     @staticmethod
-    def validate_required_field(req_field):
+    def validate_required_field(req_field: Iterable[str]) -> Optional[str]:
+        """Check if a input field has not been modified by user."""
         field_value, field_name_for_display = req_field
         if field_value in (None, "", "--select--"):
             return "Invalid value provided in {}".format(field_name_for_display)
@@ -184,45 +218,50 @@ class ValidationMixin:
             return None
 
     @classmethod
-    def validate_required_fields(cls, req_fields, window):
+    def validate_required_fields(cls, req_fields: Iterable[str], window: sg.Window) -> Optional[bool]:
+        """Check if a list of input fields have valid input from user."""
         for field in req_fields:
             validation_value = cls.validate_required_field(field)
             if validation_value is not None:
-                cls.display_message(validation_value, window)
+                BaseGUIWindow.display_message(validation_value, window)
                 return True
-            else:
-                return None
+        return None
 
     @staticmethod
-    def validate_semester(semester):
+    def validate_semester(semester: str) -> Optional[str]:
+        """Validate user's input to a semester input field."""
         if semester not in SemesterChoices.labels:
             return "Invalid value for semester"
         else:
             return None
 
     @staticmethod
-    def validate_academic_session(session):
+    def validate_academic_session(session: str) -> Optional[str]:
+        """Validate user's input to an academic session input field."""
         if not AcademicSession.is_valid_session(session):
             return "Invalid value for academic session"
         else:
             return None
 
     @staticmethod
-    def validate_student_reg_number(reg_no):
+    def validate_student_reg_number(reg_no: str) -> Optional[str]:
+        """Validate user's input to a student reg number input field."""
         if not Student.is_valid_student_reg_number(reg_no):
             return f"Invalid format for student registration number ({reg_no})"
         else:
             return None
 
     @staticmethod
-    def validate_staff_number(staff_no):
+    def validate_staff_number(staff_no: str) -> Optional[str]:
+        """Validate user's input to a staff number input field."""
         if not Staff.is_valid_staff_number(staff_no):
             return "Invalid value for staff number"
         else:
             return None
 
     @staticmethod
-    def validate_faculty(faculty):
+    def validate_faculty(faculty: str) -> Optional[str]:
+        """Validate user's input to a faculty input field."""
         if faculty.lower() not in [
             fac.lower() for fac in Faculty.get_all_faculties()
         ]:
@@ -231,7 +270,8 @@ class ValidationMixin:
             return None
 
     @staticmethod
-    def validate_department(department):
+    def validate_department(department: str) -> Optional[str]:
+        """Validate user's input to a department input field."""
         if department.lower() not in [
             dept.lower() for dept in Department.get_departments()
         ]:
@@ -240,14 +280,16 @@ class ValidationMixin:
             return None
 
     @staticmethod
-    def validate_sex(sex):
+    def validate_sex(sex: str) -> Optional[str]:
+        """Validate user's input to a sex input field."""
         if sex not in SexChoices.labels:
             return "Invalid value in sex"
         else:
             return None
 
     @staticmethod
-    def validate_int_field(field_value, field_name):
+    def validate_int_field(field_value: str, field_name: str) -> Optional[str]:
+        """Validate user's input to an input field that requires an int."""
         try:
             field_val_int = int(field_value)
         except Exception:
@@ -256,7 +298,8 @@ class ValidationMixin:
             return None
 
     @staticmethod
-    def validate_text_field(field_value, field_name):
+    def validate_text_field(field_value: str, field_name: str) -> Optional[str]:
+        """Validate user's input to an input text field."""
         if len(field_value) == 0:
             return f"{field_name.capitalize()} cannot be blank"
         else:

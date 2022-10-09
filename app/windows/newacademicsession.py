@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Any, Dict
 from django.db.utils import IntegrityError
 
 import PySimpleGUI as sg
@@ -18,7 +19,8 @@ class NewAcademicSessionWindow(ValidationMixin, BaseGUIWindow):
     """Window to create a new academic session."""
 
     @classmethod
-    def window(cls):
+    def window(cls) -> sg.Window:
+        """Construct layout/appearance of window."""
         current_year = datetime.now().year
         allowed_yrs = [x for x in range(current_year, current_year + 4)]
         layout = [
@@ -64,7 +66,8 @@ class NewAcademicSessionWindow(ValidationMixin, BaseGUIWindow):
         return window
 
     @classmethod
-    def loop(cls, window, event, values):
+    def loop(cls, window: sg.Window, event: str, values: Dict[str, Any]) -> bool:
+        """Track user interaction with window."""
         if event == "back":
             window_dispatch.dispatch.open_window("AcademicSessionDetailsWindow")
         if event == "home":
@@ -93,7 +96,7 @@ class NewAcademicSessionWindow(ValidationMixin, BaseGUIWindow):
                     return True
 
                 try:
-                    new_session = AcademicSession.objects.create(
+                    new_session_obj = AcademicSession.objects.create(
                         session=new_session,
                         is_current_session=is_current_session,
                     )
@@ -107,7 +110,7 @@ class NewAcademicSessionWindow(ValidationMixin, BaseGUIWindow):
                     return True
 
                 cls.popup_auto_close_success(
-                    f"Academic session {new_session.session} created successfully"
+                    f"Academic session {new_session_obj.session} created successfully"
                 )
                 window_dispatch.dispatch.open_window("HomeWindow")
                 return True
