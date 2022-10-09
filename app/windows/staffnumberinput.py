@@ -83,7 +83,9 @@ class StaffNumberInputWindow(
         return window
 
     @classmethod
-    def loop(cls, window: sg.Window, event: str, values: Dict[str, Any]) -> bool:
+    def loop(
+        cls, window: sg.Window, event: str, values: Dict[str, Any]
+    ) -> bool:
         """Track user interaction with window."""
         if event in ("back", "home"):
             cls.back_nav_key_handler()
@@ -124,7 +126,9 @@ class StaffNumberInputWindow(
         return True
 
     @classmethod
-    def validate(cls, values: Dict[str, Any], window: sg.Window) -> Optional[bool]:
+    def validate(
+        cls, values: Dict[str, Any], window: sg.Window
+    ) -> Optional[bool]:
         """Validate values supplied by user in the window input fields."""
         for val_check in (
             cls.validate_required_field(

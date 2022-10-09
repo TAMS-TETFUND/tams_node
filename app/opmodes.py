@@ -6,12 +6,13 @@ from app.fingerprint import FingerprintScanner
 
 class OpModes(Enum):
     """Enum of available biometric verification modes.
-    
+
     Values:
         Opmodes.FINGERPRINT: Only a fingerprint scanner is present
         Opmodes.FACE: Only a camera is present
         Opmodes.BIMODAL: Both camera and fingerprint scanner present.
     """
+
     FINGERPRINT = 1
     FACE = 2
     BIMODAL = 100
@@ -20,10 +21,10 @@ class OpModes(Enum):
 class OperationalMode:
     """A helper class to set the available biometric
     verification modes in the application configparser file.
-    
+
     If only a camera connection is detected, the app's operational mode
-    would be FACE mode. If only a fingerprint scanner connection is 
-    detected, the app's operational mode would be FINGERPRINT mode. If 
+    would be FACE mode. If only a fingerprint scanner connection is
+    detected, the app's operational mode would be FINGERPRINT mode. If
     both fingerprint scanner and camera is detected, the operational mode
     would be BIMODAL.
     """
@@ -31,8 +32,8 @@ class OperationalMode:
     @classmethod
     def check_all_modes(cls) -> int:
         """Check for a usable Camera and fingerprint scanner on device.
-        
-        Returns a value fron the OpModes (app.opmodes.OpModes) enum 
+
+        Returns a value fron the OpModes (app.opmodes.OpModes) enum
         corresponding to the biometric verification devices found
         on the node device (computer).
         """
@@ -51,7 +52,7 @@ class OperationalMode:
     @staticmethod
     def check_fingerprint() -> bool:
         """Check if a fingerprint scanner is available.
-        
+
         Returns:
             True: if available
             False if unavailable

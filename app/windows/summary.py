@@ -73,7 +73,9 @@ class NewEventSummaryWindow(StaffIDInputRouterMixin, BaseGUIWindow):
         return window
 
     @classmethod
-    def loop(cls, window: sg.Window, event: str, values: Dict[str, Any]) -> bool:
+    def loop(
+        cls, window: sg.Window, event: str, values: Dict[str, Any]
+    ) -> bool:
         """Track user interaction with window."""
         if event in ("start_event", "schedule_event"):
             new_event = dict(app_config.cp["new_event"])
@@ -204,7 +206,9 @@ class ActiveEventSummaryWindow(
         return window
 
     @classmethod
-    def loop(cls, window: sg.Window, event: str, values: Dict[str, Any]) -> bool:
+    def loop(
+        cls, window: sg.Window, event: str, values: Dict[str, Any]
+    ) -> bool:
         """Track user interaction with window."""
         if event == "continue_event":
             active_event = app_config.cp["current_attendance_session"]

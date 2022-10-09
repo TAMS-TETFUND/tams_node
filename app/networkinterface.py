@@ -8,7 +8,9 @@ from typing import Any, List, Optional, Tuple, Union
 from app.device import wlan_interface_name
 
 
-def connect_to_wifi(ssid: str, network_password: str) -> Union[int, Tuple[Any, ...]]:
+def connect_to_wifi(
+    ssid: str, network_password: str
+) -> Union[int, Tuple[Any, ...]]:
     """Establish connection to a WiFi network.
 
     returns:
@@ -52,8 +54,8 @@ class WLANInterface:
     def connection_query() -> List[str]:
         """Get information about the wireless interface of the device.
 
-        Returns a list of detailed information about the wireless 
-        interface of the device. Method returns an empty list if 
+        Returns a list of detailed information about the wireless
+        interface of the device. Method returns an empty list if
         the WLAN interface is disabled/unavailable.
         """
         interface_name = wlan_interface_name()

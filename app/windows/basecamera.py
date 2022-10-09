@@ -51,7 +51,7 @@ class CameraWindow(BaseGUIWindow):
     @classmethod
     def get_keyboard_button(cls) -> Any:
         """Return keyboard button for GUI window layout.
-        
+
         Will be hidden when a keyboard window is open. Will be
         visible if a barcode window is open."""
         if issubclass(cls, BarcodeCameraWindow):
@@ -78,7 +78,7 @@ class CameraWindow(BaseGUIWindow):
     @classmethod
     def get_fingerprint_button(cls) -> Any:
         """Return fingerprint button for GUI window layout.
-        
+
         Will be visible if a verification window is open."""
         if "verification" in cls.__name__.lower():
             return sg.pin(
@@ -112,7 +112,9 @@ class FaceCameraWindow(CameraWindow):
     """This is a base class. Implements facial recognition with camera."""
 
     @classmethod
-    def loop(cls, window: sg.Window, event: str, values: Dict[str, Any]) -> bool:
+    def loop(
+        cls, window: sg.Window, event: str, values: Dict[str, Any]
+    ) -> bool:
         """Track user interaction with window."""
         with CamFaceRec() as cam_facerec:
             while True:
@@ -155,13 +157,15 @@ class FaceCameraWindow(CameraWindow):
                 )
 
     @classmethod
-    def process_image(cls, captured_face_encodings: Any, window: sg.Window) -> None:
+    def process_image(
+        cls, captured_face_encodings: Any, window: sg.Window
+    ) -> None:
         """Process detected face."""
         raise NotImplementedError
 
     @staticmethod
     def cancel_camera() -> None:
-        """"Logic for when cancel button is pressed in camera window."""
+        """ "Logic for when cancel button is pressed in camera window."""
         raise NotImplementedError
 
     @staticmethod
@@ -186,7 +190,9 @@ class BarcodeCameraWindow(CameraWindow):
     """Base class. This implements Barcode decoding with camera."""
 
     @classmethod
-    def loop(cls, window: sg.Window, event: str, values: Dict[str, Any]) -> bool:
+    def loop(
+        cls, window: sg.Window, event: str, values: Dict[str, Any]
+    ) -> bool:
         """Track user interaction with window"""
         with Camera() as cam:
             while True:
@@ -220,7 +226,9 @@ class BarcodeCameraWindow(CameraWindow):
         return True
 
     @classmethod
-    def process_barcode(cls, identification_num: str, window: sg.Window) -> None:
+    def process_barcode(
+        cls, identification_num: str, window: sg.Window
+    ) -> None:
         """Process a decoded identification number."""
         raise NotImplementedError
 

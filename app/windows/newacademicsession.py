@@ -66,7 +66,9 @@ class NewAcademicSessionWindow(ValidationMixin, BaseGUIWindow):
         return window
 
     @classmethod
-    def loop(cls, window: sg.Window, event: str, values: Dict[str, Any]) -> bool:
+    def loop(
+        cls, window: sg.Window, event: str, values: Dict[str, Any]
+    ) -> bool:
         """Track user interaction with window."""
         if event == "back":
             window_dispatch.dispatch.open_window("AcademicSessionDetailsWindow")

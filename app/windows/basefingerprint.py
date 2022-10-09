@@ -42,7 +42,7 @@ class FingerprintGenericWindow(BaseGUIWindow):
     @classmethod
     def get_camera_button(cls) -> Any:
         """Return camera button for GUI window layout.
-        
+
         Will be visible if only if a verification window is open.
         """
         if "verification" in cls.__name__.lower():

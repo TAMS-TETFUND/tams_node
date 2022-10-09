@@ -67,7 +67,9 @@ class AcademicSessionDetailsWindow(ValidationMixin, BaseGUIWindow):
         return window
 
     @classmethod
-    def loop(cls, window: sg.Window, event: str, values: Dict[str, Any]) -> bool:
+    def loop(
+        cls, window: sg.Window, event: str, values: Dict[str, Any]
+    ) -> bool:
         """Track user interaction with window."""
         if event == "next":
             if cls.validate(values, window) is not None:
@@ -85,7 +87,9 @@ class AcademicSessionDetailsWindow(ValidationMixin, BaseGUIWindow):
         return True
 
     @classmethod
-    def validate(cls, values: Dict[str, Any], window: sg.Window) -> Optional[bool]:
+    def validate(
+        cls, values: Dict[str, Any], window: sg.Window
+    ) -> Optional[bool]:
         """Validate values supplied by user in the window input fields."""
         required_fields = [
             (values["current_semester"], "current semester"),

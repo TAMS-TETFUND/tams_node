@@ -18,7 +18,9 @@ class FingerprintEnrolmentWindow(FingerprintGenericWindow):
     """
 
     @classmethod
-    def loop(cls, window: sg.Window, event: str, values: Dict[str, Any]) -> bool:
+    def loop(
+        cls, window: sg.Window, event: str, values: Dict[str, Any]
+    ) -> bool:
         """Track user interaction with window."""
 
         if event == "cancel":
@@ -87,7 +89,7 @@ class FingerprintEnrolmentWindow(FingerprintGenericWindow):
     @staticmethod
     def post_process_enrolment_config() -> None:
         """Method to call when staff registration data has been validated.
-        
+
         Typically contains logic for synching collected data to the server.
         """
         raise NotImplementedError

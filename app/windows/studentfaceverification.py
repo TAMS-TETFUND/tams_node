@@ -21,7 +21,9 @@ class StudentFaceVerificationWindow(
     """
 
     @classmethod
-    def process_image(cls, captured_face_encodings: Any, window: sg.Window) -> None:
+    def process_image(
+        cls, captured_face_encodings: Any, window: sg.Window
+    ) -> None:
         """Process detected face."""
         if captured_face_encodings is None:
             cls.popup_auto_close_error("Eror. Image must have exactly one face")
@@ -62,7 +64,7 @@ class StudentFaceVerificationWindow(
 
     @staticmethod
     def cancel_camera() -> None:
-        """"Logic for when cancel button is pressed in camera window."""
+        """ "Logic for when cancel button is pressed in camera window."""
         window_dispatch.dispatch.open_window("AttendanceSessionLandingWindow")
 
     @classmethod

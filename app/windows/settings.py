@@ -32,5 +32,5 @@ APP_WINDOWS = {
     "StaffFingerprintEnrolmentWindow": "app.windows.staffenrolment",
     "StaffEnrolmentUpdateIDSearch": "app.windows.staffenrolment",
     "StaffEnrolmentUpdateWindow": "app.windows.staffenrolment",
-    "AttendanceSignOutWindow": "app.windows.attendancesignout"
+    "AttendanceSignOutWindow": "app.windows.attendancesignout",
 }

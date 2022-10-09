@@ -19,7 +19,9 @@ class StaffBarcodeCameraWindow(
     from qr code during attendance session initiation"""
 
     @classmethod
-    def process_barcode(cls, identification_num:str, window: sg.Window) -> None:
+    def process_barcode(
+        cls, identification_num: str, window: sg.Window
+    ) -> None:
         """Process a decoded identification number."""
         val_check = cls.validate_staff_number(identification_num)
         if val_check is not None:
@@ -75,7 +77,7 @@ class StaffBarcodeCameraWindow(
         ]
 
     @classmethod
-    def launch_keypad(cls)-> None:
+    def launch_keypad(cls) -> None:
         """Window to open when the keyboard icon is pressed in GUI window."""
         window_dispatch.dispatch.open_window("StaffNumberInputWindow")
         return

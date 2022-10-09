@@ -11,20 +11,21 @@ from app.basegui import BaseGUIWindow
 
 class Camera:
     """The camera class."""
+
     def __init__(self) -> None:
         self.camera_ok()
         self.cap = cv2.VideoCapture(0)
         self.stopped = False
         (self.grabbed, self.frame) = self.cap.read()
 
-    def __enter__(self) -> 'Camera':
+    def __enter__(self) -> "Camera":
         self.start_thread()
         return self
 
     def __exit__(self, exc_type, exc_value, exc_traceback) -> Optional[bool]:
         self.stop()
 
-    def start_thread(self) -> 'Camera':
+    def start_thread(self) -> "Camera":
         """Start the thread to read frames from the video stream"""
         Thread(target=self.update, args=()).start()
         return self
@@ -40,8 +41,8 @@ class Camera:
 
     def camera_ok(self) -> bool:
         """Check for presence of working camera.
-        
-        TODO: Current method implementation will not work for 
+
+        TODO: Current method implementation will not work for
         non-Unix OS's.
         """
         if os.path.exists("/dev/video0"):

@@ -15,6 +15,7 @@ from db.models import (
 
 class AttendanceSessionSerializer(ModelSerializer):
     """Serializer for the AttendanceSession model."""
+
     class Meta:
         model = AttendanceSession
         fields = "__all__"
@@ -22,6 +23,7 @@ class AttendanceSessionSerializer(ModelSerializer):
 
 class AttendanceRecordSerializer(ModelSerializer):
     """Serializer for the AttendanceRecord model."""
+
     class Meta:
         model = AttendanceRecord
         fields = "__all__"
@@ -29,6 +31,7 @@ class AttendanceRecordSerializer(ModelSerializer):
 
 class StudentSerializer(ModelSerializer):
     """Serializer for the Student model."""
+
     class Meta:
         model = Student
         fields = "__all__"
@@ -36,6 +39,7 @@ class StudentSerializer(ModelSerializer):
 
 class StaffSerializer(serializers.Serializer):
     """Serializer for the StaffSerializer model."""
+
     username = serializers.CharField(
         max_length=150,
     )

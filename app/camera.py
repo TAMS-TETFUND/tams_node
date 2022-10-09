@@ -16,7 +16,9 @@ class Camera(PiCamera):
         self.framerate = 24
         time.sleep(1)
 
-    def feed(self, format: str = "bgr", use_video_port: bool = True) -> np.ndarray:
+    def feed(
+        self, format: str = "bgr", use_video_port: bool = True
+    ) -> np.ndarray:
         output = np.empty((240, 320, 3), dtype=np.uint8)
         self.capture(output, "bgr", use_video_port=True)
         return output
@@ -36,7 +38,9 @@ class Camera(PiCamera):
         )[1].tobytes()
 
     def save_feed(
-        self, filename: str = "demo_img", path: str = os.path.dirname("demo_images/")
+        self,
+        filename: str = "demo_img",
+        path: str = os.path.dirname("demo_images/"),
     ) -> Self:
         os.makedirs(path, exists_ok=True)
         cv2.imwrite(f"{path}/{filename}.png", self.feed())

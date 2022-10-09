@@ -43,13 +43,14 @@ across different fingerprint scanners.
 
 class FingerprintScanner:
     """The Fingerprint scanner class.
-    
+
     Responsible for interfacing application to fingerprint scanners.
     Currently supports only fingerprint scanners that can work with
     the adafruit_fingerprint library. Should work when fingerprint
-    scanner is connected via a serial connection and when a 
+    scanner is connected via a serial connection and when a
     Serial-to-USB converter is used to connect the fingerprint scanner.
     """
+
     SERIAL_PATH = "/dev/ttyAMA0"
     BAUD_RATE = 57600
     NOFINGER = adafruit_fingerprint.NOFINGER
@@ -62,7 +63,7 @@ class FingerprintScanner:
                 self.SERIAL_PATH, baudrate=self.BAUD_RATE, timeout=1
             )
             self.finger = adafruit_fingerprint.Adafruit_Fingerprint(self.uart)
-            
+
         else:
             self.finger = None
             raise RuntimeError("Fingerprint scanner connection not detected")
@@ -105,9 +106,11 @@ class FingerprintScanner:
         else:
             return False
 
-    def send_fpdata(self, fingerprint_template: List[int], slot: int, buffer: str="char") -> int:
+    def send_fpdata(
+        self, fingerprint_template: List[int], slot: int, buffer: str = "char"
+    ) -> int:
         """Load fingerprint template into scanner buffer.
-        
+
         Returns a code of success/failure of the send operation.
         Typically adafruit_fingerprint.OK would indicate a success."""
         return self.finger.send_fpdata(
@@ -116,7 +119,7 @@ class FingerprintScanner:
 
     def fp_match(self) -> int:
         """Compare the fingerprint templates in char buffers 1 and 2.
-        
+
         Returns a code of success/failure of the match operation.
         Stores the confidence score in self.fp_match_confidence."""
         return self.finger.compare_templates()
@@ -127,7 +130,7 @@ class FingerprintScanner:
 
     def create_model(self) -> bool:
         """Generate a fingerprint template from scanner buffer content.
-        
+
         Returns:
             True if create operation succeeds.
             False if create operation fails.
@@ -144,8 +147,8 @@ class FingerprintScanner:
 
     def fp_capture(self) -> bool:
         """Capture fingerprint placed on the scanner.
-        
-        Returns: 
+
+        Returns:
             True if capture operation was successful.
             False if capture operation fails.
         """
@@ -170,7 +173,7 @@ class FingerprintScanner:
 
     def store_template_in_file(self, filename: str) -> bool:
         """Store generated fingerprint template in a file.
-        
+
         Returns:
             True if save operation is successful.
             False if save operation fails."""
@@ -200,17 +203,19 @@ class FingerprintScanner:
         else:
             return True
 
-    def get_fpdata(self, sensorbuffer: str = "char", scanner_slot: int = 1) -> List[int]:
+    def get_fpdata(
+        self, sensorbuffer: str = "char", scanner_slot: int = 1
+    ) -> List[int]:
         """Read fingerprint data from the scanner buffer.
-        
-        Fingerprint scanners supported by the adafruit_fingerprint 
-        library typically have 2 char sensor buffers and an image 
+
+        Fingerprint scanners supported by the adafruit_fingerprint
+        library typically have 2 char sensor buffers and an image
         sensor buffer. By default, this method will attempt to access
-        the char sensor buffer. 
+        the char sensor buffer.
         These adafruit-compatible scanners
         typically also have 2 slots. By default, this method will attempt
-        to access char buffer slot 1. 
-        
+        to access char buffer slot 1.
+
         Returns a code indicating success/failure of read operation.
         adafruit_fingerprint.OK would typically indicate operation success.
         """
@@ -238,6 +243,6 @@ class FingerprintScanner:
 
     def get_image(self) -> int:
         """Requests the scanner to take an image and store it in memory.
-        
+
         Returns a code that indicates success/failure of operation."""
         return self.finger.get_image()

@@ -15,7 +15,9 @@ class StaffFaceVerificationWindow(FaceCameraWindow):
     """This class is responsible for staff face verification and initiates attendance session."""
 
     @classmethod
-    def process_image(cls, captured_face_encodings: Any, window: sg.Window) -> None:
+    def process_image(
+        cls, captured_face_encodings: Any, window: sg.Window
+    ) -> None:
         """Process detected face."""
         if captured_face_encodings is None:
             cls.popup_auto_close_error("Eror. Image must have exactly one face")
@@ -54,7 +56,7 @@ class StaffFaceVerificationWindow(FaceCameraWindow):
 
     @staticmethod
     def cancel_camera() -> None:
-        """"Logic for when cancel button is pressed in camera window."""
+        """ "Logic for when cancel button is pressed in camera window."""
         if app_config.cp.has_option(
             "current_attendance_session", "initiator_id"
         ):

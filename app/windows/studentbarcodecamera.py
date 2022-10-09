@@ -26,7 +26,9 @@ class StudentBarcodeCameraWindow(
     from qr code during attendance marking"""
 
     @classmethod
-    def process_barcode(cls, identification_num: str, window: sg.Window) -> None:
+    def process_barcode(
+        cls, identification_num: str, window: sg.Window
+    ) -> None:
         """Process a decoded identification number."""
         val_check = cls.validate_student_reg_number(identification_num)
         if val_check is not None:

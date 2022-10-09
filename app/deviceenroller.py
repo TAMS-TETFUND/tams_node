@@ -16,7 +16,9 @@ class DeviceEnroller:
     DEVICE_CONFIG_FILE_PATH: str = os.path.join(
         Path(os.path.abspath(__file__)).parent, ".device_config.cp.ini"
     )
-    device_config: AppConfigParser  = AppConfigParser(file_path=DEVICE_CONFIG_FILE_PATH)
+    device_config: AppConfigParser = AppConfigParser(
+        file_path=DEVICE_CONFIG_FILE_PATH
+    )
 
     def __init__(self) -> None:
         pass
@@ -24,8 +26,8 @@ class DeviceEnroller:
     @classmethod
     def register(cls, device_registration_url: str) -> None:
         """Register a node device on the server.
-        
-        This is required to make a node device eligible to synchronize 
+
+        This is required to make a node device eligible to synchronize
         its data with the server.
         """
         try:

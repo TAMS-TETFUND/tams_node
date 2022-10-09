@@ -21,7 +21,9 @@ class StudentFingerprintVerificationWindow(
     during attendance logging."""
 
     @classmethod
-    def loop(cls, window: sg.Window, event: str, values: Dict[str, Any]) -> bool:
+    def loop(
+        cls, window: sg.Window, event: str, values: Dict[str, Any]
+    ) -> bool:
         """Track user interaction with window."""
         if event == "cancel":
             window_dispatch.dispatch.open_window(

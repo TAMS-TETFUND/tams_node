@@ -69,7 +69,9 @@ class AttendanceSessionLandingWindow(
         return window
 
     @classmethod
-    def loop(cls, window: sg.Window, event: str, values: Dict[str, Any]) -> bool:
+    def loop(
+        cls, window: sg.Window, event: str, values: Dict[str, Any]
+    ) -> bool:
         """Track user interaction with window"""
         if event == "home":
             confirm = sg.popup_yes_no(

@@ -32,9 +32,9 @@ class NodeDataSynch:
     def start_data_sync(cls, protocol: str = "http") -> None:
         """Sync server data to node device on completion of initial setup.
 
-            :param ip:  the ip of the server when connection has been made
-            :param port: the port the server is running
-            :param protocol: the protocol used to access the server
+        :param ip:  the ip of the server when connection has been made
+        :param port: the port the server is running
+        :param protocol: the protocol used to access the server
         """
         server_endpoint = "api/v1/node-devices/backup/"
 
@@ -50,7 +50,7 @@ class NodeDataSynch:
         #     )
         # # backup_data = requests.get(server_url).json()
         # backup_data = response.json()
-        
+
         # Serializing json response
         json_object = json.dumps(backup_data.json(), indent=2)
 
@@ -86,8 +86,8 @@ class NodeDataSynch:
     def node_attendance_sync(cls, protocol: str = "http") -> None:
         """Send attendance session/record from the node device to server.
 
-        Attendance session is sent first before attendance records because of a 
-        foreign key relationship between the attendance records and attendance 
+        Attendance session is sent first before attendance records because of a
+        foreign key relationship between the attendance records and attendance
         sessions.
         """
 
@@ -128,7 +128,13 @@ class NodeDataSynch:
             session.save()
 
     @staticmethod
-    def sync_request(url: str, headers: Dict[str, str], sync_data: Optional[Any] = None, get: bool = False, put: bool = False) -> Response:
+    def sync_request(
+        url: str,
+        headers: Dict[str, str],
+        sync_data: Optional[Any] = None,
+        get: bool = False,
+        put: bool = False,
+    ) -> Response:
         """Construct actual server request."""
         try:
             if get:
@@ -171,7 +177,13 @@ class NodeDataSynch:
         return headers
 
     @classmethod
-    def get_url(cls, endpoint: str, protocol: str = "http", ip: str = None, port: int = None) -> str:
+    def get_url(
+        cls,
+        endpoint: str,
+        protocol: str = "http",
+        ip: str = None,
+        port: int = None,
+    ) -> str:
         """Construct full URL for sending request to an API endpoint."""
         if ip is None or port is None:
             ip, port = cls.get_server_details()
@@ -182,7 +194,7 @@ class NodeDataSynch:
     @classmethod
     def staff_register(cls, staff_dict: Dict[str, Any]) -> str:
         """Synch registration data of staff to server.
-        
+
         Method handles both initial initial staff registration and
         update of existing staff.
         """
@@ -212,13 +224,13 @@ class NodeDataSynch:
     @classmethod
     def student_register(cls, student_dict: Dict[str, Any]) -> str:
         """Synch registration data of student to server.
-        
+
         Method handles both initial student registration and update
         of existing student.
         """
         if not DeviceRegistration.is_registered():
-            raise HTTPError('{"detail": "Device not registered!"}')    
-        
+            raise HTTPError('{"detail": "Device not registered!"}')
+
         student = Student.objects.filter(
             reg_number=student_dict["reg_number"]
         ).first()

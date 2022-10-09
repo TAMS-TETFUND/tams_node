@@ -122,7 +122,9 @@ class StaffEnrolmentWindow(ValidationMixin, BaseGUIWindow):
         return window
 
     @classmethod
-    def loop(cls, window: sg.Window, event: str, values: Dict[str, Any]) -> bool:
+    def loop(
+        cls, window: sg.Window, event: str, values: Dict[str, Any]
+    ) -> bool:
         """Track user interaction with window."""
         if event == "staff_faculty":
             if values["staff_faculty"] in (cls.COMBO_DEFAULT, None):
@@ -177,7 +179,9 @@ class StaffEnrolmentWindow(ValidationMixin, BaseGUIWindow):
         return True
 
     @classmethod
-    def validate(cls, values: Dict[str, Any], window: sg.Window) -> Optional[bool]:
+    def validate(
+        cls, values: Dict[str, Any], window: sg.Window
+    ) -> Optional[bool]:
         """Validate values supplied by user in the window input fields."""
         req_fields = [
             (values["staff_number_input"], "staff number"),
@@ -258,7 +262,9 @@ class StaffPasswordSettingWindow(BaseGUIWindow):
         return window
 
     @classmethod
-    def loop(cls, window: sg.Window, event: str, values: Dict[str, Any]) -> bool:
+    def loop(
+        cls, window: sg.Window, event: str, values: Dict[str, Any]
+    ) -> bool:
         """Track user interaction with window"""
         if event in ("staff_password", "staff_password_confirm"):
             if values["staff_password"] != values["staff_password_confirm"]:
@@ -325,7 +331,9 @@ class StaffFaceEnrolmentWindow(FaceCameraWindow):
     being enrolled."""
 
     @classmethod
-    def process_image(cls, captured_face_encodings: Any, window: sg.Window) -> None:
+    def process_image(
+        cls, captured_face_encodings: Any, window: sg.Window
+    ) -> None:
         """Process detected face."""
         if captured_face_encodings is None:
             cls.popup_auto_close_error(
@@ -348,7 +356,7 @@ class StaffFaceEnrolmentWindow(FaceCameraWindow):
 
     @staticmethod
     def cancel_camera() -> None:
-        """"Logic for when cancel button is pressed in camera window."""
+        """ "Logic for when cancel button is pressed in camera window."""
         confirm = sg.popup_yes_no(
             "Staff details will be saved with no biometric data. Continue?",
             keep_on_top=True,
@@ -388,7 +396,7 @@ class StaffFingerprintEnrolmentWindow(FingerprintEnrolmentWindow):
     @staticmethod
     def post_process_enrolment_config() -> None:
         """Method to call when staff registration data has been validated.
-        
+
         Typically contains logic for synching collected data to the server.
         """
         try:
@@ -414,13 +422,16 @@ class StaffFingerprintEnrolmentWindow(FingerprintEnrolmentWindow):
 
 class StaffEnrolmentUpdateIDSearch(StaffNumberInputWindow):
     """Window for finding staff by id for bio data update."""
+
     @classmethod
     def window(cls) -> sg.Window:
         """Construct layout/appearance of window."""
         return super().window()
 
     @classmethod
-    def loop(cls, window: sg.Window, event: str, values: Dict[str, Any]) -> bool:
+    def loop(
+        cls, window: sg.Window, event: str, values: Dict[str, Any]
+    ) -> bool:
         """Track user interaction with window."""
         return super().loop(window, event, values)
 
@@ -573,7 +584,9 @@ class StaffEnrolmentUpdateWindow(StaffEnrolmentWindow):
         return window
 
     @classmethod
-    def loop(cls, window: sg.Window, event: str, values: Dict[str, Any]) -> bool:
+    def loop(
+        cls, window: sg.Window, event: str, values: Dict[str, Any]
+    ) -> bool:
         """Track user interaction with window."""
         return super().loop(window, event, values)
 

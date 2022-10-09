@@ -14,9 +14,10 @@ sg.theme("DarkGrey")
 
 class BaseGUIWindow:
     """The Base GUI Window class.
-    
-    Contains methods that are commonly used in application windows. 
+
+    Contains methods that are commonly used in application windows.
     """
+
     COMBO_DEFAULT: str = "--select--"
     SCREEN_SIZE: Tuple[int, int] = (480, 320)
     ICON_SIZE: Dict[str, int] = {"h": 125, "w": 70}
@@ -38,16 +39,18 @@ class BaseGUIWindow:
     @classmethod
     def window(cls) -> Exception:
         """For defining the layout of the window.
-        
+
         Implemented only in concrete child classes.
-        Returns a finalized PySimpleGUI window when implemented. 
+        Returns a finalized PySimpleGUI window when implemented.
         """
         raise NotImplementedError
 
     @classmethod
-    def loop(cls, window: sg.Window, event: str, values: Dict[str, Any]) -> Exception:
+    def loop(
+        cls, window: sg.Window, event: str, values: Dict[str, Any]
+    ) -> Exception:
         """For handling events and user inputs.
-        
+
         Implemented only in concrete window child classes.
         Returns a bool when implmented.
         """
@@ -65,10 +68,15 @@ class BaseGUIWindow:
         return imgbytes
 
     @classmethod
-    def get_icon(cls, icon_name: str, size_ratio: float = 1.0, image_dimension: Iterable[int] = None) -> bytes:
+    def get_icon(
+        cls,
+        icon_name: str,
+        size_ratio: float = 1.0,
+        image_dimension: Iterable[int] = None,
+    ) -> bytes:
         """Find an icon in icons json file.
-        
-        
+
+
         Returns the byte string of the icon image if icon is defined.
         """
         image_height, image_width = image_dimension or [
@@ -91,7 +99,9 @@ class BaseGUIWindow:
         )
 
     @classmethod
-    def popup_auto_close_success(cls, message: str, title: Optional[str] = None, duration: int = 2) -> sg.popup_auto_close:
+    def popup_auto_close_success(
+        cls, message: str, title: Optional[str] = None, duration: int = 2
+    ) -> sg.popup_auto_close:
         """A popup for successful operations."""
         return sg.popup_auto_close(
             message,
@@ -102,7 +112,9 @@ class BaseGUIWindow:
         )
 
     @classmethod
-    def popup_auto_close_error(cls, message: str, title: Optional[str] = None, duration: int = 2) -> sg.popup_auto_close:
+    def popup_auto_close_error(
+        cls, message: str, title: Optional[str] = None, duration: int = 2
+    ) -> sg.popup_auto_close:
         """A popup for unsuccessful operations."""
         return sg.popup_auto_close(
             message,
@@ -113,7 +125,9 @@ class BaseGUIWindow:
         )
 
     @classmethod
-    def popup_auto_close_warn(cls, message: str, title: Optional[str] = None, duration: int = 2) -> sg.popup_auto_close:
+    def popup_auto_close_warn(
+        cls, message: str, title: Optional[str] = None, duration: int = 2
+    ) -> sg.popup_auto_close:
         """A popup for warning users."""
         return sg.popup_auto_close(
             message,
@@ -161,7 +175,9 @@ class BaseGUIWindow:
         window["message_display"].update(value="", visible=False)
 
     @classmethod
-    def navigation_pane(cls, *, next_icon: str = "next_grey", back_icon: str = "back_grey") -> List[sg.Column]:
+    def navigation_pane(
+        cls, *, next_icon: str = "next_grey", back_icon: str = "back_grey"
+    ) -> List[sg.Column]:
         """Navigation pane for application-wide use."""
         # TODO: all back button takes back to home instead of the previous screen
         return [

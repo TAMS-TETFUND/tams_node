@@ -11,7 +11,7 @@ def os_name() -> str:
 
 def wlan_interface_name() -> Optional[str]:
     """Return name of the wireless lan interface on host computer.
-    
+
     TODO: current implementation only supports a subset of Unix OS's
     """
     os_uname = os.uname()

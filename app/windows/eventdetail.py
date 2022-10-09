@@ -149,7 +149,9 @@ class EventDetailWindow(ValidationMixin, BaseGUIWindow):
         return window
 
     @classmethod
-    def loop(cls, window: sg.Window, event: str, values: Dict[str, Any]) -> bool:
+    def loop(
+        cls, window: sg.Window, event: str, values: Dict[str, Any]
+    ) -> bool:
         """Track user interaction with window."""
         if event.startswith("filter_courses"):
             window["filter_courses_img"].update(
@@ -223,7 +225,9 @@ class EventDetailWindow(ValidationMixin, BaseGUIWindow):
         return True
 
     @classmethod
-    def validate(cls, values: Dict[str, Any], window: sg.Window) -> Optional[bool]:
+    def validate(
+        cls, values: Dict[str, Any], window: sg.Window
+    ) -> Optional[bool]:
         """Validate values supplied by user in the window input fields."""
 
         required_fields = [

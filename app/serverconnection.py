@@ -19,7 +19,7 @@ class ServerConnection:
     ) -> bool:
         """Authenticate the node device on the server.
 
-        Returns: 
+        Returns:
             true if authentication is successful and saves obtained
                 token to self.token
             else, raise error

@@ -26,7 +26,9 @@ class StaffFingerprintVerificationWindow(
     fingerprint during attendance initiation."""
 
     @classmethod
-    def loop(cls, window: sg.Window, event: str, values: Dict[str, Any]) -> bool:
+    def loop(
+        cls, window: sg.Window, event: str, values: Dict[str, Any]
+    ) -> bool:
         """Track user interaction with window."""
         if event == "cancel":
             if app_config.cp.has_option(

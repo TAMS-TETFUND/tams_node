@@ -27,14 +27,14 @@ window_dispatch = app.windowdispatch.WindowDispatch()
 
 def update_device_op_mode() -> None:
     """Update operational mode of node device in app's configparser.
-    
+
     Node device can operate in 3 different modes. The mode
-    a given node device is running would depend on available 
-    biometric verification devices. The 3 modes, defined in app.opmodes 
-    are: FACE, FINGERPRINT, BIMODAL.    
+    a given node device is running would depend on available
+    biometric verification devices. The 3 modes, defined in app.opmodes
+    are: FACE, FINGERPRINT, BIMODAL.
     If only a camera connection is detected, the app's operational mode
-    would be FACE mode. If only a fingerprint scanner connection is 
-    detected, the app's operational mode would be FINGERPRINT mode. If  
+    would be FACE mode. If only a fingerprint scanner connection is
+    detected, the app's operational mode would be FINGERPRINT mode. If
     both fingerprint scanner and camera is detected, the operational mode
     would be BIMODAL.
     """
@@ -70,7 +70,9 @@ class StaffBiometricVerificationRouterMixin:
             return
         if device_op_mode == OpModes.FACE.value:
             if tmp_staff["face_encodings"] in (None, "None", ""):
-                BaseGUIWindow.popup_auto_close_error("No facial registration data found")
+                BaseGUIWindow.popup_auto_close_error(
+                    "No facial registration data found"
+                )
             else:
                 window_dispatch.dispatch.open_window(
                     "StaffFaceVerificationWindow"
@@ -102,7 +104,7 @@ class StaffIDInputRouterMixin:
     @staticmethod
     def staff_id_input_window() -> None:
         """Set staff ID input window based on current operational mode.
-        
+
         Will open the StaffBarcodeCameraWindow if a camera is connected.
         If camera is not detected, the StaffNumberInputWindow (keypad-based)
         will be opened.
@@ -128,11 +130,11 @@ class StudentBiometricVerificationRouterMixin:
     @staticmethod
     def student_verification_window() -> None:
         """Open valid student verification window for attendance logging.
-        
-        The logic is to open a verification window which the current 
-        device operational mode supports. The logic also has to confirm 
+
+        The logic is to open a verification window which the current
+        device operational mode supports. The logic also has to confirm
         that the student being verified has valid biometric data that
-        would be required by the verification window. 
+        would be required by the verification window.
         """
         update_device_op_mode()
         if "op_mode" not in app_config.cp["tmp_settings"]:
@@ -153,7 +155,9 @@ class StudentBiometricVerificationRouterMixin:
             return
         if device_op_mode == OpModes.FACE.value:
             if tmp_student["face_encodings"] in (None, "None", ""):
-                BaseGUIWindow.popup_auto_close_error("No facial registration data found")
+                BaseGUIWindow.popup_auto_close_error(
+                    "No facial registration data found"
+                )
             else:
                 window_dispatch.dispatch.open_window(
                     "StudentFaceVerificationWindow"
@@ -185,7 +189,7 @@ class StudentRegNumberInputRouterMixin:
     @staticmethod
     def student_reg_number_input_window() -> None:
         """Set student reg number input window based on current operational mode.
-        
+
         Will open the StudentBarcodeCameraWindow if a camera is connected.
         If camera is not detected, the StudentRegNumInputWindow (keypad-based)
         will be opened.
@@ -218,7 +222,9 @@ class ValidationMixin:
             return None
 
     @classmethod
-    def validate_required_fields(cls, req_fields: Iterable[str], window: sg.Window) -> Optional[bool]:
+    def validate_required_fields(
+        cls, req_fields: Iterable[str], window: sg.Window
+    ) -> Optional[bool]:
         """Check if a list of input fields have valid input from user."""
         for field in req_fields:
             validation_value = cls.validate_required_field(field)

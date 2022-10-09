@@ -28,6 +28,7 @@ class WindowDispatch:
 
 class WindowDict(UserDict):
     """Class for handling transitions between windows."""
+
     _current_window: Callable[..., Any]
     _current_window_class: BaseGUIWindow
 
@@ -50,7 +51,9 @@ class WindowDict(UserDict):
         window_module = import_module(window_path)
 
         if not hasattr(window_module, window_class_name):
-            raise RuntimeError("%s not found in specified path." % window_class_name)
+            raise RuntimeError(
+                "%s not found in specified path." % window_class_name
+            )
         window_class = getattr(window_module, window_class_name)
         self.update({window_class.__name__: window_class.window()})
         open_windows = self.copy()

@@ -12,7 +12,7 @@ class DeviceRegistration:
 
     It will connect the device to the server and obtain a device ID and token to be
     used for subsequent operations like synching to/from the server.
-    The obtained token will also be appended to the every attendance info that will 
+    The obtained token will also be appended to the every attendance info that will
     be sent to the server.
     """
 
@@ -27,7 +27,7 @@ class DeviceRegistration:
         registration_url: str = "api/v1/node-devices/",
     ) -> bool:
         """Register a node device on the server.
-        
+
         Returns:
             True if device registration was successful.
             False if device registration fails.
