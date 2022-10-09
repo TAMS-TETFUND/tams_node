@@ -50,11 +50,13 @@ class WindowDict(UserDict):
 
         window_module = import_module(window_path)
 
-        if not hasattr(window_module, window_class_name):
+        try:
+            window_class = getattr(window_module, window_class_name)
+        except AttributeError:
             raise RuntimeError(
                 "%s not found in specified path." % window_class_name
             )
-        window_class = getattr(window_module, window_class_name)
+
         self.update({window_class.__name__: window_class.window()})
         open_windows = self.copy()
         for key in open_windows.keys():
