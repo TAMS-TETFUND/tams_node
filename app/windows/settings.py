@@ -26,6 +26,7 @@ APP_WINDOWS = {
     "StudentEnrolmentWindow": "app.windows.studentenrolment",
     "StudentFaceEnrolmentWindow": "app.windows.studentenrolment",
     "StudentEnrolmentUpdateWindow": "app.windows.studentenrolment",
+    "StudentEnrolmentUpdateIDSearch": "app.windows.studentenrolment",
     "StudentFingerprintEnrolmentWindow": "app.windows.studentenrolment",
     "StudentFingerprintVerificationWindow": "app.windows.studentfingerprintverification",
     "StaffFingerprintVerificationWindow": "app.windows.stafffingerprintverification",
@@ -33,4 +34,5 @@ APP_WINDOWS = {
     "StaffEnrolmentUpdateIDSearch": "app.windows.staffenrolment",
     "StaffEnrolmentUpdateWindow": "app.windows.staffenrolment",
     "AttendanceSignOutWindow": "app.windows.attendancesignout",
+    "ServerConnectionDetailsWindow": "app.windows.serverconnectiondetails",
 }

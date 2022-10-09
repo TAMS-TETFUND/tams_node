@@ -1,4 +1,5 @@
 from typing import Any, Dict
+
 import PySimpleGUI as sg
 from app.basegui import BaseGUIWindow
 import app.appconfigparser
