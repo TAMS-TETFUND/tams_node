@@ -24,22 +24,8 @@ class NodeDeviceRegistrationWindow(ValidationMixin, BaseGUIWindow):
         input_props = {"size": (23, 1)}
         combo_props = {"size": 22}
         layout = [
-            [sg.Push(), sg.Text("Node Details"), sg.Push()],
+            [sg.Push(), sg.Text("Admin Login Details"), sg.Push()],
             [cls.message_display_field()],
-            [
-                sg.Text("Server IP adress:", **field_label_props),
-                sg.InputText(
-                    key="server_ip_address",
-                    default_text="127.0.0.1",
-                    **input_props,
-                ),
-            ],
-            [
-                sg.Text("Server Port:", **field_label_props),
-                sg.InputText(
-                    key="server_port", default_text="8080", **input_props
-                ),
-            ],
             [
                 sg.Text("Admin Username:", **field_label_props),
                 sg.InputText(key="admin_username", **input_props),
@@ -62,14 +48,17 @@ class NodeDeviceRegistrationWindow(ValidationMixin, BaseGUIWindow):
         cls, window: sg.Window, event: str, values: Dict[str, Any]
     ) -> bool:
         """Track user interaction with window."""
+        if DeviceRegistration.is_registered():
+            cls.popup_auto_close_warn("Device already registered")
+            window_dispatch.dispatch.open_window("HomeWindow")
+            return True
+
         if event in ("home", "back"):
             window_dispatch.dispatch.open_window("HomeWindow")
             return True
 
         if event in ("submit", "next"):
             required_fields = [
-                (values["server_ip_address"], "Server IP address"),
-                (values["server_port"], "Server port"),
                 (values["admin_username"], "Admin Username"),
                 (values["password"], "Password"),
             ]
@@ -80,13 +69,19 @@ class NodeDeviceRegistrationWindow(ValidationMixin, BaseGUIWindow):
                 return True
 
             conn = ServerConnection()
-            conn.token_authentication(
-                server_address=values["server_ip_address"],
-                server_port=values["server_port"],
-                username=values["admin_username"],
-                password=values["password"],
-            )
-            DeviceRegistration.register_device(conn)
+            try:
+                conn.token_authentication(
+                    username=values["admin_username"],
+                    password=values["password"],
+                )
+            except Exception as e:
+                cls.display_message("%s. %s" % (e, conn.server_url), window)
+                return True
+            try:
+                DeviceRegistration.register_device()
+            except Exception as e:
+                cls.display_message(e, window)
+                return True
             cls.popup_auto_close_success("Registered succesfully!")
             window_dispatch.dispatch.open_window("HomeWindow")
         return True
