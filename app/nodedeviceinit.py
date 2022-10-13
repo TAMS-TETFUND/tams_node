@@ -1,7 +1,7 @@
 import json
 import os
 from pathlib import Path
-import urllib3
+import requests
 
 from app.serverconnection import ServerConnection
 from db.models import NodeDevice
@@ -23,8 +23,7 @@ class DeviceRegistration:
     @classmethod
     def register_device(
         cls,
-        server_connection: ServerConnection,
-        registration_url: str = "api/v1/node-devices/",
+        registration_endpoint: str = "api/v1/node-devices/",
     ) -> bool:
         """Register a node device on the server.
 
@@ -32,22 +31,13 @@ class DeviceRegistration:
             True if device registration was successful.
             False if device registration fails.
         """
+        server_conn = ServerConnection()
         if cls.is_registered():
             raise RuntimeError("Device is already registered.")
 
-        response = urllib3.PoolManager().request(
-            "POST",
-            "http://%s:%s/%s"
-            % (
-                server_connection.server_address,
-                server_connection.server_port,
-                registration_url,
-            ),
-        )
+        response = requests.post("%s/%s" % (server_conn.server_url, registration_endpoint))
         if response.status == 201:
             device_details = json.loads(response.data.decode("utf-8"))
-            print(type(device_details))
-
             if "token" in device_details:
                 NodeDevice.objects.create(**device_details)
                 return True
