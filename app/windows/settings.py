@@ -35,4 +35,6 @@ APP_WINDOWS = {
     "StaffEnrolmentUpdateWindow": "app.windows.staffenrolment",
     "AttendanceSignOutWindow": "app.windows.attendancesignout",
     "ServerConnectionDetailsWindow": "app.windows.serverconnectiondetails",
+    "AttendanceViewerWindow": "app.windows.attendanceviewer",
+    "ScheduledEventsWindow": "app.windows.scheduledevents"
 }

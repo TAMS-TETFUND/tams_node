@@ -214,6 +214,9 @@ class HomeWindow(BaseGUIWindow):
                     title="No Event",
                     keep_on_top=True,
                 )
+        if event in ("schedule", "schedule_txt", "schedule_txt_2"):
+            window_dispatch.dispatch.open_window("ScheduledEventsWindow")
+            return True
         if event == "settings":
             window_dispatch.dispatch.open_window("EnrolmentMenuWindow")
         if event == "quit":
