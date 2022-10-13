@@ -6,10 +6,11 @@ import PySimpleGUI as sg
 from app.basegui import BaseGUIWindow
 import app.appconfigparser
 import app.windowdispatch
+from app.serverconnection import ServerConnection
 from app.nodedevicedatasynch import NodeDataSynch
 
 window_dispatch = app.windowdispatch.WindowDispatch()
-
+app_config = app.appconfigparser.AppConfigParser()
 
 class EnrolmentMenuWindow(BaseGUIWindow):
     """This window provides links to student and staff enrolment."""
@@ -225,6 +226,19 @@ class EnrolmentMenuWindow(BaseGUIWindow):
         """Track user interaction with window."""
         if event in ("back", "home"):
             window_dispatch.dispatch.open_window("HomeWindow")
+
+        conn = ServerConnection()
+        try:
+            conn_test = conn.test_connection()
+        except Exception:
+            app_config.cp["server_connection"] = {"next_window": "EnrolmentMenuWindow"}
+            window_dispatch.dispatch.open_window("ServerConnectionDetailsWindow")
+            return True
+        if not conn_test:
+            app_config.cp["server_connection"] = {"next_window": "EnrolmentMenuWindow"}
+            window_dispatch.dispatch.open_window("ServerConnectionDetailsWindow")
+            return True
+
         if event in (
             "staff_enrolment",
             "staff_enrolment_txt",
@@ -237,6 +251,7 @@ class EnrolmentMenuWindow(BaseGUIWindow):
             "student_enrolment_txt_2",
         ):
             window_dispatch.dispatch.open_window("StudentEnrolmentWindow")
+            return True
         if event in (
             "staff_enrolment_update",
             "staff_enrolment_update_txt",
@@ -244,6 +259,7 @@ class EnrolmentMenuWindow(BaseGUIWindow):
             "staff_enrolment_update_txt_3",
         ):
             window_dispatch.dispatch.open_window("StaffEnrolmentUpdateIDSearch")
+            return True
         if event in (
             "student_enrolment_update",
             "student_enrolment_update_txt",
@@ -253,15 +269,17 @@ class EnrolmentMenuWindow(BaseGUIWindow):
             window_dispatch.dispatch.open_window(
                 "StudentEnrolmentUpdateIDSearch"
             )
+            return True
         if event in (
             "register_device",
             "register_device_txt",
             "register_device_txt_2",
         ):
             window_dispatch.dispatch.open_window("NodeDeviceRegistrationWindow")
+            return True
         if event in ("synch_device", "synch_device_txt", "synch_device_txt_2"):
             window_dispatch.dispatch.open_window(
-                "ServerConnectionDetailsWindow"
+                "NodeDeviceSynchWindow"
             )
         if event == "sync_attendance":
             try:
