@@ -12,7 +12,7 @@ class WindowDispatch:
     """A singleton that holds the currently open window."""
 
     __instance = None
-    __initalized = False
+    __initialized = False
 
     def __new__(cls) -> "WindowDispatch":
         if cls.__instance is None:
@@ -20,9 +20,9 @@ class WindowDispatch:
         return cls.__instance
 
     def __init__(self) -> None:
-        if type(self).__initalized:
+        if type(self).__initialized:
             return
-        type(self).__initalized = True
+        type(self).__initialized = True
         self.dispatch = WindowDict()
 
 
