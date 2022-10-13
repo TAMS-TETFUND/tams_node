@@ -20,6 +20,21 @@ app_config = app.appconfigparser.AppConfigParser()
 window_dispatch = app.windowdispatch.WindowDispatch()
 
 
+def sync_student_data() -> None:
+    """Synch student data to the server."""
+    try:
+        message = NodeDataSynch.student_register(
+            app_config.cp.section_dict("new_student")
+        )
+    except Exception as e:
+        error = json.loads(str(e))["detail"]
+        BaseGUIWindow.popup_auto_close_error(error, duration=5)
+    else:
+        BaseGUIWindow.popup_auto_close_success(message, duration=5)
+
+    app_config.cp.remove_section("new_student")
+    return
+
 class StudentEnrolmentWindow(ValidationMixin, BaseGUIWindow):
     """The GUI window for enrolment of student biodata."""
 
@@ -186,7 +201,7 @@ class StudentEnrolmentWindow(ValidationMixin, BaseGUIWindow):
                     reg_number=new_student_dict["reg_number"]
                 ).exists()
             ):
-                cls.display_message("Student already exist!", window)
+                cls.display_message("Student profile already created!", window)
                 return True
 
             if not OperationalMode.check_camera():
@@ -196,6 +211,8 @@ class StudentEnrolmentWindow(ValidationMixin, BaseGUIWindow):
                     cls.popup_auto_close_error(
                         "Fingerprint scanner not connected"
                     )
+                    sync_student_data()
+                    BaseGUIWindow.popup_auto_close_success("Student enrolment successful")
                     window_dispatch.dispatch.open_window("HomeWindow")
                     return True
                 else:
@@ -252,16 +269,6 @@ class StudentEnrolmentWindow(ValidationMixin, BaseGUIWindow):
             if criteria is not None:
                 cls.display_message(criteria, window)
                 return True
-
-        # if Student.objects.filter(
-        #     reg_number=values["student_reg_number_input"]
-        # ).exists():
-        #     cls.display_message(
-        #         f"Student with registration number "
-        #         f"{values['student_reg_number_input']} already exists",
-        #         window,
-        #     )
-        #     return True
         return None
 
 
@@ -279,19 +286,21 @@ class StudentFaceEnrolmentWindow(FaceCameraWindow):
                 "Error. Image must have exactly one face"
             )
             return
-        # new_student = app_config.cp["new_student"]
-
-        # try:
-        #     student = Student.objects.get(reg_number=new_student["reg_number"])
-        # except Exception as e:
-        #     cls.popup_auto_close_error(e)
-        #     return
-
         app_config.cp["new_student"]["face_encodings"] = face_enc_to_str(
             captured_face_encodings
         )
-        # student.save()
-        cls.popup_auto_close_success("Biometric data saved")
+        
+        if not OperationalMode.check_fingerprint():
+            BaseGUIWindow.popup_auto_close_warn("Fingerprint scanner not available")
+
+            # save student if fingerprint enrolment not available
+            sync_student_data()
+            BaseGUIWindow.popup_auto_close_success("Student enrolment successful")
+            
+            window_dispatch.dispatch.open_window("StudentEnrolmentWindow")
+            return
+
+
         window_dispatch.dispatch.open_window(
             "StudentFingerprintEnrolmentWindow"
         )
@@ -319,7 +328,7 @@ class StudentFingerprintEnrolmentWindow(FingerprintEnrolmentWindow):
         app_config.cp["new_student"]["fingerprint_template"] = str(
             fingerprint_data
         )
-        cls.post_process_enrolment_config()
+        sync_student_data()
         cls.popup_auto_close_success("Student enrolment successful")
         window_dispatch.dispatch.open_window("StudentEnrolmentWindow")
         return
@@ -336,27 +345,6 @@ class StudentFingerprintEnrolmentWindow(FingerprintEnrolmentWindow):
             window_dispatch.dispatch.open_window("HomeWindow")
         return
 
-    @staticmethod
-    def post_process_enrolment_config() -> None:
-        """Method to call when staff registration data has been validated.
-
-        Typically contains logic for synching collected data to the server.
-        """
-        try:
-            message = NodeDataSynch.student_register(
-                app_config.cp.section_dict("new_student")
-            )
-            BaseGUIWindow.popup_auto_close_success(message, duration=5)
-            app_config.cp.remove_section("new_staff")
-            # sync server data with the node device
-
-        except Exception as e:
-            error = json.loads(str(e))["detail"]
-            BaseGUIWindow.popup_auto_close_error(error, duration=5)
-
-        app_config.cp.remove_section("new_student")
-        return
-
     @classmethod
     def window_title(cls) -> str:
         """Title of the GUI window."""
@@ -369,7 +357,7 @@ class StudentEnrolmentUpdateWindow(StudentEnrolmentWindow):
     @classmethod
     def window(cls) -> sg.Window:
         """Construct layout/appearance of window."""
-        student = app_config.cp["edit_student"]
+        student = app_config.cp["new_student"]
 
         try:
             student_sex = SexChoices(int(student["sex"])).label
@@ -527,7 +515,7 @@ class StudentEnrolmentUpdateIDSearch(StudentRegNumInputWindow):
     @classmethod
     def process_student(cls, student: Student) -> None:
         """Process staff info for update."""
-        app_config.cp["edit_student"] = app_config.cp.dict_vals_to_str(
+        app_config.cp["new_student"] = app_config.cp.dict_vals_to_str(
             student.values(
                 "reg_number",
                 "first_name",
