@@ -6,10 +6,14 @@ import app.windowdispatch
 
 window_dispatch = app.windowdispatch.WindowDispatch()
 
+
 class NodeDeviceSynchWindow(LoadingWindow):
     """Synch node device with server."""
+
     @classmethod
-    def loop(cls, window: sg.Window, event: str, values: Dict[str, Any]) -> bool:
+    def loop(
+        cls, window: sg.Window, event: str, values: Dict[str, Any]
+    ) -> bool:
         """Track user interaction with window."""
         NodeDataSynch.start_data_sync()
         cls.popup_auto_close_success("Synch Successful")

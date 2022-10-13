@@ -35,7 +35,9 @@ class DeviceRegistration:
         if cls.is_registered():
             raise RuntimeError("Device is already registered.")
 
-        response = requests.post("%s/%s" % (server_conn.server_url, registration_endpoint))
+        response = requests.post(
+            "%s/%s" % (server_conn.server_url, registration_endpoint)
+        )
         if response.status == 201:
             device_details = json.loads(response.data.decode("utf-8"))
             if "token" in device_details:

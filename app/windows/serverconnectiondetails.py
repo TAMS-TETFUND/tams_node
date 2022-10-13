@@ -20,6 +20,7 @@ class ServerConnectionDetailsWindow(ValidationMixin, BaseGUIWindow):
     This window will be collect information (server address, SSID, password)
     that will enable connection to the server.
     """
+
     next_window: str = ""
 
     @classmethod
@@ -39,23 +40,29 @@ class ServerConnectionDetailsWindow(ValidationMixin, BaseGUIWindow):
                 sg.Text("Server IP adress:", **field_label_props),
                 sg.InputText(
                     key="server_ip_address",
-                    default_text=server_details["server_ip_address"] if server_details else "127.0.0.1",
+                    default_text=server_details["server_ip_address"]
+                    if server_details
+                    else "127.0.0.1",
                     **input_props,
                 ),
             ],
             [
                 sg.Text("Server Port:", **field_label_props),
                 sg.InputText(
-                    key="server_port", 
-                    default_text= server_details["server_port"] if server_details else "8080", 
-                    **input_props
+                    key="server_port",
+                    default_text=server_details["server_port"]
+                    if server_details
+                    else "8080",
+                    **input_props,
                 ),
             ],
             [
                 sg.Text("Connection Type:", **field_label_props),
                 sg.Combo(
                     values=["WiFi", "LORA"],
-                    default_value=server_details["connection_type"] if server_details else "WiFi",
+                    default_value=server_details["connection_type"]
+                    if server_details
+                    else "WiFi",
                     key="connection_type",
                     enable_events=True,
                     **combo_props,
@@ -65,7 +72,9 @@ class ServerConnectionDetailsWindow(ValidationMixin, BaseGUIWindow):
                 sg.Text("WLAN Name (SSID):", **field_label_props),
                 sg.Combo(
                     key="ssid",
-                    default_value=server_details["ssid"] if server_details else "",
+                    default_value=server_details["ssid"]
+                    if server_details
+                    else "",
                     values=WLANInterface.available_networks() or [],
                     **combo_props,
                 ),
@@ -73,10 +82,12 @@ class ServerConnectionDetailsWindow(ValidationMixin, BaseGUIWindow):
             [
                 sg.Text("WLAN Password:", **field_label_props),
                 sg.InputText(
-                    key="wlan_password", 
-                    default_text=server_details["wlan_password"] if server_details else "",
-                    password_char="*", 
-                    **input_props
+                    key="wlan_password",
+                    default_text=server_details["wlan_password"]
+                    if server_details
+                    else "",
+                    password_char="*",
+                    **input_props,
                 ),
             ],
             [sg.Button("Submit", key="submit")],
@@ -90,13 +101,17 @@ class ServerConnectionDetailsWindow(ValidationMixin, BaseGUIWindow):
         return window
 
     @classmethod
-    def loop(cls, window: sg.Window, event: str, values: Dict[str, Any]) -> bool:
+    def loop(
+        cls, window: sg.Window, event: str, values: Dict[str, Any]
+    ) -> bool:
         """Track user interaction with window."""
 
         # Don't open window if server connection already established
         if ServerConnection().test_connection():
             if app_config.cp.has_option("server_connection", "next_window"):
-                window_dispatch.dispatch.open_window(app_config.cp.get("server_connection", "next_window"))
+                window_dispatch.dispatch.open_window(
+                    app_config.cp.get("server_connection", "next_window")
+                )
                 app_config.cp.remove_section("server_connection")
             else:
                 window_dispatch.dispatch.open_window("HomeWindow")
@@ -126,7 +141,6 @@ class ServerConnectionDetailsWindow(ValidationMixin, BaseGUIWindow):
                 is not None
             ):
                 return True
-            
 
             app_config.cp["server_details"] = {
                 "server_ip_address": values["server_ip_address"],
@@ -139,27 +153,35 @@ class ServerConnectionDetailsWindow(ValidationMixin, BaseGUIWindow):
             server_details = app_config.cp["server_details"]
             if values["connection_type"] == "WiFi":
                 # check if server address is the local device.
-                if values["server_ip_address"].lower() in ("localhost", "127.0.0.1"):
+                if values["server_ip_address"].lower() in (
+                    "localhost",
+                    "127.0.0.1",
+                ):
                     connect_result = 0
                 else:
                     try:
                         connect_result = WLANInterface.connect_to_wifi(
-                            server_details["ssid"], server_details["wlan_password"]
+                            server_details["ssid"],
+                            server_details["wlan_password"],
                         )
                     except Exception as e:
                         cls.popup_auto_close_error(e)
                         return True
-                
+
                 if connect_result != 0:
-                    cls.popup_auto_close_error("Error establishing WiFi network connection. Check details provided.")
+                    cls.popup_auto_close_error(
+                        "Error establishing WiFi network connection. Check details provided."
+                    )
                     return True
-                
+
                 conn = ServerConnection()
                 conn.server_address = values["server_ip_address"]
                 conn.server_port = values["server_port"]
 
                 if not conn.test_connection():
-                    cls.display_message("Server not reachable with provided IP/Port.", window)
+                    cls.display_message(
+                        "Server not reachable with provided IP/Port.", window
+                    )
                     return True
 
                 cls.popup_auto_close_success(
@@ -167,7 +189,9 @@ class ServerConnectionDetailsWindow(ValidationMixin, BaseGUIWindow):
                 )
                 time.sleep(1)
                 if app_config.cp.has_option("server_connection", "next_window"):
-                    window_dispatch.dispatch.open_window(app_config.cp.get("server_connection", "next_window"))
+                    window_dispatch.dispatch.open_window(
+                        app_config.cp.get("server_connection", "next_window")
+                    )
                     app_config.cp.remove_section("server_connection")
                     return True
         return True

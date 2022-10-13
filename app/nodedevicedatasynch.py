@@ -28,6 +28,7 @@ from db.models import (
 app_config = AppConfigParser()
 server_conn = ServerConnection()
 
+
 class NodeDataSynch:
     @classmethod
     def start_data_sync(cls, protocol: str = "http") -> None:

@@ -35,6 +35,7 @@ def sync_student_data() -> None:
     app_config.cp.remove_section("new_student")
     return
 
+
 class StudentEnrolmentWindow(ValidationMixin, BaseGUIWindow):
     """The GUI window for enrolment of student biodata."""
 
@@ -212,7 +213,9 @@ class StudentEnrolmentWindow(ValidationMixin, BaseGUIWindow):
                         "Fingerprint scanner not connected"
                     )
                     sync_student_data()
-                    BaseGUIWindow.popup_auto_close_success("Student enrolment successful")
+                    BaseGUIWindow.popup_auto_close_success(
+                        "Student enrolment successful"
+                    )
                     window_dispatch.dispatch.open_window("HomeWindow")
                     return True
                 else:
@@ -289,17 +292,20 @@ class StudentFaceEnrolmentWindow(FaceCameraWindow):
         app_config.cp["new_student"]["face_encodings"] = face_enc_to_str(
             captured_face_encodings
         )
-        
+
         if not OperationalMode.check_fingerprint():
-            BaseGUIWindow.popup_auto_close_warn("Fingerprint scanner not available")
+            BaseGUIWindow.popup_auto_close_warn(
+                "Fingerprint scanner not available"
+            )
 
             # save student if fingerprint enrolment not available
             sync_student_data()
-            BaseGUIWindow.popup_auto_close_success("Student enrolment successful")
-            
+            BaseGUIWindow.popup_auto_close_success(
+                "Student enrolment successful"
+            )
+
             window_dispatch.dispatch.open_window("StudentEnrolmentWindow")
             return
-
 
         window_dispatch.dispatch.open_window(
             "StudentFingerprintEnrolmentWindow"

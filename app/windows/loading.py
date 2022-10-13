@@ -14,14 +14,14 @@ class LoadingWindow(BaseGUIWindow):
             title="Loading window",
             layout=[
                 [sg.VPush()],
-                [   sg.Push(),
+                [
+                    sg.Push(),
                     sg.Image(
                         data=cls.get_icon("ring_lines", 2),
                         enable_events=True,
                         key="loading_image",
                     ),
-                    sg.Push()
-
+                    sg.Push(),
                 ],
                 [sg.Push(), sg.Text("Loading..."), sg.Push()],
                 [sg.VPush()],

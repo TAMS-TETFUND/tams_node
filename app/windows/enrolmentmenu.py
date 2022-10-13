@@ -12,6 +12,7 @@ from app.nodedevicedatasynch import NodeDataSynch
 window_dispatch = app.windowdispatch.WindowDispatch()
 app_config = app.appconfigparser.AppConfigParser()
 
+
 class EnrolmentMenuWindow(BaseGUIWindow):
     """This window provides links to student and staff enrolment."""
 
@@ -231,12 +232,20 @@ class EnrolmentMenuWindow(BaseGUIWindow):
         try:
             conn_test = conn.test_connection()
         except Exception:
-            app_config.cp["server_connection"] = {"next_window": "EnrolmentMenuWindow"}
-            window_dispatch.dispatch.open_window("ServerConnectionDetailsWindow")
+            app_config.cp["server_connection"] = {
+                "next_window": "EnrolmentMenuWindow"
+            }
+            window_dispatch.dispatch.open_window(
+                "ServerConnectionDetailsWindow"
+            )
             return True
         if not conn_test:
-            app_config.cp["server_connection"] = {"next_window": "EnrolmentMenuWindow"}
-            window_dispatch.dispatch.open_window("ServerConnectionDetailsWindow")
+            app_config.cp["server_connection"] = {
+                "next_window": "EnrolmentMenuWindow"
+            }
+            window_dispatch.dispatch.open_window(
+                "ServerConnectionDetailsWindow"
+            )
             return True
 
         if event in (
@@ -278,9 +287,7 @@ class EnrolmentMenuWindow(BaseGUIWindow):
             window_dispatch.dispatch.open_window("NodeDeviceRegistrationWindow")
             return True
         if event in ("synch_device", "synch_device_txt", "synch_device_txt_2"):
-            window_dispatch.dispatch.open_window(
-                "NodeDeviceSynchWindow"
-            )
+            window_dispatch.dispatch.open_window("NodeDeviceSynchWindow")
         if event == "sync_attendance":
             try:
                 NodeDataSynch.node_attendance_sync()

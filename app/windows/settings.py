@@ -37,5 +37,5 @@ APP_WINDOWS = {
     "ServerConnectionDetailsWindow": "app.windows.serverconnectiondetails",
     "AttendanceViewerWindow": "app.windows.attendanceviewer",
     "ScheduledEventsWindow": "app.windows.scheduledevents",
-    "NodeDeviceSynchWindow": "app.windows.nodedevicesynch"
+    "NodeDeviceSynchWindow": "app.windows.nodedevicesynch",
 }

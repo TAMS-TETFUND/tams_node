@@ -48,7 +48,7 @@ class AttendanceSessionLandingWindow(
                     "{}".format(cls.valid_check_in_count()), k="valid_checks"
                 ),
                 sg.Push(),
-                sg.Button("Attendance List", k="attendance_list")
+                sg.Button("Attendance List", k="attendance_list"),
             ],
             [sg.VPush()],
             [
@@ -84,7 +84,7 @@ class AttendanceSessionLandingWindow(
             if confirm == "Yes":
                 window_dispatch.dispatch.open_window("HomeWindow")
             return True
-        
+
         if event == "attendance_list":
             window_dispatch.dispatch.open_window("AttendanceViewerWindow")
         if event == "start_attendance":

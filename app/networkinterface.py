@@ -8,8 +8,6 @@ from typing import Any, List, Optional, Tuple, Union
 from app.device import wlan_interface_name
 
 
-
-
 def connect_to_LORA() -> None:
     """This function will handle connection to LORA."""
     pass
@@ -17,6 +15,7 @@ def connect_to_LORA() -> None:
 
 class WLANInterface:
     """A class to manage WLAN communication in application."""
+
     @classmethod
     def connect_to_wifi(
         cls, ssid: str, network_password: str
