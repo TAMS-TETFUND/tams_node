@@ -8,27 +8,6 @@ from typing import Any, List, Optional, Tuple, Union
 from app.device import wlan_interface_name
 
 
-def connect_to_wifi(
-    ssid: str, network_password: str
-) -> Union[int, Tuple[Any, ...]]:
-    """Establish connection to a WiFi network.
-
-    returns:
-        0 on successful connection
-        2560 if unsuccessful
-    """
-    try:
-        message = os.system(
-            'nmcli device wifi connect "'
-            + ssid
-            + '" password "'
-            + network_password
-            + '"'
-        )
-    except Exception as e:
-        return "Connection to %s failed: %s" % ssid, e.args
-    else:
-        return message
 
 
 def connect_to_LORA() -> None:
@@ -37,6 +16,34 @@ def connect_to_LORA() -> None:
 
 
 class WLANInterface:
+    """A class to manage WLAN communication in application."""
+    @classmethod
+    def connect_to_wifi(
+        cls, ssid: str, network_password: str
+    ) -> Union[int, Tuple[Any, ...]]:
+        """Establish connection to a WiFi network.
+
+        returns:
+            0 on successful connection
+            2560 if unsuccessful
+        """
+
+        if cls.is_connected():
+            if cls.current_network_name() == ssid:
+                return 0
+        try:
+            message = os.system(
+                'nmcli device wifi connect "'
+                + ssid
+                + '" password "'
+                + network_password
+                + '"'
+            )
+        except Exception as e:
+            return "Connection to %s failed: %s" % ssid, e.args
+        else:
+            return message
+
     @staticmethod
     def available_networks() -> List[str]:
         """Checks for available WiFi networks."""
