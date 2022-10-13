@@ -21,3 +21,19 @@
         it is safe to assume that he got there by suspicious means/ with 
         questionable intents. 
 
+=========================================
+enrolment is no longer working as expected. Fix
+
+=========================================
+Before user starts entering biodata confirm connection to server
+if any settings are found in configparser, try establishing a connection 
+to server with those settings. If connection cannot be established,
+prompt user to modify settings by displaying the server connection details
+window/popup. Allow user to return to home window if server connection is
+unsuccessful.
+============================================
+View list of students that have checked in already.
+Collect script number/serial number for examination events?
+
+========================================================
+give option to download attendance in order of sign-in/by alphabetical order
