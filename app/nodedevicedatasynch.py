@@ -5,9 +5,8 @@ import json
 import os
 from typing import Any, Dict, Optional, Tuple
 
-import requests
 from django.core.management import call_command
-from requests import HTTPError, Response
+from requests import HTTPError
 from app.appconfigparser import AppConfigParser
 from app.nodedeviceinit import DeviceRegistration
 from app.serializers import (
@@ -61,17 +60,6 @@ class NodeDataSynch:
         Staff.objects.filter(is_active=False).delete()
 
     @classmethod
-    def node_register(
-        cls,
-        headers: Dict[str, str],
-        json_data: Dict[str, Any],
-        protocol: str = "http",
-    ) -> Any:
-        endpoint = "api/v1/node-devices/"
-        response = server_conn.request(endpoint, json_data)
-        return response.json()
-
-    @classmethod
     def node_attendance_sync(cls, protocol: str = "http") -> None:
         """Send attendance session/record from the node device to server.
 
@@ -91,7 +79,6 @@ class NodeDataSynch:
         # sync the attendance session first
         for session in sessions:
             sync_data.append(AttendanceSessionSerializer(session).data)
-
         server_conn.request(endpoint, sync_data)
 
         # sync the records for each attendance session
@@ -103,7 +90,6 @@ class NodeDataSynch:
             records = session.attendancerecord_set.all()
             for record in records:
                 sync_data.append(AttendanceRecordSerializer(record).data)
-
         server_conn.request(endpoint, sync_data)
 
         for session in sessions:
@@ -122,7 +108,7 @@ class NodeDataSynch:
         ).first()
 
         if staff:
-            ser_data = StaffSerializer(staff, data=staff_dict)
+            ser_data = StaffSerializer(staff, data=staff_dict, partial=True)
             endpoint = f"api/v1/staff/{staff.staff_number}/"
             put = True
             return_text = "Staff Updated successfully!"
@@ -153,7 +139,7 @@ class NodeDataSynch:
         ).first()
 
         if student:
-            ser_data = StudentSerializer(student, data=student_dict)
+            ser_data = StudentSerializer(student, data=student_dict, partial=True)
             endpoint = f"api/v1/students/{student.reg_number}/"
             put = True
             return_text = "Student Updated successfully!"
