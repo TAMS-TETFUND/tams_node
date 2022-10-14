@@ -37,3 +37,6 @@ Collect script number/serial number for examination events?
 
 ========================================================
 give option to download attendance in order of sign-in/by alphabetical order
+
+allow academic session to be created at node devices. Change pk to the session itself
+csv file upload of student bios. MUST BE VERY SIMPLE TO USE
