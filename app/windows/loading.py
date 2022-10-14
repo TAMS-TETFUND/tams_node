@@ -2,7 +2,9 @@ from typing import Any, Dict
 import PySimpleGUI as sg
 
 from app.basegui import BaseGUIWindow
+import app.windowdispatch
 
+window_dispatch = app.windowdispatch.WindowDispatch()
 
 class LoadingWindow(BaseGUIWindow):
     """Window to display when an operation takes too long to complete."""
@@ -25,6 +27,7 @@ class LoadingWindow(BaseGUIWindow):
                 ],
                 [sg.Push(), sg.Text("Loading..."), sg.Push()],
                 [sg.VPush()],
+                cls.navigation_pane(next_icon="next_disabled")
             ],
             **cls.window_init_dict()
         )
@@ -34,3 +37,5 @@ class LoadingWindow(BaseGUIWindow):
         cls, window: sg.Window, event: str, values: Dict[str, Any]
     ) -> bool:
         """Track user interaction with window."""
+        if event in ("home", "back"):
+            window_dispatch.dispatch.open_window("HomeWindow")

@@ -19,6 +19,25 @@ app_config = app.appconfigparser.AppConfigParser()
 window_dispatch = app.windowdispatch.WindowDispatch()
 
 
+def send_staff_data() -> None:
+    """Synch staff data to the server.
+    """
+    try:
+        message = NodeDataSynch.staff_register(
+            app_config.cp.section_dict("new_staff")
+        )
+        BaseGUIWindow.popup_auto_close_success(message, duration=5)
+        app_config.cp.remove_section("new_staff")
+        # sync server data with the node device
+
+    except Exception as e:
+        error = json.loads(str(e))["detail"]
+        BaseGUIWindow.popup_auto_close_error(error, duration=5)
+
+    app_config.cp.remove_section("new_staff")
+    return
+
+
 class StaffEnrolmentWindow(ValidationMixin, BaseGUIWindow):
     """The GUI window for enrolment of staff biodata"""
 
@@ -93,7 +112,7 @@ class StaffEnrolmentWindow(ValidationMixin, BaseGUIWindow):
             [sg.VPush()],
             [
                 sg.Push(),
-                sg.Column(column1),
+                sg.Column(column1, pad=(0, None)),
                 sg.Push(),
             ],
             [
@@ -119,6 +138,17 @@ class StaffEnrolmentWindow(ValidationMixin, BaseGUIWindow):
         window = sg.Window(
             "Staff Enrolment", scrolled_layout, **cls.window_init_dict()
         )
+
+        for key in (
+            "staff_number_input",
+            "staff_first_name",
+            "staff_last_name",
+            "staff_other_names",
+            "staff_sex",
+            "staff_faculty",
+            "staff_department",
+        ):
+            window[key].expand(expand_x=True)
         return window
 
     @classmethod
@@ -156,7 +186,6 @@ class StaffEnrolmentWindow(ValidationMixin, BaseGUIWindow):
                 "department": Department.get_id(values["staff_department"]),
                 "sex": SexChoices.str_to_value(values["staff_sex"]),
             }
-
             new_staff_dict = app_config.cp.section_dict("new_staff")
 
             if (
@@ -165,13 +194,9 @@ class StaffEnrolmentWindow(ValidationMixin, BaseGUIWindow):
                     staff_number=new_staff_dict["staff_number"]
                 ).exists()
             ):
-                cls.display_message("Staff already exist!", window)
+                cls.display_message("Staff profile already created!", window)
                 return True
-            # else:
-            #     Staff.objects.create_user(
-            #         department=department, **new_staff_dict
-            #     )
-
+            
             cls.next_window()
         if event == "cancel":
             window_dispatch.dispatch.open_window("HomeWindow")
@@ -279,7 +304,6 @@ class StaffPasswordSettingWindow(BaseGUIWindow):
             new_staff = app_config.cp["new_staff"]
 
             if event == "submit":
-                # todo: verify that password is the same on submit
                 password_fields = (
                     values["staff_password"],
                     values["staff_password_confirm"],
@@ -293,22 +317,7 @@ class StaffPasswordSettingWindow(BaseGUIWindow):
 
                 new_staff["password"] = values["staff_password"]
 
-                if not OperationalMode.check_camera():
-                    cls.popup_auto_close_warn("Camera not connected.")
-                    time.sleep(2)
-                    if not OperationalMode.check_fingerprint():
-                        cls.popup_auto_close_warn(
-                            "Fingerprint scanner not connected"
-                        )
-                        window_dispatch.dispatch.open_window("HomeWindow")
-                    else:
-                        window_dispatch.dispatch.open_window(
-                            "StaffFingerprintEnrolmentWindow"
-                        )
-                else:
-                    window_dispatch.dispatch.open_window(
-                        "StaffFaceEnrolmentWindow"
-                    )
+                cls.next_window()
                 return True
 
             if event in ("cancel", "home"):
@@ -318,12 +327,38 @@ class StaffPasswordSettingWindow(BaseGUIWindow):
                     keep_on_top=True,
                 )
                 if confirm == "Yes":
-                    # todo: clear app config section 'new staff'
+                    app_config.cp.remove_section("new_staff")
                     window_dispatch.dispatch.open_window("StaffEnrolmentWindow")
                     return True
                 else:
                     return True
         return True
+
+    @classmethod
+    def next_window(cls):
+        if not OperationalMode.check_camera():
+            cls.popup_auto_close_warn("Camera not connected.")
+            time.sleep(2)
+            if not OperationalMode.check_fingerprint():
+                cls.popup_auto_close_warn(
+                    "Fingerprint scanner not connected"
+                )
+                send_staff_data()
+                BaseGUIWindow.popup_auto_close_success(
+                    "Staff enrolment saved with no biometric data."
+                    "Staff will not be able to initiate attendance "
+                    "until atleast biometric data is updated.",
+                    duration=5)
+                window_dispatch.dispatch.open_window("HomeWindow")
+            else:
+                window_dispatch.dispatch.open_window(
+                    "StaffFingerprintEnrolmentWindow"
+                )
+        else:
+            window_dispatch.dispatch.open_window(
+                "StaffFaceEnrolmentWindow"
+            )
+        return
 
 
 class StaffFaceEnrolmentWindow(FaceCameraWindow):
@@ -342,27 +377,33 @@ class StaffFaceEnrolmentWindow(FaceCameraWindow):
             return
         new_staff = app_config.cp["new_staff"]
 
-        # try:
-        #     staff = Staff.objects.get(staff_number=new_staff["staff_number"])
-        # except Exception as e:
-        #     cls.popup_auto_close_error(e)
-        #     return
-
         new_staff["face_encodings"] = face_enc_to_str(captured_face_encodings)
 
-        window_dispatch.dispatch.open_window("StaffFingerprintEnrolmentWindow")
-        cls.popup_auto_close_success("Biometric data saved")
-        return
+        cls.next_window() 
 
+    @classmethod
+    def next_window(cls):
+        if not OperationalMode.check_fingerprint():
+            BaseGUIWindow.popup_auto_close_warn("Fingerprint scanner not available")
+            send_staff_data()
+            BaseGUIWindow.popup_auto_close_success("Staff enrolment saved.")
+            return
+        window_dispatch.dispatch.open_window("StaffFingerprintEnrolmentWindow")
+        return
+    
     @staticmethod
     def cancel_camera() -> None:
         """ "Logic for when cancel button is pressed in camera window."""
+        if OperationalMode.check_fingerprint():
+            window_dispatch.dispatch.open_window("StaffFingerprintEnrolmentWindow")
+            return
         confirm = sg.popup_yes_no(
-            "Staff details will be saved with no biometric data. Continue?",
+            # "Staff details will be saved with no biometric data. Continue?",
+            "Save changes?",
             keep_on_top=True,
         )
         if confirm == "Yes":
-            app_config.cp.remove_section("new_staff")
+            send_staff_data()
             window_dispatch.dispatch.open_window("HomeWindow")
         return
 
@@ -376,7 +417,7 @@ class StaffFingerprintEnrolmentWindow(FingerprintEnrolmentWindow):
         app_config.cp["new_staff"]["fingerprint_template"] = str(
             fingerprint_data
         )
-        cls.post_process_enrolment_config()
+        send_staff_data()
         cls.popup_auto_close_success("Staff enrolment successful")
         window_dispatch.dispatch.open_window("StaffEnrolmentWindow")
         return
@@ -389,29 +430,8 @@ class StaffFingerprintEnrolmentWindow(FingerprintEnrolmentWindow):
             keep_on_top=True,
         )
         if confirm == "Yes":
-            app_config.cp.remove_section("new_staff")
+            send_staff_data()
             window_dispatch.dispatch.open_window("HomeWindow")
-        return
-
-    @staticmethod
-    def post_process_enrolment_config() -> None:
-        """Method to call when staff registration data has been validated.
-
-        Typically contains logic for synching collected data to the server.
-        """
-        try:
-            message = NodeDataSynch.staff_register(
-                app_config.cp.section_dict("new_staff")
-            )
-            BaseGUIWindow.popup_auto_close_success(message, duration=5)
-            app_config.cp.remove_section("new_staff")
-            # sync server data with the node device
-
-        except Exception as e:
-            error = json.loads(str(e))["detail"]
-            BaseGUIWindow.popup_auto_close_error(error, duration=5)
-
-        app_config.cp.remove_section("new_staff")
         return
 
     @classmethod
@@ -464,8 +484,6 @@ class StaffEnrolmentUpdateIDSearch(StaffNumberInputWindow):
 class StaffEnrolmentUpdateWindow(StaffEnrolmentWindow):
     """A window for updating biodata of existing staff."""
 
-    enroll_update = "update"
-
     @classmethod
     def window(cls) -> sg.Window:
         """Construct layout/appearance of window."""
@@ -480,7 +498,7 @@ class StaffEnrolmentUpdateWindow(StaffEnrolmentWindow):
         combo_props = {"size": 28}
         input_props = {"size": 29}
         column1 = [
-            [sg.Push(), sg.Text("Staff Enrolment"), sg.Push()],
+            [sg.Push(), sg.Text("Staff Enrolment Update"), sg.Push()],
             [sg.HorizontalSeparator()],
             [cls.message_display_field()],
             [
@@ -555,7 +573,7 @@ class StaffEnrolmentUpdateWindow(StaffEnrolmentWindow):
             [sg.VPush()],
             [
                 sg.Push(),
-                sg.Column(column1),
+                sg.Column(column1, pad=(0, None)),
                 sg.Push(),
             ],
             [
@@ -581,6 +599,18 @@ class StaffEnrolmentUpdateWindow(StaffEnrolmentWindow):
         window = sg.Window(
             "Staff Enrolment", scrolled_layout, **cls.window_init_dict()
         )
+
+        # adjust input field size to width of column1
+        for key in (
+            "staff_number_input",
+            "staff_first_name",
+            "staff_last_name",
+            "staff_other_names",
+            "staff_sex",
+            "staff_faculty",
+            "staff_department",
+        ):
+            window[key].expand(expand_x=True)
         return window
 
     @classmethod
@@ -593,6 +623,37 @@ class StaffEnrolmentUpdateWindow(StaffEnrolmentWindow):
     @classmethod
     def next_window(cls) -> None:
         """Open next window when processing of submitted data is complete."""
+        change_password = sg.popup_yes_no("Do you want to change password?", keep_on_top=True)
+        if change_password == "Yes":
+            window_dispatch.dispatch.open_window("StaffPasswordSettingUpdateWindow")
+            return
+        
+        if not OperationalMode.check_camera():
+            cls.popup_auto_close_warn("Camera not connected.", keep_on_top=True)
+            time.sleep(2)
+            if not OperationalMode.check_fingerprint():
+                cls.popup_auto_close_warn("Fingerprint scanner not connected")
+                window_dispatch.dispatch.open_window("HomeWindow")
+            else:
+                update_fingerprint = sg.popup_yes_no("Update fingerprint?", keep_on_top=True)
+                if update_fingerprint == "Yes":
+                    window_dispatch.dispatch.open_window(
+                        "StaffFingerprintEnrolmentWindow"
+                    )
+                    return
+        else:
+            update_face = sg.popup_yes_no("Update face capture?", keep_on_top=True)
+            if update_face == "Yes":
+                window_dispatch.dispatch.open_window("StaffFaceEnrolmentUpdateWindow")
+                return
+        send_staff_data()
+        window_dispatch.dispatch.open_window("HomeWindow")
+        return
+
+class StaffPasswordSettingUpdateWindow(StaffPasswordSettingWindow):
+    """Update staff password"""
+    @classmethod
+    def next_window(cls):
         if not OperationalMode.check_camera():
             cls.popup_auto_close_warn("Camera not connected.")
             time.sleep(2)
@@ -600,8 +661,32 @@ class StaffEnrolmentUpdateWindow(StaffEnrolmentWindow):
                 cls.popup_auto_close_warn("Fingerprint scanner not connected")
                 window_dispatch.dispatch.open_window("HomeWindow")
             else:
+                update_fingerprint = sg.popup_yes_no("Update fingerprint?", keep_on_top=True)
+                if update_fingerprint == "Yes":
+                    window_dispatch.dispatch.open_window(
+                        "StaffFingerprintEnrolmentWindow"
+                    )
+                    return
+        else:
+            update_face = sg.popup_yes_no("Update face capture?", keep_on_top=True)
+            if update_face == "Yes":
+                window_dispatch.dispatch.open_window("StaffFaceEnrolmentUpdateWindow")
+                return
+        send_staff_data()
+        window_dispatch.dispatch.open_window("HomeWindow")
+        return
+
+class StaffFaceEnrolmentUpdateWindow(StaffFaceEnrolmentWindow):
+    """Update staff face capture."""
+    @classmethod
+    def next_window(cls):
+        if not OperationalMode.check_fingerprint():
+            cls.popup_auto_close_warn("Fingerprint scanner not connected")
+            send_staff_data()
+            window_dispatch.dispatch.open_window("HomeWindow")
+        else:
+            update_fingerprint = sg.popup_yes_no("Update fingerprint?", keep_on_top=True)
+            if update_fingerprint == "Yes":
                 window_dispatch.dispatch.open_window(
                     "StaffFingerprintEnrolmentWindow"
                 )
-        else:
-            window_dispatch.dispatch.open_window("StaffFaceEnrolmentWindow")

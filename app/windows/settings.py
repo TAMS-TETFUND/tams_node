@@ -22,6 +22,8 @@ APP_WINDOWS = {
     "StaffEnrolmentWindow": "app.windows.staffenrolment",
     "StaffPasswordSettingWindow": "app.windows.staffenrolment",
     "StaffFaceEnrolmentWindow": "app.windows.staffenrolment",
+    "StaffFaceEnrolmentUpdateWindow": "app.windows.staffenrolment",
+    "StaffPasswordSettingUpdateWindow": "app.windows.staffenrolment",
     "StaffFaceVerificationWindow": "app.windows.stafffaceverification",
     "StudentEnrolmentWindow": "app.windows.studentenrolment",
     "StudentFaceEnrolmentWindow": "app.windows.studentenrolment",

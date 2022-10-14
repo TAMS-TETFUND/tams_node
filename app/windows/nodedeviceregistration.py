@@ -25,6 +25,7 @@ class NodeDeviceRegistrationWindow(ValidationMixin, BaseGUIWindow):
         combo_props = {"size": 22}
         layout = [
             [sg.Push(), sg.Text("Admin Login Details"), sg.Push()],
+            [sg.VPush()],
             [cls.message_display_field()],
             [
                 sg.Text("Admin Username:", **field_label_props),
@@ -35,6 +36,7 @@ class NodeDeviceRegistrationWindow(ValidationMixin, BaseGUIWindow):
                 sg.InputText(key="password", password_char="*", **input_props),
             ],
             [sg.Button("Submit", key="submit")],
+            [sg.VPush()],
             cls.navigation_pane(),
         ]
 

@@ -20,7 +20,7 @@ app_config = app.appconfigparser.AppConfigParser()
 window_dispatch = app.windowdispatch.WindowDispatch()
 
 
-def sync_student_data() -> None:
+def send_student_data() -> None:
     """Synch student data to the server."""
     try:
         message = NodeDataSynch.student_register(
@@ -132,7 +132,7 @@ class StudentEnrolmentWindow(ValidationMixin, BaseGUIWindow):
             [sg.VPush()],
             [
                 sg.Push(),
-                sg.Column(column1),
+                sg.Column(column1, pad=(0, None)),
                 sg.Push(),
             ],
             [
@@ -158,6 +158,21 @@ class StudentEnrolmentWindow(ValidationMixin, BaseGUIWindow):
         window = sg.Window(
             "Student Enrolment", scrolled_layout, **cls.window_init_dict()
         )
+
+        # adjust input fields to same size within column
+        for key in (
+            "student_reg_number_input", 
+            "student_first_name", 
+            "student_last_name", 
+            "student_other_names", 
+            "student_sex", 
+            "student_level_of_study", 
+            "student_possible_grad_yr", 
+            "student_faculty",
+            "student_department",
+        ):
+            window[key].expand(expand_x=True)
+
         return window
 
     @classmethod
@@ -212,9 +227,12 @@ class StudentEnrolmentWindow(ValidationMixin, BaseGUIWindow):
                     cls.popup_auto_close_error(
                         "Fingerprint scanner not connected"
                     )
-                    sync_student_data()
+                    send_student_data()
                     BaseGUIWindow.popup_auto_close_success(
-                        "Student enrolment successful"
+                        "Student bio-date enrolment with no biometric data. "
+                        "Student will not be able to log attendance until "
+                        "biometric data is updated.",
+                        duration=5
                     )
                     window_dispatch.dispatch.open_window("HomeWindow")
                     return True
@@ -299,7 +317,7 @@ class StudentFaceEnrolmentWindow(FaceCameraWindow):
             )
 
             # save student if fingerprint enrolment not available
-            sync_student_data()
+            send_student_data()
             BaseGUIWindow.popup_auto_close_success(
                 "Student enrolment successful"
             )
@@ -320,7 +338,8 @@ class StudentFaceEnrolmentWindow(FaceCameraWindow):
             keep_on_top=True,
         )
         if confirm == "Yes":
-            app_config.cp.remove_section("new_student")
+            send_student_data()
+            BaseGUIWindow.popup_auto_close_success("Save successful")
             window_dispatch.dispatch.open_window("HomeWindow")
         return
 
@@ -334,7 +353,7 @@ class StudentFingerprintEnrolmentWindow(FingerprintEnrolmentWindow):
         app_config.cp["new_student"]["fingerprint_template"] = str(
             fingerprint_data
         )
-        sync_student_data()
+        send_student_data()
         cls.popup_auto_close_success("Student enrolment successful")
         window_dispatch.dispatch.open_window("StudentEnrolmentWindow")
         return
@@ -467,7 +486,7 @@ class StudentEnrolmentUpdateWindow(StudentEnrolmentWindow):
             [sg.VPush()],
             [
                 sg.Push(),
-                sg.Column(column1),
+                sg.Column(column1, pad=(0, None)),
                 sg.Push(),
             ],
             [
@@ -493,6 +512,22 @@ class StudentEnrolmentUpdateWindow(StudentEnrolmentWindow):
         window = sg.Window(
             "Student Enrolment", scrolled_layout, **cls.window_init_dict()
         )
+
+
+        # adjust input fields to same size within column
+        for key in (
+            "student_reg_number_input", 
+            "student_first_name", 
+            "student_last_name", 
+            "student_other_names", 
+            "student_sex", 
+            "student_level_of_study", 
+            "student_possible_grad_yr", 
+            "student_faculty",
+            "student_department",
+        ):
+            window[key].expand(expand_x=True)
+
         return window
 
     @classmethod
@@ -519,7 +554,7 @@ class StudentEnrolmentUpdateIDSearch(StudentRegNumInputWindow):
         return super().loop(window, event, values)
 
     @classmethod
-    def process_student(cls, student: Student) -> None:
+    def process_student(cls, student: Student, window: sg.Window) -> None:
         """Process staff info for update."""
         app_config.cp["new_student"] = app_config.cp.dict_vals_to_str(
             student.values(

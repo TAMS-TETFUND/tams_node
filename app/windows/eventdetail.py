@@ -20,7 +20,7 @@ class EventDetailWindow(ValidationMixin, BaseGUIWindow):
     @classmethod
     def window(cls) -> sg.Window:
         """Construct layout/appearance of window."""
-        combo_props = {"size": 32}
+        combo_props = {"size": 31}
         field_label_props = {"size": 12}
         section1 = [
             [
@@ -120,7 +120,6 @@ class EventDetailWindow(ValidationMixin, BaseGUIWindow):
                 ),
                 sg.Text("Hour(s)"),
             ],
-            [sg.VPush()],
             [sg.Button("Submit", key="submit")],
             [sg.VPush()],
             cls.navigation_pane(back_icon="back_disabled"),
@@ -196,7 +195,7 @@ class EventDetailWindow(ValidationMixin, BaseGUIWindow):
                 )
         if event == "pick_date":
             event_date = sg.popup_get_date(
-                close_when_chosen=True, keep_on_top=False, modal=False
+                close_when_chosen=True, no_titlebar=False
             )
             if event_date is None:
                 return True

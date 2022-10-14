@@ -154,6 +154,7 @@ class ScheduledEventsWindow(BaseGUIWindow):
         window = sg.Window(
             "Scheduled Events", scrolled_layout, **cls.window_init_dict()
         )
+        window["main_column"].expand(expand_x=True)
         return window
 
     @classmethod

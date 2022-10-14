@@ -222,38 +222,40 @@ class EnrolmentMenuWindow(BaseGUIWindow):
 
     @classmethod
     def loop(
-        cls, window: sg.Window, event: str, values: Dict[str, Any]
+        cls, window: sg.Window, event: str, values: Dict[str, Any], loop_count = []
     ) -> bool:
         """Track user interaction with window."""
+        
+        if loop_count == []:
+            conn = ServerConnection()
+            try:
+                conn_test = conn.test_connection()
+            except Exception:
+                app_config.cp["server_connection"] = {
+                    "next_window": "EnrolmentMenuWindow"
+                }
+                window_dispatch.dispatch.open_window(
+                    "ServerConnectionDetailsWindow"
+                )
+                return True
+            if not conn_test:
+                app_config.cp["server_connection"] = {
+                    "next_window": "EnrolmentMenuWindow"
+                }
+                window_dispatch.dispatch.open_window("ServerConnectionDetailsWindow")
+                return True
+            loop_count.append("Done")
+
         if event in ("back", "home"):
             window_dispatch.dispatch.open_window("HomeWindow")
-
-        conn = ServerConnection()
-        try:
-            conn_test = conn.test_connection()
-        except Exception:
-            app_config.cp["server_connection"] = {
-                "next_window": "EnrolmentMenuWindow"
-            }
-            window_dispatch.dispatch.open_window(
-                "ServerConnectionDetailsWindow"
-            )
             return True
-        if not conn_test:
-            app_config.cp["server_connection"] = {
-                "next_window": "EnrolmentMenuWindow"
-            }
-            window_dispatch.dispatch.open_window(
-                "ServerConnectionDetailsWindow"
-            )
-            return True
-
         if event in (
             "staff_enrolment",
             "staff_enrolment_txt",
             "staff_enrolment_txt_2",
         ):
             window_dispatch.dispatch.open_window("StaffEnrolmentWindow")
+            return True
         if event in (
             "student_enrolment",
             "student_enrolment_txt",
@@ -288,14 +290,5 @@ class EnrolmentMenuWindow(BaseGUIWindow):
             return True
         if event in ("synch_device", "synch_device_txt", "synch_device_txt_2"):
             window_dispatch.dispatch.open_window("NodeDeviceSynchWindow")
-        if event == "sync_attendance":
-            try:
-                NodeDataSynch.node_attendance_sync()
-                msg = "Attendance Successfully Synced!"
-            except Exception as e:
-                print(e)
-                err_msg = f"Error: {json.loads(str(e))['detail']}"
-                cls.popup_auto_close_error(message=err_msg, duration=5)
-                return True
-            cls.popup_auto_close_success(message=msg, duration=5)
+            return True
         return True

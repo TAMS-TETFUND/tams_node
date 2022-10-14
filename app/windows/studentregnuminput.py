@@ -150,19 +150,7 @@ class StudentRegNumInputWindow(
             ),
             student_id=tmp_student["reg_number"],
         ).exists():
-            record = AttendanceRecord.objects.get(
-                student_id=tmp_student["reg_number"],
-                attendance_session_id=app_config.cp.get(
-                    "current_attendance_session", "session_id"
-                ),
-            )
-            # check if the student is signed out and prevent re-entry
-            if record.record_type == RecordTypesChoices.SIGN_OUT:
-                cls.display_message("Student already signed out!", window)
-                cls.resize_column(window)
-                return
-
-            window_dispatch.dispatch.open_window("AttendanceSignOutWindow")
+            cls.display_message("Student already signed in!", window)
             return
         cls.student_verification_window()
 
