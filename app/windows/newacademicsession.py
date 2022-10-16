@@ -121,7 +121,9 @@ class NewAcademicSessionWindow(ValidationMixin, BaseGUIWindow):
                 return True
             else:
                 if session_start_int > 0:
-                    window[cls.key("session_end")].update(value=session_start_int + 1)
+                    window[cls.key("session_end")].update(
+                        value=session_start_int + 1
+                    )
                 else:
                     window[cls.key("session_end")].update(value=0)
                 return True
@@ -136,7 +138,9 @@ class NewAcademicSessionWindow(ValidationMixin, BaseGUIWindow):
                 return True
             else:
                 if session_end_int > 0:
-                    window[cls.key("session_start")].update(value=session_end_int - 1)
+                    window[cls.key("session_start")].update(
+                        value=session_end_int - 1
+                    )
                 else:
                     window[cls.key("session_start")].update(value=0)
                 return True

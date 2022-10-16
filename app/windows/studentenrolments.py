@@ -137,7 +137,11 @@ class StudentEnrolmentWindow(ValidationMixin, BaseGUIWindow):
             ],
             [
                 sg.Button("Submit", key=cls.key("submit")),
-                sg.Button("Cancel", key=cls.key("cancel"), **cls.cancel_button_kwargs()),
+                sg.Button(
+                    "Cancel",
+                    key=cls.key("cancel"),
+                    **cls.cancel_button_kwargs(),
+                ),
             ],
             [sg.VPush()],
         ]
@@ -157,13 +161,13 @@ class StudentEnrolmentWindow(ValidationMixin, BaseGUIWindow):
         ]
         # adjust input fields to same size within column
         # for key in (
-        #     "student_reg_number_input", 
-        #     "student_first_name", 
-        #     "student_last_name", 
-        #     "student_other_names", 
-        #     "student_sex", 
-        #     "student_level_of_study", 
-        #     "student_possible_grad_yr", 
+        #     "student_reg_number_input",
+        #     "student_first_name",
+        #     "student_last_name",
+        #     "student_other_names",
+        #     "student_sex",
+        #     "student_level_of_study",
+        #     "student_possible_grad_yr",
         #     "student_faculty",
         #     "student_department",
         # ):
@@ -203,7 +207,9 @@ class StudentEnrolmentWindow(ValidationMixin, BaseGUIWindow):
                 "level_of_study": values[cls.key("student_level_of_study")],
                 "possible_grad_yr": values[cls.key("student_possible_grad_yr")],
                 "sex": SexChoices.str_to_value(values[cls.key("student_sex")]),
-                "department": Department.get_id(values[cls.key("student_department")]),
+                "department": Department.get_id(
+                    values[cls.key("student_department")]
+                ),
             }
             new_student_dict = app_config.cp.section_dict("new_student")
 
@@ -228,7 +234,7 @@ class StudentEnrolmentWindow(ValidationMixin, BaseGUIWindow):
                         "Student bio-date enrolment with no biometric data. "
                         "Student will not be able to log attendance until "
                         "biometric data is updated.",
-                        duration=5
+                        duration=5,
                     )
                     window_dispatch.dispatch.open_window("HomeWindow")
                     return True
@@ -252,12 +258,18 @@ class StudentEnrolmentWindow(ValidationMixin, BaseGUIWindow):
     ) -> Optional[bool]:
         """Validate values supplied by user in the window input fields."""
         req_fields = [
-            (values[cls.key("student_reg_number_input")], "registration number"),
+            (
+                values[cls.key("student_reg_number_input")],
+                "registration number",
+            ),
             (values[cls.key("student_first_name")], "first name"),
             (values[cls.key("student_last_name")], "last name"),
             (values[cls.key("student_sex")], "sex"),
             (values[cls.key("student_level_of_study")], "level of study"),
-            (values[cls.key("student_possible_grad_yr")], "possible year of graduation"),
+            (
+                values[cls.key("student_possible_grad_yr")],
+                "possible year of graduation",
+            ),
             (values[cls.key("student_faculty")], "faculty"),
             (values[cls.key("student_department")], "department"),
         ]
@@ -271,7 +283,9 @@ class StudentEnrolmentWindow(ValidationMixin, BaseGUIWindow):
                 return True
 
         for criteria in (
-            cls.validate_student_reg_number(values[cls.key("student_reg_number_input")]),
+            cls.validate_student_reg_number(
+                values[cls.key("student_reg_number_input")]
+            ),
             cls.validate_sex(values[cls.key("student_sex")]),
             cls.validate_faculty(values[cls.key("student_faculty")]),
             cls.validate_department(values[cls.key("student_department")]),
@@ -487,7 +501,11 @@ class StudentEnrolmentUpdateWindow(StudentEnrolmentWindow):
             ],
             [
                 sg.Button("Submit", key=cls.key("submit")),
-                sg.Button("Cancel", key=cls.key("cancel"), **cls.cancel_button_kwargs()),
+                sg.Button(
+                    "Cancel",
+                    key=cls.key("cancel"),
+                    **cls.cancel_button_kwargs(),
+                ),
             ],
             [sg.VPush()],
         ]
@@ -507,13 +525,13 @@ class StudentEnrolmentUpdateWindow(StudentEnrolmentWindow):
         ]
         # adjust input fields to same size within column
         # for key in (
-        #     "student_reg_number_input", 
-        #     "student_first_name", 
-        #     "student_last_name", 
-        #     "student_other_names", 
-        #     "student_sex", 
-        #     "student_level_of_study", 
-        #     "student_possible_grad_yr", 
+        #     "student_reg_number_input",
+        #     "student_first_name",
+        #     "student_last_name",
+        #     "student_other_names",
+        #     "student_sex",
+        #     "student_level_of_study",
+        #     "student_possible_grad_yr",
         #     "student_faculty",
         #     "student_department",
         # ):

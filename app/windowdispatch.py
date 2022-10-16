@@ -42,11 +42,24 @@ class WindowDict(UserDict):
         for win_name, win in APP_WINDOWS.items():
             win_module = import_module(win)
             win_class = getattr(win_module, win_name)
-            app_layout.append(sg.Column(win_class.window(), key=win_name, pad=(0, 0), visible=False if win_name!="HomeWindow" else True, expand_x=True, expand_y=True))
+            app_layout.append(
+                sg.Column(
+                    win_class.window(),
+                    key=win_name,
+                    pad=(0, 0),
+                    visible=False if win_name != "HomeWindow" else True,
+                    expand_x=True,
+                    expand_y=True,
+                )
+            )
             if win_name == "HomeWindow":
                 self.current_window = win_name
                 self.current_window_class = win_class
-        self.app_window = sg.Window("TAMS Attendance Logger", [app_layout], **BaseGUIWindow.window_init_dict())
+        self.app_window = sg.Window(
+            "TAMS Attendance Logger",
+            [app_layout],
+            **BaseGUIWindow.window_init_dict(),
+        )
 
     def open_window(
         self,
@@ -69,13 +82,11 @@ class WindowDict(UserDict):
             raise RuntimeError(
                 "%s not found in specified path." % window_class_name
             )
-        
-        
+
         window_class.refresh_dynamic_fields(self.app_window)
         self.app_window.refresh()
         self.app_window[self.current_window].update(visible=False)
         self.app_window[window_class_name].update(visible=True)
-        
 
         self.update({window_class.__name__: window_class})
         open_windows = self.copy()

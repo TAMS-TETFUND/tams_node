@@ -11,7 +11,6 @@ import app.appconfigparser
 import app.windowdispatch
 
 
-
 app_config = app.appconfigparser.AppConfigParser()
 window_dispatch = app.windowdispatch.WindowDispatch()
 
@@ -19,7 +18,7 @@ window_dispatch = app.windowdispatch.WindowDispatch()
 def main_loop() -> None:
     """Function that starts the application."""
     import app.guiutils
-    
+
     # setting the operational mode of device
     app_config.cp["tmp_settings"] = {}
     app.guiutils.update_device_op_mode()
@@ -32,10 +31,11 @@ def main_loop() -> None:
         current_window_class = window_dispatch.dispatch.current_window_class
         if current_window:
             continue_loop = current_window_class.loop(window, event, values)
-        
+
         if event == sg.WINDOW_CLOSE_ATTEMPTED_EVENT:
             from app.basegui import BaseGUIWindow
+
             continue_loop = BaseGUIWindow.confirm_exit()
-        
+
         if event in (sg.WIN_CLOSED, None):
             break

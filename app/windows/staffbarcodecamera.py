@@ -55,10 +55,12 @@ class StaffBarcodeCameraWindow(
     @classmethod
     def window_title(cls) -> List[Any]:
         """Title of GUI window."""
-        course = app_config.cp.get("current_attendance_session", "course", fallback="").split(
-            ":"
+        course = app_config.cp.get(
+            "current_attendance_session", "course", fallback=""
+        ).split(":")
+        event = app_config.cp.get(
+            "current_attendance_session", "type", fallback=""
         )
-        event = app_config.cp.get("current_attendance_session", "type", fallback="")
         return [
             [
                 sg.Push(),

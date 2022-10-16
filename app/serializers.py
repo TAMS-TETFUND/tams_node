@@ -15,6 +15,7 @@ from db.models import (
 
 class AttendanceSessionSerializer(ModelSerializer):
     """Serializer for the AttendanceSession model."""
+
     class Meta:
         model = AttendanceSession
         fields = "__all__"
@@ -22,6 +23,7 @@ class AttendanceSessionSerializer(ModelSerializer):
 
 class AttendanceRecordSerializer(ModelSerializer):
     """Serializer for the AttendanceRecord model."""
+
     class Meta:
         model = AttendanceRecord
         fields = "__all__"

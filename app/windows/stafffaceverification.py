@@ -71,18 +71,22 @@ class StaffFaceVerificationWindow(FaceCameraWindow):
     @classmethod
     def window_title(cls) -> List[Any]:
         """Title to GUI window."""
-        course = app_config.cp.get("current_attendance_session", "course", fallback="").split(
-            ":"
+        course = app_config.cp.get(
+            "current_attendance_session", "course", fallback=""
+        ).split(":")
+        event = app_config.cp.get(
+            "current_attendance_session", "type", fallback=""
         )
-        event = app_config.cp.get("current_attendance_session", "type", fallback="")
-        staff_fname = app_config.cp.get("tmp_staff", "first_name", fallback="fname")
+        staff_fname = app_config.cp.get(
+            "tmp_staff", "first_name", fallback="fname"
+        )
         staff_lname = app_config.cp.get("tmp_staff", "last_name", fallback="")
         return [
             [
                 sg.Push(),
                 sg.Text(
                     f"Staff Consent for {course[0]} {event.capitalize()} Attendance",
-                    key=cls.key("course")
+                    key=cls.key("course"),
                 ),
                 sg.Push(),
             ],
@@ -91,23 +95,31 @@ class StaffFaceVerificationWindow(FaceCameraWindow):
                 sg.Image(data=cls.get_icon("face_scanner", 0.3)),
                 sg.Text(
                     f"Face Verification for: {staff_fname[0]}. {staff_lname}",
-                    key=cls.key("staff_name")
+                    key=cls.key("staff_name"),
                 ),
                 sg.Push(),
             ],
         ]
-    
+
     @classmethod
     def refresh_dynamic_fields(cls, window: sg.Window) -> None:
-        course = app_config.cp.get("current_attendance_session", "course", fallback="").split(
-            ":"
+        course = app_config.cp.get(
+            "current_attendance_session", "course", fallback=""
+        ).split(":")
+        event = app_config.cp.get(
+            "current_attendance_session", "type", fallback=""
         )
-        event = app_config.cp.get("current_attendance_session", "type", fallback="")
-        staff_fname = app_config.cp.get("tmp_staff", "first_name", fallback="fname")
+        staff_fname = app_config.cp.get(
+            "tmp_staff", "first_name", fallback="fname"
+        )
         staff_lname = app_config.cp.get("tmp_staff", "last_name", fallback="")
 
-        window[cls.key("course")].update(f"Staff Consent for {course[0]} {event.capitalize()} Attendance")
-        window[cls.key("staff_name")].update(f"Face Verification for: {staff_fname[0]}. {staff_lname}")
+        window[cls.key("course")].update(
+            f"Staff Consent for {course[0]} {event.capitalize()} Attendance"
+        )
+        window[cls.key("staff_name")].update(
+            f"Face Verification for: {staff_fname[0]}. {staff_lname}"
+        )
 
     @staticmethod
     def open_fingerprint() -> None:

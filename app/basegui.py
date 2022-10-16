@@ -161,7 +161,7 @@ class BaseGUIWindow:
             "icon": cls.get_icon("icon"),
             "grab_anywhere": False,
             "margins": (0, 0),
-            "enable_close_attempted_event":True,
+            "enable_close_attempted_event": True,
         }
         return init_dict
 
@@ -169,7 +169,12 @@ class BaseGUIWindow:
     def message_display_field(cls) -> Callable[[Any], sg.Column]:
         """A field for displaying messages to the user on an app window."""
         return sg.pin(
-            sg.Text("", enable_events=True, k=cls.key("message_display"), visible=False)
+            sg.Text(
+                "",
+                enable_events=True,
+                k=cls.key("message_display"),
+                visible=False,
+            )
         )
 
     @classmethod
@@ -221,29 +226,31 @@ class BaseGUIWindow:
                 pad=(0, 0),
                 key="navigation_pane",
             )
-        ]    
+        ]
 
     @classmethod
     def key(cls, suffix: str) -> str:
         """Generate key for window elements based on class name and suffix value."""
-        return ''.join([cls.__name__.lower().strip('window'), '_', suffix])
+        return "".join([cls.__name__.lower().strip("window"), "_", suffix])
 
     @classmethod
     def key_prefix(cls) -> str:
         """Get prefix used to generate unique key for window elements."""
-        return ''.join([cls.__name__.lower().strip('window'), '_'])
+        return "".join([cls.__name__.lower().strip("window"), "_"])
 
     @classmethod
     def refresh_dynamic_fields(cls, window: sg.Window) -> None:
         """Refresh dynamic fields in a window.
-        
+
         Called when the window is about to be made visible.
         For use in windows that need data from database or confifgparser
         file.
         """
 
     @classmethod
-    def adjust_input_field_size(cls, window: sg.Window, input_fields: Iterable[str] = []) -> None:
+    def adjust_input_field_size(
+        cls, window: sg.Window, input_fields: Iterable[str] = []
+    ) -> None:
         """Adjust input field sizes to avoid uneven widths in appearance."""
         try:
             window[cls.key("main_column")].expand(expand_x=True, expand_y=True)

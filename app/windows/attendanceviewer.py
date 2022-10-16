@@ -17,7 +17,9 @@ class AttendanceViewerWindow(BaseGUIWindow):
     @classmethod
     def window(cls) -> sg.Window:
         current_attendance_session = app_config.cp["current_attendance_session"]
-        if not app_config.cp.has_option("current_attendance_session", "session"):
+        if not app_config.cp.has_option(
+            "current_attendance_session", "session"
+        ):
             layout = []
         else:
             try:
@@ -28,7 +30,9 @@ class AttendanceViewerWindow(BaseGUIWindow):
                 table_rows = []
             else:
                 att_records = list(
-                    AttendanceRecord.objects.filter(attendance_session=att_session_obj)
+                    AttendanceRecord.objects.filter(
+                        attendance_session=att_session_obj
+                    )
                     .prefetch_related("student")
                     .values_list(
                         "student__reg_number",
@@ -38,14 +42,21 @@ class AttendanceViewerWindow(BaseGUIWindow):
                         "record_type",
                     )
                 )
-                
+
                 table_rows = []
                 for idx, record in enumerate(att_records, 1):
                     table_rows.append(
                         [
                             idx,
                             "".join(
-                                [record[1], " ", record[2][0], ". (", record[0], ")"]
+                                [
+                                    record[1],
+                                    " ",
+                                    record[2][0],
+                                    ". (",
+                                    record[0],
+                                    ")",
+                                ]
                             ),
                             record[3].strftime("%H:%M"),
                             RecordTypesChoices(record[4]).label,
@@ -57,7 +68,9 @@ class AttendanceViewerWindow(BaseGUIWindow):
                     sg.Push(),
                     sg.Text(
                         "%s Attendance List"
-                        % current_attendance_session.get("course", fallback="").split(" : ")[0]
+                        % current_attendance_session.get(
+                            "course", fallback=""
+                        ).split(" : ")[0]
                     ),
                     sg.Push(),
                 ],
@@ -65,7 +78,9 @@ class AttendanceViewerWindow(BaseGUIWindow):
                 [
                     sg.Push(),
                     sg.Table(
-                        table_rows, headings=table_headings, justification="center"
+                        table_rows,
+                        headings=table_headings,
+                        justification="center",
                     ),
                     sg.Push(),
                 ],

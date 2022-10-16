@@ -33,7 +33,9 @@ class NodeDeviceRegistrationWindow(ValidationMixin, BaseGUIWindow):
             ],
             [
                 sg.Text("Initial Password:", **field_label_props),
-                sg.InputText(key=cls.key("password"), password_char="*", **input_props),
+                sg.InputText(
+                    key=cls.key("password"), password_char="*", **input_props
+                ),
             ],
             [sg.Button("Submit", key=cls.key("submit"))],
             [sg.VPush()],

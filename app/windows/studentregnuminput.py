@@ -80,11 +80,11 @@ class StudentRegNumInputWindow(
             ]
         ]
         return scrolled_layout
+
     @classmethod
     def refresh_dynamic_fields(cls, window: sg.Window) -> None:
         cls.adjust_input_field_size(window, ("reg_num_input", "column1"))
         window.refresh()
-
 
     @classmethod
     def loop(
@@ -100,15 +100,15 @@ class StudentRegNumInputWindow(
 
         keys_pressed = None
         if event in (
-            cls.key("0"), 
-            cls.key("1"), 
-            cls.key("2"), 
-            cls.key("3"), 
+            cls.key("0"),
+            cls.key("1"),
+            cls.key("2"),
+            cls.key("3"),
             cls.key("4"),
-            cls.key("5"), 
-            cls.key("6"), 
-            cls.key("7"), 
-            cls.key("8"), 
+            cls.key("5"),
+            cls.key("6"),
+            cls.key("7"),
+            cls.key("8"),
             cls.key("9"),
             cls.key("/"),
         ):
@@ -132,7 +132,9 @@ class StudentRegNumInputWindow(
 
             student = Student.objects.filter(reg_number=reg_number_entered)
             if not student.exists():
-                cls.popup_auto_close_error("No student found with given registration number.")
+                cls.popup_auto_close_error(
+                    "No student found with given registration number."
+                )
                 return True
             cls.process_student(student, window)
         return True

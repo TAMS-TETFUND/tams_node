@@ -45,7 +45,8 @@ class AttendanceSessionLandingWindow(
             [
                 sg.Text(f"Number of valid check-ins: "),
                 sg.Text(
-                    "{}".format(cls.valid_check_in_count()), k=cls.key("valid_checks")
+                    "{}".format(cls.valid_check_in_count()),
+                    k=cls.key("valid_checks"),
                 ),
                 sg.Push(),
                 sg.Button("Attendance List", k=cls.key("attendance_list")),

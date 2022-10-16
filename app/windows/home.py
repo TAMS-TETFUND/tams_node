@@ -33,12 +33,16 @@ class HomeWindow(BaseGUIWindow):
             ],
             [
                 sg.Push(),
-                sg.Text("New", key=cls.key("new_event_txt"), enable_events=True),
+                sg.Text(
+                    "New", key=cls.key("new_event_txt"), enable_events=True
+                ),
                 sg.Push(),
             ],
             [
                 sg.Push(),
-                sg.Text("Event", key=cls.key("new_event_txt"), enable_events=True),
+                sg.Text(
+                    "Event", key=cls.key("new_event_txt"), enable_events=True
+                ),
                 sg.Push(),
             ],
         ]
@@ -85,13 +89,19 @@ class HomeWindow(BaseGUIWindow):
             ],
             [
                 sg.Push(),
-                sg.Text("Scheduled &", key=cls.key("schedule_txt"), enable_events=True),
+                sg.Text(
+                    "Scheduled &",
+                    key=cls.key("schedule_txt"),
+                    enable_events=True,
+                ),
                 sg.Push(),
             ],
             [
                 sg.Push(),
                 sg.Text(
-                    "Recurring Events", key=cls.key("schedule_txt_2"), enable_events=True
+                    "Recurring Events",
+                    key=cls.key("schedule_txt_2"),
+                    enable_events=True,
                 ),
                 sg.Push(),
             ],
@@ -144,7 +154,11 @@ class HomeWindow(BaseGUIWindow):
             cls.key("continue_attendance_txt"),
             cls.key("continue_attendance_txt_2"),
         ):
-            if app_config.cp.has_section("current_attendance_session") and app_config.cp["current_attendance_session"].items() != app_config.cp["DEFAULT"].items():
+            if (
+                app_config.cp.has_section("current_attendance_session")
+                and app_config.cp["current_attendance_session"].items()
+                != app_config.cp["DEFAULT"].items()
+            ):
                 current_att_session = app_config.cp[
                     "current_attendance_session"
                 ]
@@ -209,7 +223,11 @@ class HomeWindow(BaseGUIWindow):
                     keep_on_top=True,
                 )
             return True
-        if event in (cls.key("schedule"), cls.key("schedule_txt"), cls.key("schedule_txt_2")):
+        if event in (
+            cls.key("schedule"),
+            cls.key("schedule_txt"),
+            cls.key("schedule_txt_2"),
+        ):
             window_dispatch.dispatch.open_window("ScheduledEventsWindow")
             return True
         if event == cls.key("settings"):

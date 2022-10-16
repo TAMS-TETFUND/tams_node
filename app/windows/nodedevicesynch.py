@@ -12,6 +12,7 @@ window_dispatch = app.windowdispatch.WindowDispatch()
 
 class NodeDeviceSynchWindow(LoadingWindow):
     """Synch node device with server."""
+
     @classmethod
     def loop(
         cls, window: sg.Window, event: str, values: Dict[str, Any]

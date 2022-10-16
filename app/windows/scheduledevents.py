@@ -19,7 +19,7 @@ class ScheduledEventsWindow(BaseGUIWindow):
     @classmethod
     def window(cls) -> sg.Window:
         """Layout/appearance of GUI window."""
-        
+
         table_headings = ["S/N", "Event", "Time", "Duration(H)"]
         table_rows = cls.get_table_rows()
         layout = [
@@ -32,8 +32,7 @@ class ScheduledEventsWindow(BaseGUIWindow):
                     k=cls.key("scheduled_events"),
                     enable_click_events=True,
                     justification="center",
-                    pad=(1, 1)
-
+                    pad=(1, 1),
                 ),
                 sg.Push(),
             ],
@@ -46,7 +45,7 @@ class ScheduledEventsWindow(BaseGUIWindow):
                     k=cls.key("weekly_events"),
                     enable_click_events=True,
                     justification="center",
-                    pad=(1, 1)
+                    pad=(1, 1),
                 )
             ],
             cls.navigation_pane(next_icon="next_disabled"),
@@ -65,10 +64,11 @@ class ScheduledEventsWindow(BaseGUIWindow):
             ]
         ]
         return scrolled_layout
-    
 
     @classmethod
-    def adjust_input_field_size(cls, window: sg.Window, input_fields: Iterable[Optional[str]] = ...) -> None:
+    def adjust_input_field_size(
+        cls, window: sg.Window, input_fields: Iterable[Optional[str]] = ...
+    ) -> None:
         return super().adjust_input_field_size(window, input_fields)
 
     @classmethod
@@ -184,7 +184,7 @@ class ScheduledEventsWindow(BaseGUIWindow):
             event_type__in=(EventTypeChoices.LECTURE, EventTypeChoices.LAB),
             start_time__week_day=weekday_mapping[today.weekday()][0],
             start_time__date__lt=today,
-            initiator__isnull=False
+            initiator__isnull=False,
         )
         scheduled_events = AttendanceSession.objects.filter(
             start_time__day=today.day,
@@ -263,7 +263,9 @@ class ScheduledEventsWindow(BaseGUIWindow):
 
     @classmethod
     def refresh_dynamic_fields(cls, window: sg.Window) -> None:
-        cls.adjust_input_field_size(window, ["scheduled_events", "weekly_events"])
+        cls.adjust_input_field_size(
+            window, ["scheduled_events", "weekly_events"]
+        )
         table_rows = cls.get_table_rows()
         window[cls.key("scheduled_events")].update(table_rows["scheduled"])
         window[cls.key("weekly_events")].update(table_rows["weekly"])

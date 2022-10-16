@@ -172,6 +172,9 @@ class ServerConnection(metaclass=SingletonType):
             raise HTTPError('{"detail": "Connection refused!"}')
 
         if res.status_code not in range(200, 300):
-            raise HTTPError('{"detail": "Connection error (%s): %s"}'%(res.status_code, res.reason))
+            raise HTTPError(
+                '{"detail": "Connection error (%s): %s"}'
+                % (res.status_code, res.reason)
+            )
 
         return res

@@ -23,7 +23,11 @@ class CameraWindow(BaseGUIWindow):
             [sg.Push(), sg.Column(cls.window_title()), sg.Push()],
             [
                 sg.Push(),
-                sg.Image(filename="", key=cls.key("image_display"), enable_events=True),
+                sg.Image(
+                    filename="",
+                    key=cls.key("image_display"),
+                    enable_events=True,
+                ),
                 sg.Push(),
             ],
             [
@@ -221,7 +225,9 @@ class BarcodeCameraWindow(CameraWindow):
                     )
                     return True
                 img_bnw = cam.image_to_grayscale(img)
-                window[cls.key("image_display")].update(data=cam.feed_to_bytes(img_bnw))
+                window[cls.key("image_display")].update(
+                    data=cam.feed_to_bytes(img_bnw)
+                )
         return True
 
     @classmethod

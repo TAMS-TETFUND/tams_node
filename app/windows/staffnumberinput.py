@@ -89,16 +89,16 @@ class StaffNumberInputWindow(
 
         keys_pressed = None
         if event in (
-            cls.key("0"), 
-            cls.key("1"), 
-            cls.key("2"), 
-            cls.key("3"), 
+            cls.key("0"),
+            cls.key("1"),
+            cls.key("2"),
+            cls.key("3"),
             cls.key("4"),
-            cls.key("5"), 
-            cls.key("6"), 
-            cls.key("7"), 
-            cls.key("8"), 
-            cls.key("9")
+            cls.key("5"),
+            cls.key("6"),
+            cls.key("7"),
+            cls.key("8"),
+            cls.key("9"),
         ):
             keys_pressed = values[cls.key("staff_number_input")]
             keys_pressed += event.strip(cls.key_prefix())
@@ -122,7 +122,7 @@ class StaffNumberInputWindow(
                 cls.popup_auto_close_error(
                     "No staff found with given staff ID. "
                     "\nEnsure you have been duly registered on the system.",
-                    duration=5
+                    duration=5,
                 )
                 return True
             cls.process_staff(staff)
@@ -137,7 +137,9 @@ class StaffNumberInputWindow(
             cls.validate_required_field(
                 (values[cls.key("staff_number_input")], "staff number")
             ),
-            cls.validate_staff_number("SS." + values[cls.key("staff_number_input")]),
+            cls.validate_staff_number(
+                "SS." + values[cls.key("staff_number_input")]
+            ),
         ):
             if val_check is not None:
                 cls.popup_auto_close_error(val_check)

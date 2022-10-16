@@ -37,7 +37,11 @@ class AttendanceSignOutWindow(BaseGUIWindow):
                     f"Student Name: {student_dict.get('first_name', '')} {student_dict.get('last_name', '')}"
                 )
             ],
-            [sg.Text(f"Registration Number: {student_dict.get('reg_number', '')} ")],
+            [
+                sg.Text(
+                    f"Registration Number: {student_dict.get('reg_number', '')} "
+                )
+            ],
             # [sg.Text(f"Sign In Time: {student_attendance[0].check_in_by}")],
             [sg.VPush()],
             [

@@ -42,7 +42,9 @@ class AcademicSessionDetailsWindow(ValidationMixin, BaseGUIWindow):
             [
                 sg.Push(),
                 sg.Text(
-                    "New Academic Session?", k=cls.key("new_session"), enable_events=True
+                    "New Academic Session?",
+                    k=cls.key("new_session"),
+                    enable_events=True,
                 ),
             ],
             [
@@ -70,8 +72,12 @@ class AcademicSessionDetailsWindow(ValidationMixin, BaseGUIWindow):
             if cls.validate(values, window) is not None:
                 return True
 
-            app_config.cp["DEFAULT"]["semester"] = values[cls.key("current_semester")]
-            app_config.cp["DEFAULT"]["session"] = values[cls.key("current_session")]
+            app_config.cp["DEFAULT"]["semester"] = values[
+                cls.key("current_semester")
+            ]
+            app_config.cp["DEFAULT"]["session"] = values[
+                cls.key("current_session")
+            ]
             window_dispatch.dispatch.open_window("EventDetailWindow")
         elif event == cls.key("back"):
             window_dispatch.dispatch.open_window("EventMenuWindow")
@@ -93,7 +99,9 @@ class AcademicSessionDetailsWindow(ValidationMixin, BaseGUIWindow):
         if cls.validate_required_fields(required_fields, window) is not None:
             return True
 
-        validation_val = cls.validate_semester(values[cls.key("current_semester")])
+        validation_val = cls.validate_semester(
+            values[cls.key("current_semester")]
+        )
         if validation_val is not None:
             cls.display_message(validation_val, window)
             return True

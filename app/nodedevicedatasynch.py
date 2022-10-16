@@ -139,7 +139,9 @@ class NodeDataSynch:
         ).first()
 
         if student:
-            ser_data = StudentSerializer(student, data=student_dict, partial=True)
+            ser_data = StudentSerializer(
+                student, data=student_dict, partial=True
+            )
             endpoint = f"api/v1/students/{student.reg_number}/"
             put = True
             return_text = "Student Updated successfully!"

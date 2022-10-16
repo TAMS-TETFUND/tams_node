@@ -2,7 +2,7 @@ from typing import Any, Dict, Optional
 import PySimpleGUI as sg
 from datetime import datetime, timedelta
 
-from  app.basegui import BaseGUIWindow
+from app.basegui import BaseGUIWindow
 from app.guiutils import ValidationMixin
 import app.appconfigparser
 import app.windowdispatch
@@ -11,6 +11,7 @@ from db.models import Course, Faculty, Department
 
 app_config = app.appconfigparser.AppConfigParser()
 window_dispatch = app.windowdispatch.WindowDispatch()
+
 
 class EventDetailWindow(ValidationMixin, BaseGUIWindow):
     """Window to for user to specify event deatils like: course,
@@ -78,7 +79,12 @@ class EventDetailWindow(ValidationMixin, BaseGUIWindow):
             ],
             [
                 sg.pin(
-                    sg.Column(section1, k=cls.key("sec1"), visible=False, expand_y=True)
+                    sg.Column(
+                        section1,
+                        k=cls.key("sec1"),
+                        visible=False,
+                        expand_y=True,
+                    )
                 )
             ],
             [sg.HorizontalSeparator()],
@@ -144,7 +150,7 @@ class EventDetailWindow(ValidationMixin, BaseGUIWindow):
         cls, window: sg.Window, event: str, values: Dict[str, Any]
     ) -> bool:
         """Track user interaction with window."""
-        if event.startswith(''.join([cls.key_prefix(), "filter_courses"])):
+        if event.startswith("".join([cls.key_prefix(), "filter_courses"])):
             window[cls.key("filter_courses_img")].update(
                 data=EventDetailWindow.get_icon("down_arrow", 0.25)
             )
@@ -159,7 +165,9 @@ class EventDetailWindow(ValidationMixin, BaseGUIWindow):
                 )
             else:
                 window[cls.key("course_department")].update(
-                    values=Department.get_departments(values[cls.key("course_faculty")]),
+                    values=Department.get_departments(
+                        values[cls.key("course_faculty")]
+                    ),
                     value=cls.COMBO_DEFAULT,
                 )
                 window[cls.key("selected_course")].update(
@@ -170,7 +178,10 @@ class EventDetailWindow(ValidationMixin, BaseGUIWindow):
                     value=cls.COMBO_DEFAULT,
                 )
         if event == cls.key("course_department"):
-            if values[cls.key("course_department")] in (cls.COMBO_DEFAULT, None):
+            if values[cls.key("course_department")] in (
+                cls.COMBO_DEFAULT,
+                None,
+            ):
                 window[cls.key("selected_course")].update(
                     values=Course.get_courses(
                         semester=app_config.cp.get("DEFAULT", "semester")
@@ -202,11 +213,17 @@ class EventDetailWindow(ValidationMixin, BaseGUIWindow):
                 window[cls.key("main_column")].contents_changed()
                 return True
 
-            app_config.cp["new_event"]["course"] = values[cls.key("selected_course")]
+            app_config.cp["new_event"]["course"] = values[
+                cls.key("selected_course")
+            ]
             app_config.cp["new_event"]["start_time"] = (
-                values[cls.key("start_hour")] + ":" + values[cls.key("start_minute")]
+                values[cls.key("start_hour")]
+                + ":"
+                + values[cls.key("start_minute")]
             )
-            app_config.cp["new_event"]["start_date"] = values[cls.key("start_date")]
+            app_config.cp["new_event"]["start_date"] = values[
+                cls.key("start_date")
+            ]
             app_config.cp["new_event"]["duration"] = values[cls.key("duration")]
             app_config.cp.save()
 
@@ -239,14 +256,17 @@ class EventDetailWindow(ValidationMixin, BaseGUIWindow):
 
         for val_check in (
             cls.validate_int_field(values[cls.key("start_hour")], "start time"),
-            cls.validate_int_field(values[cls.key("start_minute")], "start time"),
+            cls.validate_int_field(
+                values[cls.key("start_minute")], "start time"
+            ),
         ):
             if val_check is not None:
                 cls.display_message(val_check, window)
                 return True
 
         if (
-            cls.validate_int_field(values[cls.key("duration")], "duration") is not None
+            cls.validate_int_field(values[cls.key("duration")], "duration")
+            is not None
             or int(values[cls.key("duration")]) <= 0
         ):
             cls.display_message("Invalid value in duration", window)
