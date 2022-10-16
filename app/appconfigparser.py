@@ -45,9 +45,9 @@ class ModifiedConfigParser(configparser.ConfigParser):
 
     def remove_section(self, section: str) -> bool:
         """Delete a section of the configparser."""
-        result = super().remove_section(section)
+        self[section] = {}
         self.save()
-        return result
+        return True
 
     def save(self) -> None:
         """Save configparser to config file."""
