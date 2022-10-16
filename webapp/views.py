@@ -18,6 +18,7 @@ from db.models import (
 from app.appconfigparser import AppConfigParser
 from .spreadsheets import generate_attendance_records_sheet
 
+
 @login_required
 def dashboard(request):
     template = "dashboard.html"
@@ -90,7 +91,7 @@ def download_attendance(request, pk):
     if not qs.exists():
         message = {"details": "No attendance records were found for the event"}
         return render(request, template, message)
-    
+
     wb = generate_attendance_records_sheet(attendance_session, qs)
 
     response = HttpResponse(
