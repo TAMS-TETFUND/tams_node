@@ -1,5 +1,4 @@
-import json
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, TypeVar
 from requests import HTTPError
 import urllib3
 import requests
@@ -13,7 +12,7 @@ app_config = app.appconfigparser.AppConfigParser()
 class SingletonType(type):
     _instances = {}
 
-    def __call__(cls, *args: Any, **kwargs: Any) -> Dict[Any, Any]:
+    def __call__(cls, *args: Any, **kwargs: Any):
         if cls not in cls._instances:
             cls._instances[cls] = super(SingletonType, cls).__call__(
                 *args, **kwargs
