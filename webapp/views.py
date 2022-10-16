@@ -1,4 +1,3 @@
-import csv
 from datetime import datetime
 
 from django.http import HttpResponse
@@ -9,6 +8,7 @@ from django.contrib.auth.decorators import login_required
 from django.http.response import HttpResponseRedirect
 from django.urls import reverse
 from django.views.generic import ListView
+from openpyxl.writer.excel import save_virtual_workbook
 
 from db.models import (
     AttendanceRecord,
@@ -16,7 +16,7 @@ from db.models import (
     AttendanceSessionStatusChoices,
 )
 from app.appconfigparser import AppConfigParser
-
+from .spreadsheets import generate_attendance_records_sheet
 
 @login_required
 def dashboard(request):
@@ -38,8 +38,8 @@ class AttendanceRecordView(ListView):
 def end_attendance_session(request, pk):
     app_config = AppConfigParser()
 
-    if app_config.has_option("current_attendance_session", "session_id"):
-        if app_config.getint("current_attendance_session", "session_id") == pk:
+    if app_config.cp.has_option("current_attendance_session", "session_id"):
+        if app_config.cp.get("current_attendance_session", "session_id") == pk:
             messages.add_message(
                 request,
                 messages.ERROR,
@@ -61,7 +61,6 @@ def end_attendance_session(request, pk):
 def download_attendance(request, pk):
     template = "download.html"
     attendance_session = AttendanceSession.objects.get(id=pk)
-
     if (
         attendance_session.initiator is None
         or attendance_session.initiator.username != request.user.username
@@ -91,33 +90,16 @@ def download_attendance(request, pk):
     if not qs.exists():
         message = {"details": "No attendance records were found for the event"}
         return render(request, template, message)
+    
+    wb = generate_attendance_records_sheet(attendance_session, qs)
 
     response = HttpResponse(
-        content_type="text/csv",
+        content=save_virtual_workbook(wb),
+        content_type="application/ms-excel",
         headers={
             f"Content-Disposition": "attachment; filename="
             f"{attendance_session.course.code} "
-            f'Attendance {datetime.strftime(attendance_session.start_time, "%d-%m-%Y")}.csv'
+            f'Attendance {datetime.strftime(attendance_session.start_time, "%d-%m-%Y")}.xlsx'
         },
     )
-
-    field_names = ["S/N", "Name", "Reg. Number", "Department", "Sign In"]
-    attendance_writer = csv.DictWriter(response, fieldnames=field_names)
-    attendance_writer.writerow(
-        {
-            "S/N": f'{attendance_session.course.code} Attendance {datetime.strftime(attendance_session.start_time, "%d-%m-%Y")}'
-        }
-    )
-    attendance_writer.writeheader()
-    for idx, row in enumerate(qs, 1):
-        attendance_writer.writerow(
-            {
-                "S/N": idx,
-                "Name": f'{row["student__last_name"].capitalize()} {row["student__first_name"].capitalize()}',
-                "Reg. Number": row["student__reg_number"],
-                "Department": row["student__department__name"],
-                "Sign In": f'{datetime.strftime(row["check_in_by"], "%H:%M")}',
-            }
-        )
-
     return response
