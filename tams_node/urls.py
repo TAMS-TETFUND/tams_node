@@ -23,6 +23,6 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('accounts/profile/', dashboard, name='profile'),
     path('accounts/', include('django.contrib.auth.urls')),
-    path('session/<int:pk>/', download_attendance, name="download"),
-    path('session/<int:pk>/end/', end_attendance_session, name="end_session"),
+    path('session/<str:pk>/', download_attendance, name="download"),
+    path('session/<str:pk>/end/', end_attendance_session, name="end_session"),
 ]
