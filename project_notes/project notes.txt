@@ -95,3 +95,6 @@ attendance sign-out feature
 	-	check if student signed in during the sign-in segment of the event
 	-	confirm student hasn't already signed out
 	- 	log sign-out record for student
+
+if an event session is already active confirm the session can be ended before starting a
+new session.
