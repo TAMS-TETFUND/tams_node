@@ -137,24 +137,39 @@ class BaseGUIWindow:
             keep_on_top=True,
         )
 
+    @staticmethod
+    def confirm_exit() -> bool:
+        """Confirm user wants to exit application."""
+        clicked = sg.popup_ok_cancel(
+            "Shutting down attendance logger. Do you want to continue?",
+            title="Shutdown",
+            keep_on_top=True,
+        )
+        if clicked == "OK":
+            return False
+        if clicked in ("Cancel", None):
+            return True
+        return True
+
     @classmethod
     def window_init_dict(cls) -> Dict[str, Any]:
         """Common parameters passed into the window class during initialization."""
         init_dict = {
             "size": cls.SCREEN_SIZE,
-            "font": "Helvetica 12",
+            "font": "Helvetica 13",
             "no_titlebar": False,
             "icon": cls.get_icon("icon"),
             "grab_anywhere": False,
-            "finalize": True,
+            "margins": (0, 0),
+            "enable_close_attempted_event":True,
         }
         return init_dict
 
-    @staticmethod
-    def message_display_field() -> Callable[[Any], sg.Column]:
+    @classmethod
+    def message_display_field(cls) -> Callable[[Any], sg.Column]:
         """A field for displaying messages to the user on an app window."""
         return sg.pin(
-            sg.Text("", enable_events=True, k="message_display", visible=False)
+            sg.Text("", enable_events=True, k=cls.key("message_display"), visible=False)
         )
 
     @classmethod
@@ -163,22 +178,21 @@ class BaseGUIWindow:
         kwargs_dict = {"button_color": ("#ffffff", cls.UI_COLORS["red"])}
         return kwargs_dict
 
-    @staticmethod
-    def display_message(message: str, window: sg.Window) -> None:
+    @classmethod
+    def display_message(cls, message: str, window: sg.Window) -> None:
         """Add a message to the message display field."""
-        window["message_display"].update(value=message, visible=True)
+        window[cls.key("message_display")].update(value=message, visible=True)
 
-    @staticmethod
-    def hide_message_display_field(window: sg.Window) -> None:
+    @classmethod
+    def hide_message_display_field(cls, window: sg.Window) -> None:
         """Clear messages from the message display field."""
-        window["message_display"].update(value="", visible=False)
+        window[cls.key("message_display")].update(value="", visible=False)
 
     @classmethod
     def navigation_pane(
         cls, *, next_icon: str = "next_grey", back_icon: str = "back_grey"
     ) -> List[sg.Column]:
         """Navigation pane for application-wide use."""
-        # TODO: all back button takes back to home instead of the previous screen
         return [
             sg.Column(
                 [
@@ -186,24 +200,55 @@ class BaseGUIWindow:
                         sg.Button(
                             image_data=cls.get_icon(back_icon, 0.4),
                             button_color=cls.ICON_BUTTON_COLOR,
-                            key="back",
+                            key=cls.key("back"),
                             use_ttk_buttons=True,
                         ),
                         sg.Button(
                             image_data=cls.get_icon(next_icon, 0.4),
                             button_color=cls.ICON_BUTTON_COLOR,
-                            key="next",
+                            key=cls.key("next"),
                             use_ttk_buttons=True,
                         ),
+                        sg.Push(),
                         sg.Button(
                             image_data=cls.get_icon("home_grey", 0.4),
                             button_color=cls.ICON_BUTTON_COLOR,
-                            key="home",
+                            key=cls.key("home"),
                             use_ttk_buttons=True,
                         ),
                     ],
                 ],
-                # expand_x=True,
                 pad=(0, 0),
+                key="navigation_pane",
             )
-        ]
+        ]    
+
+    @classmethod
+    def key(cls, suffix: str) -> str:
+        """Generate key for window elements based on class name and suffix value."""
+        return ''.join([cls.__name__.lower().strip('window'), '_', suffix])
+
+    @classmethod
+    def key_prefix(cls) -> str:
+        """Get prefix used to generate unique key for window elements."""
+        return ''.join([cls.__name__.lower().strip('window'), '_'])
+
+    @classmethod
+    def refresh_dynamic_fields(cls, window: sg.Window) -> None:
+        """Refresh dynamic fields in a window.
+        
+        Called when the window is about to be made visible.
+        For use in windows that need data from database or confifgparser
+        file.
+        """
+
+    @classmethod
+    def adjust_input_field_size(cls, window: sg.Window, input_fields: Iterable[str] = []) -> None:
+        """Adjust input field sizes to avoid uneven widths in appearance."""
+        try:
+            window[cls.key("main_column")].expand(expand_x=True, expand_y=True)
+        except KeyError:
+            pass
+        if len(input_fields) > 0:
+            for key in input_fields:
+                window[cls.key(key)].expand(expand_x=True)
