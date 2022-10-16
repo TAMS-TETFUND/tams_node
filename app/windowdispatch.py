@@ -34,6 +34,19 @@ class WindowDict(UserDict):
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super(WindowDict, self).__init__(*args, **kwargs)
+        self.start_application()
+
+    def start_application(self):
+        """Entry point for the application."""
+        app_layout = []
+        for win_name, win in APP_WINDOWS.items():
+            win_module = import_module(win)
+            win_class = getattr(win_module, win_name)
+            app_layout.append(sg.Column(win_class.window(), key=win_name, pad=(0, 0), visible=False if win_name!="HomeWindow" else True, expand_x=True, expand_y=True))
+            if win_name == "HomeWindow":
+                self.current_window = win_name
+                self.current_window_class = win_class
+        self.app_window = sg.Window("TAMS Attendance Logger", [app_layout], **BaseGUIWindow.window_init_dict())
 
     def open_window(
         self,
@@ -56,19 +69,26 @@ class WindowDict(UserDict):
             raise RuntimeError(
                 "%s not found in specified path." % window_class_name
             )
+        
+        
+        window_class.refresh_dynamic_fields(self.app_window)
+        self.app_window.refresh()
+        self.app_window[self.current_window].update(visible=False)
+        self.app_window[window_class_name].update(visible=True)
+        
 
-        self.update({window_class.__name__: window_class.window()})
+        self.update({window_class.__name__: window_class})
         open_windows = self.copy()
         for key in open_windows.keys():
             if key != window_class.__name__:
-                self.close_window(key)
+                self.pop(key)
 
         self.current_window_class = window_class
-        self.current_window = self[window_class.__name__]
+        self.current_window = window_class.__name__
 
     def close_window(self, window_name: str) -> None:
         """Close a window."""
-        self.pop(window_name).close()
+        self.pop(window_name)
 
     def find_window_name(self, window_object: sg.Window) -> Optional[str]:
         """Find name of a given window object if it exists in WindowDict."""
