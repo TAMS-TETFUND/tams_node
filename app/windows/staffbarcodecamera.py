@@ -3,7 +3,7 @@ import PySimpleGUI as sg
 
 from app.windows.basecamera import BarcodeCameraWindow
 import app.appconfigparser
-from app.gui_utils import StaffBiometricVerificationRouterMixin, ValidationMixin
+from app.guiutils import StaffBiometricVerificationRouterMixin, ValidationMixin
 import app.windowdispatch
 from db.models import Staff
 
@@ -55,10 +55,10 @@ class StaffBarcodeCameraWindow(
     @classmethod
     def window_title(cls) -> List[Any]:
         """Title of GUI window."""
-        course = app_config.cp["current_attendance_session"]["course"].split(
+        course = app_config.cp.get("current_attendance_session", "course", fallback="").split(
             ":"
         )
-        event = app_config.cp["current_attendance_session"]["type"]
+        event = app_config.cp.get("current_attendance_session", "type", fallback="")
         return [
             [
                 sg.Push(),

@@ -4,7 +4,7 @@ import PySimpleGUI as sg
 from app.basegui import BaseGUIWindow
 import app.appconfigparser
 import app.windowdispatch
-from app.gui_utils import (
+from app.guiutils import (
     ValidationMixin,
     StudentBiometricVerificationRouterMixin,
 )
@@ -26,26 +26,26 @@ class StudentRegNumInputWindow(
         INPUT_BUTTON_SIZE = (8, 2)
         column1 = [
             [
-                sg.Button("1", s=INPUT_BUTTON_SIZE),
-                sg.Button("2", s=INPUT_BUTTON_SIZE),
-                sg.Button("3", s=INPUT_BUTTON_SIZE),
-                sg.Button("0", s=INPUT_BUTTON_SIZE),
+                sg.Button("1", s=INPUT_BUTTON_SIZE, k=cls.key("1")),
+                sg.Button("2", s=INPUT_BUTTON_SIZE, k=cls.key("2")),
+                sg.Button("3", s=INPUT_BUTTON_SIZE, k=cls.key("3")),
+                sg.Button("0", s=INPUT_BUTTON_SIZE, k=cls.key("0")),
             ],
             [
-                sg.Button("4", s=INPUT_BUTTON_SIZE),
-                sg.Button("5", s=INPUT_BUTTON_SIZE),
-                sg.Button("6", s=INPUT_BUTTON_SIZE),
-                sg.Button("/", s=INPUT_BUTTON_SIZE),
+                sg.Button("4", s=INPUT_BUTTON_SIZE, k=cls.key("4")),
+                sg.Button("5", s=INPUT_BUTTON_SIZE, k=cls.key("5")),
+                sg.Button("6", s=INPUT_BUTTON_SIZE, k=cls.key("6")),
+                sg.Button("/", s=INPUT_BUTTON_SIZE, k=cls.key("/")),
             ],
             [
-                sg.Button("7", s=INPUT_BUTTON_SIZE),
-                sg.Button("8", s=INPUT_BUTTON_SIZE),
-                sg.Button("9", s=INPUT_BUTTON_SIZE),
-                sg.Button("AC", key="clear", s=INPUT_BUTTON_SIZE),
+                sg.Button("7", s=INPUT_BUTTON_SIZE, k=cls.key("7")),
+                sg.Button("8", s=INPUT_BUTTON_SIZE, k=cls.key("8")),
+                sg.Button("9", s=INPUT_BUTTON_SIZE, k=cls.key("9")),
+                sg.Button("AC", key=cls.key("clear"), s=INPUT_BUTTON_SIZE),
             ],
             [
                 sg.Push(),
-                sg.Button("Submit", key="submit", s=INPUT_BUTTON_SIZE),
+                sg.Button("Submit", key=cls.key("submit"), s=INPUT_BUTTON_SIZE),
                 sg.Push(),
             ],
         ]
@@ -59,12 +59,12 @@ class StudentRegNumInputWindow(
                 sg.Input(
                     size=(25, 1),
                     justification="left",
-                    key="reg_num_input",
+                    key=cls.key("reg_num_input"),
                     focus=True,
                 ),
                 sg.Push(),
             ],
-            [sg.Push(), sg.Column(column1), sg.Push()],
+            [sg.Push(), sg.Column(column1, key=cls.key("column1")), sg.Push()],
             [sg.VPush()],
             cls.navigation_pane(),
         ]
@@ -74,55 +74,65 @@ class StudentRegNumInputWindow(
                     layout,
                     scrollable=True,
                     vertical_scroll_only=True,
-                    key="main_column",
+                    key=cls.key("main_column"),
                     expand_y=True,
                 )
             ]
         ]
+        return scrolled_layout
+    @classmethod
+    def refresh_dynamic_fields(cls, window: sg.Window) -> None:
+        cls.adjust_input_field_size(window, ("reg_num_input", "column1"))
+        window.refresh()
 
-        window = sg.Window(
-            "Reg Number Input", scrolled_layout, **cls.window_init_dict()
-        )
-        return window
 
     @classmethod
     def loop(
         cls, window: sg.Window, event: str, values: Dict[str, Any]
     ) -> bool:
         """Track user interaction with window."""
-        if event == "back":
+        if event == cls.key("back"):
             cls.back_nav_key_handler()
             return True
-        if event == "home":
+        if event == cls.key("home"):
             window_dispatch.dispatch.open_window("HomeWindow")
             return True
 
         keys_pressed = None
-        if event in "0123456789/":
-            keys_pressed = values["reg_num_input"]
-            keys_pressed += event
-            window["reg_num_input"].update(keys_pressed)
+        if event in (
+            cls.key("0"), 
+            cls.key("1"), 
+            cls.key("2"), 
+            cls.key("3"), 
+            cls.key("4"),
+            cls.key("5"), 
+            cls.key("6"), 
+            cls.key("7"), 
+            cls.key("8"), 
+            cls.key("9"),
+            cls.key("/"),
+        ):
+            keys_pressed = values[cls.key("reg_num_input")]
+            keys_pressed += event.strip(cls.key_prefix())
+            window[cls.key("reg_num_input")].update(keys_pressed)
             return True
 
-        elif event == "clear":
-            window["reg_num_input"].update("")
+        elif event == cls.key("clear"):
+            window[cls.key("reg_num_input")].update("")
             cls.hide_message_display_field(window)
             cls.resize_column(window)
             return True
 
-        elif event in ("submit", "next"):
+        elif event in (cls.key("submit"), cls.key("next")):
             if cls.validate(values, window) is not None:
                 cls.resize_column(window)
                 return True
 
-            reg_number_entered = values["reg_num_input"]
+            reg_number_entered = values[cls.key("reg_num_input")]
 
             student = Student.objects.filter(reg_number=reg_number_entered)
             if not student.exists():
-                cls.display_message(
-                    "No student found with given registration number.", window
-                )
-                cls.resize_column(window)
+                cls.popup_auto_close_error("No student found with given registration number.")
                 return True
             cls.process_student(student, window)
         return True
@@ -161,20 +171,20 @@ class StudentRegNumInputWindow(
         """Validate values supplied by user in the window input fields."""
         for val_check in (
             cls.validate_required_field(
-                (values["reg_num_input"], "registration number")
+                (values[cls.key("reg_num_input")], "registration number")
             ),
-            cls.validate_student_reg_number(values["reg_num_input"]),
+            cls.validate_student_reg_number(values[cls.key("reg_num_input")]),
         ):
             if val_check is not None:
-                cls.display_message(val_check, window)
+                cls.popup_auto_close_error(val_check)
                 return True
         return None
 
-    @staticmethod
-    def resize_column(window: sg.Window) -> None:
+    @classmethod
+    def resize_column(cls, window: sg.Window) -> None:
         """Refresh GUI when adding/removing message display field."""
         window.refresh()
-        window["main_column"].contents_changed()
+        window[cls.key("main_column")].contents_changed()
 
     @staticmethod
     def back_nav_key_handler() -> None:

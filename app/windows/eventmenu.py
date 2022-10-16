@@ -23,7 +23,7 @@ class EventMenuWindow(BaseGUIWindow):
         layout = [
             [
                 sg.Push(),
-                sg.Text("Select Event Type", font="Helvetica 24"),
+                sg.Text("Select Event Type"),
                 sg.Push(),
             ],
             [sg.HorizontalSeparator()],
@@ -34,34 +34,34 @@ class EventMenuWindow(BaseGUIWindow):
                 sg.Combo(
                     values=EventTypeChoices.labels,
                     default_value=EventTypeChoices.labels[0],
-                    key="event_type",
-                    size=40
+                    key=cls.key("event_type"),
+                    size=42
                 ), 
                 sg.Push()
             ],
-            [sg.Push(), sg.Button("Select", k="submit")],
+            [sg.Push(), sg.Button("Select", k=cls.key("submit"))],
             [sg.VPush()],
             [sg.HorizontalSeparator()],
             cls.navigation_pane(next_icon="next_disabled"),
         ]
-        window = sg.Window("Event Menu", layout, **cls.window_init_dict())
-        return window
+        return layout
 
     @classmethod
     def loop(
         cls, window: sg.Window, event: str, values: Dict[str, Any]
     ) -> bool:
         """Track user interaction with window."""
-        if event in (sg.WIN_CLOSED, "back", "cancel", "home"):
+        if event in (sg.WIN_CLOSED, cls.key("back"), cls.key("cancel"), cls.key("home")):
             window_dispatch.dispatch.open_window("HomeWindow")
   
-        if event == "submit":
+        if event == cls.key("submit"):
             app_config.cp["new_event"] = {}
-            app_config.cp["new_event"]["type"] = values["event_type"]
+            app_config.cp["new_event"]["type"] = values[cls.key("event_type")]
             app_config.cp["new_event"]["recurring"] = "False"
-            if values["event_type"].lower() not in ("examination", "quiz"):
+            app_config.cp.save()
+            if values[cls.key("event_type")].lower() not in ("examination", "quiz"):
                 recurring = sg.popup_yes_no(
-                    f"Is this {values['event_type']} a weekly activity?",
+                    f"Is this {values[cls.key('event_type')]} a weekly activity?",
                     title="Event detail",
                     keep_on_top=True,
                 )

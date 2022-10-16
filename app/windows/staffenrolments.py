@@ -7,7 +7,7 @@ import PySimpleGUI as sg
 from app.basegui import BaseGUIWindow
 from app.windows.basefingerprintverfication import FingerprintEnrolmentWindow
 from app.windows.staffnumberinput import StaffNumberInputWindow
-from app.gui_utils import ValidationMixin
+from app.guiutils import ValidationMixin
 from app.nodedevicedatasynch import NodeDataSynch
 import app.appconfigparser
 import app.windowdispatch
@@ -55,7 +55,7 @@ class StaffEnrolmentWindow(ValidationMixin, BaseGUIWindow):
                 sg.Text("Staff Number:", **field_label_props),
                 sg.Input(
                     justification="left",
-                    key="staff_number_input",
+                    key=cls.key("staff_number_input"),
                     focus=True,
                     **input_props,
                 ),
@@ -63,19 +63,19 @@ class StaffEnrolmentWindow(ValidationMixin, BaseGUIWindow):
             [
                 sg.Text("First Name:", **field_label_props),
                 sg.Input(
-                    justification="left", key="staff_first_name", **input_props
+                    justification="left", key=cls.key("staff_first_name"), **input_props
                 ),
             ],
             [
                 sg.Text("Last Name:", **field_label_props),
                 sg.Input(
-                    justification="left", key="staff_last_name", **input_props
+                    justification="left", key=cls.key("staff_last_name"), **input_props
                 ),
             ],
             [
                 sg.Text("Other Names:", **field_label_props),
                 sg.Input(
-                    justification="left", key="staff_other_names", **input_props
+                    justification="left", key=cls.key("staff_other_names"), **input_props
                 ),
             ],
             [
@@ -83,7 +83,7 @@ class StaffEnrolmentWindow(ValidationMixin, BaseGUIWindow):
                 sg.Combo(
                     values=SexChoices.labels,
                     default_value=cls.COMBO_DEFAULT,
-                    key="staff_sex",
+                    key=cls.key("staff_sex"),
                     **combo_props,
                 ),
             ],
@@ -93,7 +93,7 @@ class StaffEnrolmentWindow(ValidationMixin, BaseGUIWindow):
                     values=Faculty.get_all_faculties(),
                     default_value=cls.COMBO_DEFAULT,
                     enable_events=True,
-                    key="staff_faculty",
+                    key=cls.key("staff_faculty"),
                     **combo_props,
                 ),
             ],
@@ -103,7 +103,7 @@ class StaffEnrolmentWindow(ValidationMixin, BaseGUIWindow):
                     values=Department.get_departments(),
                     default_value=cls.COMBO_DEFAULT,
                     enable_events=True,
-                    key="staff_department",
+                    key=cls.key("staff_department"),
                     **combo_props,
                 ),
             ],
@@ -116,8 +116,8 @@ class StaffEnrolmentWindow(ValidationMixin, BaseGUIWindow):
                 sg.Push(),
             ],
             [
-                sg.Button("Submit", key="submit"),
-                sg.Button("Cancel", key="cancel", **cls.cancel_button_kwargs()),
+                sg.Button("Submit", key=cls.key("submit")),
+                sg.Button("Cancel", key=cls.key("cancel"), **cls.cancel_button_kwargs()),
             ],
             [sg.VPush()],
         ]
@@ -131,60 +131,56 @@ class StaffEnrolmentWindow(ValidationMixin, BaseGUIWindow):
                     expand_y=True,
                     expand_x=True,
                     pad=(0, 0),
-                    key="main_column",
+                    key=cls.key("main_column"),
                 )
             ]
         ]
-        window = sg.Window(
-            "Staff Enrolment", scrolled_layout, **cls.window_init_dict()
-        )
-
-        for key in (
-            "staff_number_input",
-            "staff_first_name",
-            "staff_last_name",
-            "staff_other_names",
-            "staff_sex",
-            "staff_faculty",
-            "staff_department",
-        ):
-            window[key].expand(expand_x=True)
-        return window
+        # for key in (
+        #     "staff_number_input",
+        #     "staff_first_name",
+        #     "staff_last_name",
+        #     "staff_other_names",
+        #     "staff_sex",
+        #     "staff_faculty",
+        #     "staff_department",
+        # ):
+        #     window[key].expand(expand_x=True)
+        return scrolled_layout
 
     @classmethod
     def loop(
         cls, window: sg.Window, event: str, values: Dict[str, Any]
     ) -> bool:
         """Track user interaction with window."""
-        if event == "staff_faculty":
-            if values["staff_faculty"] in (cls.COMBO_DEFAULT, None):
-                window["staff_faculty"].update(
+        if event == cls.key("staff_faculty"):
+            if values[cls.key("staff_faculty")] in (cls.COMBO_DEFAULT, None):
+                window[cls.key("staff_faculty")].update(
                     values=Faculty.get_all_faculties(), value=cls.COMBO_DEFAULT
                 )
             else:
-                window["staff_department"].update(
+                window[cls.key("staff_department")].update(
                     values=Department.get_departments(
-                        faculty=values["staff_faculty"]
+                        faculty=values[cls.key("staff_faculty")]
                     ),
                     value=cls.COMBO_DEFAULT,
                 )
 
-        if event == "submit":
+        if event == cls.key("submit"):
             if cls.validate(values, window) is not None:
                 window.refresh()
-                window["main_column"].contents_changed()
+                window[cls.key("main_column")].contents_changed()
                 return True
 
-            values["staff_number_input"] = values["staff_number_input"].upper()
+            values[cls.key("staff_number_input")] = values[cls.key("staff_number_input")].upper()
 
             app_config.cp["new_staff"] = {
-                "username": values["staff_number_input"],
-                "staff_number": values["staff_number_input"],
-                "first_name": values["staff_first_name"],
-                "last_name": values["staff_last_name"],
-                "other_names": values["staff_other_names"],
-                "department": Department.get_id(values["staff_department"]),
-                "sex": SexChoices.str_to_value(values["staff_sex"]),
+                "username": values[cls.key("staff_number_input")],
+                "staff_number": values[cls.key("staff_number_input")],
+                "first_name": values[cls.key("staff_first_name")],
+                "last_name": values[cls.key("staff_last_name")],
+                "other_names": values[cls.key("staff_other_names")],
+                "department": Department.get_id(values[cls.key("staff_department")]),
+                "sex": SexChoices.str_to_value(values[cls.key("staff_sex")]),
             }
             new_staff_dict = app_config.cp.section_dict("new_staff")
 
@@ -198,7 +194,7 @@ class StaffEnrolmentWindow(ValidationMixin, BaseGUIWindow):
                 return True
             
             cls.next_window()
-        if event == "cancel":
+        if event == cls.key("cancel"):
             window_dispatch.dispatch.open_window("HomeWindow")
 
         return True
@@ -209,12 +205,12 @@ class StaffEnrolmentWindow(ValidationMixin, BaseGUIWindow):
     ) -> Optional[bool]:
         """Validate values supplied by user in the window input fields."""
         req_fields = [
-            (values["staff_number_input"], "staff number"),
-            (values["staff_first_name"], "first name"),
-            (values["staff_last_name"], "last name"),
-            (values["staff_sex"], "sex"),
-            (values["staff_faculty"], "faculty"),
-            (values["staff_department"], "department"),
+            (values[cls.key("staff_number_input")], "staff number"),
+            (values[cls.key("staff_first_name")], "first name"),
+            (values[cls.key("staff_last_name")], "last name"),
+            (values[cls.key("staff_sex")], "sex"),
+            (values[cls.key("staff_faculty")], "faculty"),
+            (values[cls.key("staff_department")], "department"),
         ]
         validation_val = cls.validate_required_fields(req_fields, window)
         if validation_val is not None:
@@ -227,10 +223,10 @@ class StaffEnrolmentWindow(ValidationMixin, BaseGUIWindow):
                 return True
 
         for criteria in (
-            cls.validate_staff_number(values["staff_number_input"]),
-            cls.validate_sex(values["staff_sex"]),
-            cls.validate_faculty(values["staff_faculty"]),
-            cls.validate_department(values["staff_department"]),
+            cls.validate_staff_number(values[cls.key("staff_number_input")]),
+            cls.validate_sex(values[cls.key("staff_sex")]),
+            cls.validate_faculty(values[cls.key("staff_faculty")]),
+            cls.validate_department(values[cls.key("staff_department")]),
         ):
             if criteria is not None:
                 cls.display_message(criteria, window)
@@ -258,7 +254,7 @@ class StaffPasswordSettingWindow(BaseGUIWindow):
             [
                 sg.Text("Password:", **field_label_props),
                 sg.Input(
-                    key="staff_password",
+                    key=cls.key("staff_password"),
                     expand_x=True,
                     enable_events=True,
                     password_char="*",
@@ -268,31 +264,28 @@ class StaffPasswordSettingWindow(BaseGUIWindow):
             [
                 sg.Text("Confirm Password:", **field_label_props),
                 sg.Input(
-                    key="staff_password_confirm",
+                    key=cls.key("staff_password_confirm"),
                     expand_x=True,
                     password_char="*",
                 ),
             ],
             [
-                sg.Button("Submit", key="submit"),
-                sg.Button("Cancel", key="cancel", **cls.cancel_button_kwargs()),
+                sg.Button("Submit", key=cls.key("submit")),
+                sg.Button("Cancel", key=cls.key("cancel"), **cls.cancel_button_kwargs()),
             ],
             cls.navigation_pane(
                 next_icon="next_disabled", back_icon="back_disabled"
             ),
         ]
-        window = sg.Window(
-            "Staff Password Setup", layout, **cls.window_init_dict()
-        )
-        return window
+        return layout
 
     @classmethod
     def loop(
         cls, window: sg.Window, event: str, values: Dict[str, Any]
     ) -> bool:
         """Track user interaction with window"""
-        if event in ("staff_password", "staff_password_confirm"):
-            if values["staff_password"] != values["staff_password_confirm"]:
+        if event in (cls.key("staff_password"), cls.key("staff_password_confirm")):
+            if values[cls.key("staff_password")] != values[cls.key("staff_password_confirm")]:
                 cls.display_message(
                     "Re-enter the same password in the 'Confirm Password' field",
                     window,
@@ -300,13 +293,13 @@ class StaffPasswordSettingWindow(BaseGUIWindow):
             else:
                 cls.display_message("", window)
 
-        if event in ("cancel", "submit"):
+        if event in (cls.key("cancel"), cls.key("submit")):
             new_staff = app_config.cp["new_staff"]
 
-            if event == "submit":
+            if event == cls.key("submit"):
                 password_fields = (
-                    values["staff_password"],
-                    values["staff_password_confirm"],
+                    values[cls.key("staff_password")],
+                    values[cls.key("staff_password_confirm")],
                 )
                 for field in password_fields:
                     if field in (None, ""):
@@ -315,12 +308,12 @@ class StaffPasswordSettingWindow(BaseGUIWindow):
                         )
                         return True
 
-                new_staff["password"] = values["staff_password"]
+                new_staff["password"] = values[cls.key("staff_password")]
 
                 cls.next_window()
                 return True
 
-            if event in ("cancel", "home"):
+            if event in (cls.key("cancel"), cls.key("home")):
                 confirm = sg.popup_yes_no(
                     "Cancel Staff registration?",
                     title="Cancel Registration",
@@ -440,18 +433,16 @@ class StaffFingerprintEnrolmentWindow(FingerprintEnrolmentWindow):
         return "Student Fingerprint Verification"
 
 
-class StaffEnrolmentUpdateIDSearch(StaffNumberInputWindow):
+class StaffEnrolmentUpdateIDSearchWindow(StaffNumberInputWindow):
     """Window for finding staff by id for bio data update."""
 
     @classmethod
-    def window(cls) -> sg.Window:
+    def window(cls) -> List[Any]:
         """Construct layout/appearance of window."""
         return super().window()
-
+    
     @classmethod
-    def loop(
-        cls, window: sg.Window, event: str, values: Dict[str, Any]
-    ) -> bool:
+    def loop(cls, window: sg.Window, event: str, values: Dict[str, Any]) -> bool:
         """Track user interaction with window."""
         return super().loop(window, event, values)
 
@@ -505,7 +496,7 @@ class StaffEnrolmentUpdateWindow(StaffEnrolmentWindow):
                 sg.Text("Staff Number:", **field_label_props),
                 sg.Input(
                     justification="left",
-                    key="staff_number_input",
+                    key=cls.key("staff_number_input"),
                     disabled=True,
                     **input_props,
                     default_text=staff["staff_number"],
@@ -516,7 +507,7 @@ class StaffEnrolmentUpdateWindow(StaffEnrolmentWindow):
                 sg.Input(
                     justification="left",
                     focus=True,
-                    key="staff_first_name",
+                    key=cls.key("staff_first_name"),
                     **input_props,
                     default_text=staff["first_name"],
                 ),
@@ -526,7 +517,7 @@ class StaffEnrolmentUpdateWindow(StaffEnrolmentWindow):
                 sg.Input(
                     justification="left",
                     default_text=staff["last_name"],
-                    key="staff_last_name",
+                    key=cls.key("staff_last_name"),
                     **input_props,
                 ),
             ],
@@ -535,7 +526,7 @@ class StaffEnrolmentUpdateWindow(StaffEnrolmentWindow):
                 sg.Input(
                     justification="left",
                     default_text=staff["other_names"],
-                    key="staff_other_names",
+                    key=cls.key("staff_other_names"),
                     **input_props,
                 ),
             ],
@@ -544,7 +535,7 @@ class StaffEnrolmentUpdateWindow(StaffEnrolmentWindow):
                 sg.Combo(
                     values=SexChoices.labels,
                     default_value=staff_sex or cls.COMBO_DEFAULT,
-                    key="staff_sex",
+                    key=cls.key("staff_sex"),
                     **combo_props,
                 ),
             ],
@@ -554,7 +545,7 @@ class StaffEnrolmentUpdateWindow(StaffEnrolmentWindow):
                     values=Faculty.get_all_faculties(),
                     default_value=staff["department__faculty__name"],
                     enable_events=True,
-                    key="staff_faculty",
+                    key=cls.key("staff_faculty"),
                     **combo_props,
                 ),
             ],
@@ -564,7 +555,7 @@ class StaffEnrolmentUpdateWindow(StaffEnrolmentWindow):
                     values=Department.get_departments(),
                     default_value=staff["department__name"],
                     enable_events=True,
-                    key="staff_department",
+                    key=cls.key("staff_department"),
                     **combo_props,
                 ),
             ],
@@ -577,8 +568,8 @@ class StaffEnrolmentUpdateWindow(StaffEnrolmentWindow):
                 sg.Push(),
             ],
             [
-                sg.Button("Submit", key="submit"),
-                sg.Button("Cancel", key="cancel", **cls.cancel_button_kwargs()),
+                sg.Button("Submit", key=cls.key("submit")),
+                sg.Button("Cancel", key=cls.key("cancel"), **cls.cancel_button_kwargs()),
             ],
             [sg.VPush()],
         ]
@@ -592,26 +583,22 @@ class StaffEnrolmentUpdateWindow(StaffEnrolmentWindow):
                     expand_y=True,
                     expand_x=True,
                     pad=(0, 0),
-                    key="main_column",
+                    key=cls.key("main_column"),
                 )
             ]
         ]
-        window = sg.Window(
-            "Staff Enrolment", scrolled_layout, **cls.window_init_dict()
-        )
-
         # adjust input field size to width of column1
-        for key in (
-            "staff_number_input",
-            "staff_first_name",
-            "staff_last_name",
-            "staff_other_names",
-            "staff_sex",
-            "staff_faculty",
-            "staff_department",
-        ):
-            window[key].expand(expand_x=True)
-        return window
+        # for key in (
+        #     "staff_number_input",
+        #     "staff_first_name",
+        #     "staff_last_name",
+        #     "staff_other_names",
+        #     "staff_sex",
+        #     "staff_faculty",
+        #     "staff_department",
+        # ):
+        #     window[key].expand(expand_x=True)
+        return scrolled_layout
 
     @classmethod
     def loop(

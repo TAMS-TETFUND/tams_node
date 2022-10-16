@@ -23,7 +23,7 @@ class FingerprintEnrolmentWindow(FingerprintGenericWindow):
     ) -> bool:
         """Track user interaction with window."""
 
-        if event == "cancel":
+        if event == cls.key("cancel"):
             cls.cancel_fp_enrolment()
             return True
 

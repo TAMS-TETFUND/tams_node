@@ -1,0 +1,5 @@
+from .studentenrolmentupdate import StudentEnrolmentUpdateWindow
+from .studentenrolmentupdateidsearch import StudentEnrolmentUpdateIDSearchWindow
+from .studentenrolmentwin import StudentEnrolmentWindow
+from .studentfaceenrolment import StudentFaceEnrolmentWindow
+from .studentfingerprintenrolment import StudentFingerprintEnrolmentWindow

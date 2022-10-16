@@ -7,7 +7,7 @@ import PySimpleGUI as sg
 from app.basegui import BaseGUIWindow
 from app.windows.basefingerprintverfication import FingerprintEnrolmentWindow
 from app.windows.studentregnuminput import StudentRegNumInputWindow
-from app.gui_utils import ValidationMixin
+from app.guiutils import ValidationMixin
 from app.nodedevicedatasynch import NodeDataSynch
 import app.appconfigparser
 import app.windowdispatch
@@ -52,7 +52,7 @@ class StudentEnrolmentWindow(ValidationMixin, BaseGUIWindow):
                 sg.Text("Registration Number:", **field_label_props),
                 sg.Input(
                     justification="left",
-                    key="student_reg_number_input",
+                    key=cls.key("student_reg_number_input"),
                     focus=True,
                     **input_props,
                 ),
@@ -61,7 +61,7 @@ class StudentEnrolmentWindow(ValidationMixin, BaseGUIWindow):
                 sg.Text("First Name:", **field_label_props),
                 sg.Input(
                     justification="left",
-                    key="student_first_name",
+                    key=cls.key("student_first_name"),
                     **input_props,
                 ),
             ],
@@ -69,7 +69,7 @@ class StudentEnrolmentWindow(ValidationMixin, BaseGUIWindow):
                 sg.Text("Last Name:", **field_label_props),
                 sg.Input(
                     justification="left",
-                    key="student_last_name",
+                    key=cls.key("student_last_name"),
                     **input_props,
                 ),
             ],
@@ -77,7 +77,7 @@ class StudentEnrolmentWindow(ValidationMixin, BaseGUIWindow):
                 sg.Text("Other Names:", **field_label_props),
                 sg.Input(
                     justification="left",
-                    key="student_other_names",
+                    key=cls.key("student_other_names"),
                     **input_props,
                 ),
             ],
@@ -86,7 +86,7 @@ class StudentEnrolmentWindow(ValidationMixin, BaseGUIWindow):
                 sg.Combo(
                     values=SexChoices.labels,
                     default_value=cls.COMBO_DEFAULT,
-                    key="student_sex",
+                    key=cls.key("student_sex"),
                     **combo_props,
                 ),
             ],
@@ -94,7 +94,7 @@ class StudentEnrolmentWindow(ValidationMixin, BaseGUIWindow):
                 sg.Text("Level of study:", **field_label_props),
                 sg.Input(
                     justification="left",
-                    key="student_level_of_study",
+                    key=cls.key("student_level_of_study"),
                     **input_props,
                 ),
             ],
@@ -102,7 +102,7 @@ class StudentEnrolmentWindow(ValidationMixin, BaseGUIWindow):
                 sg.Text("Possible graduation year:", **field_label_props),
                 sg.Input(
                     justification="left",
-                    key="student_possible_grad_yr",
+                    key=cls.key("student_possible_grad_yr"),
                     **input_props,
                 ),
             ],
@@ -112,7 +112,7 @@ class StudentEnrolmentWindow(ValidationMixin, BaseGUIWindow):
                     values=Faculty.get_all_faculties(),
                     default_value=cls.COMBO_DEFAULT,
                     enable_events=True,
-                    key="student_faculty",
+                    key=cls.key("student_faculty"),
                     **combo_props,
                 ),
             ],
@@ -122,7 +122,7 @@ class StudentEnrolmentWindow(ValidationMixin, BaseGUIWindow):
                     values=Department.get_departments(),
                     default_value=cls.COMBO_DEFAULT,
                     enable_events=True,
-                    key="student_department",
+                    key=cls.key("student_department"),
                     **combo_props,
                 ),
             ],
@@ -136,8 +136,8 @@ class StudentEnrolmentWindow(ValidationMixin, BaseGUIWindow):
                 sg.Push(),
             ],
             [
-                sg.Button("Submit", key="submit"),
-                sg.Button("Cancel", key="cancel", **cls.cancel_button_kwargs()),
+                sg.Button("Submit", key=cls.key("submit")),
+                sg.Button("Cancel", key=cls.key("cancel"), **cls.cancel_button_kwargs()),
             ],
             [sg.VPush()],
         ]
@@ -151,63 +151,59 @@ class StudentEnrolmentWindow(ValidationMixin, BaseGUIWindow):
                     expand_y=True,
                     expand_x=True,
                     pad=(0, 0),
-                    key="main_column",
+                    key=cls.key("main_column"),
                 )
             ]
         ]
-        window = sg.Window(
-            "Student Enrolment", scrolled_layout, **cls.window_init_dict()
-        )
-
         # adjust input fields to same size within column
-        for key in (
-            "student_reg_number_input", 
-            "student_first_name", 
-            "student_last_name", 
-            "student_other_names", 
-            "student_sex", 
-            "student_level_of_study", 
-            "student_possible_grad_yr", 
-            "student_faculty",
-            "student_department",
-        ):
-            window[key].expand(expand_x=True)
+        # for key in (
+        #     "student_reg_number_input", 
+        #     "student_first_name", 
+        #     "student_last_name", 
+        #     "student_other_names", 
+        #     "student_sex", 
+        #     "student_level_of_study", 
+        #     "student_possible_grad_yr", 
+        #     "student_faculty",
+        #     "student_department",
+        # ):
+        #     window[key].expand(expand_x=True)
 
-        return window
+        return scrolled_layout
 
     @classmethod
     def loop(
         cls, window: sg.Window, event: str, values: Dict[str, Any]
     ) -> bool:
         """Track user interaction with window."""
-        if event == "student_faculty":
-            if values["student_faculty"] in (cls.COMBO_DEFAULT, None):
-                window["student_faculty"].update(
+        if event == cls.key("student_faculty"):
+            if values[cls.key("student_faculty")] in (cls.COMBO_DEFAULT, None):
+                window[cls.key("student_faculty")].update(
                     values=Faculty.get_all_faculties(), value=cls.COMBO_DEFAULT
                 )
             else:
-                window["student_department"].update(
+                window[cls.key("student_department")].update(
                     values=Department.get_departments(
-                        faculty=values["student_faculty"]
+                        faculty=values[cls.key("student_faculty")]
                     ),
                     value=cls.COMBO_DEFAULT,
                 )
-        if event == "submit":
+        if event == cls.key("submit"):
             if cls.validate(values, window) is not None:
                 window.refresh()
-                window["main_column"].contents_changed()
+                window[cls.key("main_column")].contents_changed()
                 return True
 
             app_config.cp["new_student"] = {}
             app_config.cp["new_student"] = {
-                "reg_number": values["student_reg_number_input"],
-                "first_name": values["student_first_name"],
-                "last_name": values["student_last_name"],
-                "other_names": values["student_other_names"],
-                "level_of_study": values["student_level_of_study"],
-                "possible_grad_yr": values["student_possible_grad_yr"],
-                "sex": SexChoices.str_to_value(values["student_sex"]),
-                "department": Department.get_id(values["student_department"]),
+                "reg_number": values[cls.key("student_reg_number_input")],
+                "first_name": values[cls.key("student_first_name")],
+                "last_name": values[cls.key("student_last_name")],
+                "other_names": values[cls.key("student_other_names")],
+                "level_of_study": values[cls.key("student_level_of_study")],
+                "possible_grad_yr": values[cls.key("student_possible_grad_yr")],
+                "sex": SexChoices.str_to_value(values[cls.key("student_sex")]),
+                "department": Department.get_id(values[cls.key("student_department")]),
             }
             new_student_dict = app_config.cp.section_dict("new_student")
 
@@ -246,7 +242,7 @@ class StudentEnrolmentWindow(ValidationMixin, BaseGUIWindow):
                     "StudentFaceEnrolmentWindow"
                 )
                 return True
-        if event == "cancel":
+        if event == cls.key("cancel"):
             window_dispatch.dispatch.open_window("HomeWindow")
         return True
 
@@ -256,14 +252,14 @@ class StudentEnrolmentWindow(ValidationMixin, BaseGUIWindow):
     ) -> Optional[bool]:
         """Validate values supplied by user in the window input fields."""
         req_fields = [
-            (values["student_reg_number_input"], "registration number"),
-            (values["student_first_name"], "first name"),
-            (values["student_last_name"], "last name"),
-            (values["student_sex"], "sex"),
-            (values["student_level_of_study"], "level of study"),
-            (values["student_possible_grad_yr"], "possible year of graduation"),
-            (values["student_faculty"], "faculty"),
-            (values["student_department"], "department"),
+            (values[cls.key("student_reg_number_input")], "registration number"),
+            (values[cls.key("student_first_name")], "first name"),
+            (values[cls.key("student_last_name")], "last name"),
+            (values[cls.key("student_sex")], "sex"),
+            (values[cls.key("student_level_of_study")], "level of study"),
+            (values[cls.key("student_possible_grad_yr")], "possible year of graduation"),
+            (values[cls.key("student_faculty")], "faculty"),
+            (values[cls.key("student_department")], "department"),
         ]
         if cls.validate_required_fields(req_fields, window) is not None:
             return True
@@ -275,15 +271,15 @@ class StudentEnrolmentWindow(ValidationMixin, BaseGUIWindow):
                 return True
 
         for criteria in (
-            cls.validate_student_reg_number(values["student_reg_number_input"]),
-            cls.validate_sex(values["student_sex"]),
-            cls.validate_faculty(values["student_faculty"]),
-            cls.validate_department(values["student_department"]),
+            cls.validate_student_reg_number(values[cls.key("student_reg_number_input")]),
+            cls.validate_sex(values[cls.key("student_sex")]),
+            cls.validate_faculty(values[cls.key("student_faculty")]),
+            cls.validate_department(values[cls.key("student_department")]),
             cls.validate_int_field(
-                values["student_level_of_study"], "level of study"
+                values[cls.key("student_level_of_study")], "level of study"
             ),
             cls.validate_int_field(
-                values["student_possible_grad_yr"],
+                values[cls.key("student_possible_grad_yr")],
                 "possible year of graduation",
             ),
         ):
@@ -399,7 +395,7 @@ class StudentEnrolmentUpdateWindow(StudentEnrolmentWindow):
                 sg.Text("Registration Number:", **field_label_props),
                 sg.Input(
                     justification="left",
-                    key="student_reg_number_input",
+                    key=cls.key("student_reg_number_input"),
                     disabled=True,
                     **input_props,
                     default_text=student["reg_number"],
@@ -409,7 +405,7 @@ class StudentEnrolmentUpdateWindow(StudentEnrolmentWindow):
                 sg.Text("First Name:", **field_label_props),
                 sg.Input(
                     justification="left",
-                    key="student_first_name",
+                    key=cls.key("student_first_name"),
                     focus=True,
                     **input_props,
                     default_text=student["first_name"],
@@ -419,7 +415,7 @@ class StudentEnrolmentUpdateWindow(StudentEnrolmentWindow):
                 sg.Text("Last Name:", **field_label_props),
                 sg.Input(
                     justification="left",
-                    key="student_last_name",
+                    key=cls.key("student_last_name"),
                     **input_props,
                     default_text=student["last_name"],
                 ),
@@ -428,7 +424,7 @@ class StudentEnrolmentUpdateWindow(StudentEnrolmentWindow):
                 sg.Text("Other Names:", **field_label_props),
                 sg.Input(
                     justification="left",
-                    key="student_other_names",
+                    key=cls.key("student_other_names"),
                     **input_props,
                     default_text=student["other_names"],
                 ),
@@ -438,7 +434,7 @@ class StudentEnrolmentUpdateWindow(StudentEnrolmentWindow):
                 sg.Combo(
                     values=SexChoices.labels,
                     default_value=student_sex or cls.COMBO_DEFAULT,
-                    key="student_sex",
+                    key=cls.key("student_sex"),
                     **combo_props,
                 ),
             ],
@@ -446,7 +442,7 @@ class StudentEnrolmentUpdateWindow(StudentEnrolmentWindow):
                 sg.Text("Level of study:", **field_label_props),
                 sg.Input(
                     justification="left",
-                    key="student_level_of_study",
+                    key=cls.key("student_level_of_study"),
                     **input_props,
                     default_text=student["level_of_study"],
                 ),
@@ -455,7 +451,7 @@ class StudentEnrolmentUpdateWindow(StudentEnrolmentWindow):
                 sg.Text("Possible graduation year:", **field_label_props),
                 sg.Input(
                     justification="left",
-                    key="student_possible_grad_yr",
+                    key=cls.key("student_possible_grad_yr"),
                     **input_props,
                     default_text=student["possible_grad_yr"],
                 ),
@@ -466,7 +462,7 @@ class StudentEnrolmentUpdateWindow(StudentEnrolmentWindow):
                     values=Faculty.get_all_faculties(),
                     default_value=student["department__faculty__name"],
                     enable_events=True,
-                    key="student_faculty",
+                    key=cls.key("student_faculty"),
                     **combo_props,
                 ),
             ],
@@ -476,7 +472,7 @@ class StudentEnrolmentUpdateWindow(StudentEnrolmentWindow):
                     values=Department.get_departments(),
                     default_value=student["department__name"],
                     enable_events=True,
-                    key="student_department",
+                    key=cls.key("student_department"),
                     **combo_props,
                 ),
             ],
@@ -490,8 +486,8 @@ class StudentEnrolmentUpdateWindow(StudentEnrolmentWindow):
                 sg.Push(),
             ],
             [
-                sg.Button("Submit", key="submit"),
-                sg.Button("Cancel", key="cancel", **cls.cancel_button_kwargs()),
+                sg.Button("Submit", key=cls.key("submit")),
+                sg.Button("Cancel", key=cls.key("cancel"), **cls.cancel_button_kwargs()),
             ],
             [sg.VPush()],
         ]
@@ -505,30 +501,25 @@ class StudentEnrolmentUpdateWindow(StudentEnrolmentWindow):
                     expand_y=True,
                     expand_x=True,
                     pad=(0, 0),
-                    key="main_column",
+                    key=cls.key("main_column"),
                 )
             ]
         ]
-        window = sg.Window(
-            "Student Enrolment", scrolled_layout, **cls.window_init_dict()
-        )
-
-
         # adjust input fields to same size within column
-        for key in (
-            "student_reg_number_input", 
-            "student_first_name", 
-            "student_last_name", 
-            "student_other_names", 
-            "student_sex", 
-            "student_level_of_study", 
-            "student_possible_grad_yr", 
-            "student_faculty",
-            "student_department",
-        ):
-            window[key].expand(expand_x=True)
+        # for key in (
+        #     "student_reg_number_input", 
+        #     "student_first_name", 
+        #     "student_last_name", 
+        #     "student_other_names", 
+        #     "student_sex", 
+        #     "student_level_of_study", 
+        #     "student_possible_grad_yr", 
+        #     "student_faculty",
+        #     "student_department",
+        # ):
+        #     window[key].expand(expand_x=True)
 
-        return window
+        return scrolled_layout
 
     @classmethod
     def loop(
@@ -538,7 +529,7 @@ class StudentEnrolmentUpdateWindow(StudentEnrolmentWindow):
         return super().loop(window, event, values)
 
 
-class StudentEnrolmentUpdateIDSearch(StudentRegNumInputWindow):
+class StudentEnrolmentUpdateIDSearchWindow(StudentRegNumInputWindow):
     """Window for finding student by reg number for bio data update."""
 
     @classmethod

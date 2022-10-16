@@ -28,4 +28,4 @@ class NodeDeviceSynchWindow(LoadingWindow):
         NodeDataSynch.start_data_sync()
         cls.popup_auto_close_success("Synch Successful")
         window_dispatch.dispatch.open_window("HomeWindow")
-        return True
+        return super().loop(window, event, values)

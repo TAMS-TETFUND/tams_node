@@ -26,20 +26,20 @@ class EnrolmentMenuWindow(BaseGUIWindow):
                 sg.Button(
                     image_data=cls.get_icon("add_user", 0.5),
                     button_color=cls.ICON_BUTTON_COLOR,
-                    key="staff_enrolment",
+                    key=cls.key("staff_enrolment"),
                     use_ttk_buttons=True,
                 ),
                 sg.Push(),
             ],
             [
                 sg.Push(),
-                sg.Text("Staff", key="staff_enrolment_txt", enable_events=True),
+                sg.Text("Staff", key=cls.key("staff_enrolment_txt"), enable_events=True),
                 sg.Push(),
             ],
             [
                 sg.Push(),
                 sg.Text(
-                    "Enrolment", key="staff_enrolment_txt_2", enable_events=True
+                    "Enrolment", key=cls.key("staff_enrolment_txt_2"), enable_events=True
                 ),
                 sg.Push(),
             ],
@@ -50,7 +50,7 @@ class EnrolmentMenuWindow(BaseGUIWindow):
                 sg.Button(
                     image_data=cls.get_icon("add_user", 0.5),
                     button_color=cls.ICON_BUTTON_COLOR,
-                    key="student_enrolment",
+                    key=cls.key("student_enrolment"),
                     use_ttk_buttons=True,
                 ),
                 sg.Push(),
@@ -58,7 +58,7 @@ class EnrolmentMenuWindow(BaseGUIWindow):
             [
                 sg.Push(),
                 sg.Text(
-                    "Student", key="student_enrolment_txt", enable_events=True
+                    "Student", key=cls.key("student_enrolment_txt"), enable_events=True
                 ),
                 sg.Push(),
             ],
@@ -66,7 +66,7 @@ class EnrolmentMenuWindow(BaseGUIWindow):
                 sg.Push(),
                 sg.Text(
                     "Enrolment",
-                    key="student_enrolment_txt_2",
+                    key=cls.key("student_enrolment_txt_2"),
                     enable_events=True,
                 ),
                 sg.Push(),
@@ -78,7 +78,7 @@ class EnrolmentMenuWindow(BaseGUIWindow):
                 sg.Button(
                     image_data=cls.get_icon("edit_user", 0.5),
                     button_color=cls.ICON_BUTTON_COLOR,
-                    key="staff_enrolment_update",
+                    key=cls.key("staff_enrolment_update"),
                     use_ttk_buttons=True,
                 ),
                 sg.Push(),
@@ -87,7 +87,7 @@ class EnrolmentMenuWindow(BaseGUIWindow):
                 sg.Push(),
                 sg.Text(
                     "Staff",
-                    key="staff_enrolment_update_txt",
+                    key=cls.key("staff_enrolment_update_txt"),
                     enable_events=True,
                 ),
                 sg.Push(),
@@ -96,7 +96,7 @@ class EnrolmentMenuWindow(BaseGUIWindow):
                 sg.Push(),
                 sg.Text(
                     "Enrolment",
-                    key="staff_enrolment_update_txt_2",
+                    key=cls.key("staff_enrolment_update_txt_2"),
                     enable_events=True,
                 ),
                 sg.Push(),
@@ -105,7 +105,7 @@ class EnrolmentMenuWindow(BaseGUIWindow):
                 sg.Push(),
                 sg.Text(
                     "Update",
-                    key="staff_enrolment_update_txt_3",
+                    key=cls.key("staff_enrolment_update_txt_3"),
                     enable_events=True,
                 ),
                 sg.Push(),
@@ -117,7 +117,7 @@ class EnrolmentMenuWindow(BaseGUIWindow):
                 sg.Button(
                     image_data=cls.get_icon("edit_user", 0.5),
                     button_color=cls.ICON_BUTTON_COLOR,
-                    key="student_enrolment_update",
+                    key=cls.key("student_enrolment_update"),
                     use_ttk_buttons=True,
                 ),
                 sg.Push(),
@@ -126,7 +126,7 @@ class EnrolmentMenuWindow(BaseGUIWindow):
                 sg.Push(),
                 sg.Text(
                     "Student",
-                    key="student_enrolment_update_txt",
+                    key=cls.key("student_enrolment_update_txt"),
                     enable_events=True,
                 ),
                 sg.Push(),
@@ -135,7 +135,7 @@ class EnrolmentMenuWindow(BaseGUIWindow):
                 sg.Push(),
                 sg.Text(
                     "Enrolment",
-                    key="student_enrolment_update_txt_2",
+                    key=cls.key("student_enrolment_update_txt_2"),
                     enable_events=True,
                 ),
                 sg.Push(),
@@ -144,7 +144,7 @@ class EnrolmentMenuWindow(BaseGUIWindow):
                 sg.Push(),
                 sg.Text(
                     "Update",
-                    key="student_enrolment_update_txt_2",
+                    key=cls.key("student_enrolment_update_txt_2"),
                     enable_events=True,
                 ),
                 sg.Push(),
@@ -156,7 +156,7 @@ class EnrolmentMenuWindow(BaseGUIWindow):
                 sg.Button(
                     image_data=cls.get_icon("register_device", 0.5),
                     button_color=cls.ICON_BUTTON_COLOR,
-                    key="register_device",
+                    key=cls.key("register_device"),
                     use_ttk_buttons=True,
                 ),
                 sg.Push(),
@@ -164,14 +164,14 @@ class EnrolmentMenuWindow(BaseGUIWindow):
             [
                 sg.Push(),
                 sg.Text(
-                    "Register", key="register_device_txt", enable_events=True
+                    "Register", key=cls.key("register_device_txt"), enable_events=True
                 ),
                 sg.Push(),
             ],
             [
                 sg.Push(),
                 sg.Text(
-                    "Device", key="register_device_txt", enable_events=True
+                    "Device", key=cls.key("register_device_txt"), enable_events=True
                 ),
                 sg.Push(),
             ],
@@ -182,19 +182,19 @@ class EnrolmentMenuWindow(BaseGUIWindow):
                 sg.Button(
                     image_data=cls.get_icon("synch", 0.5),
                     button_color=cls.ICON_BUTTON_COLOR,
-                    key="synch_device",
+                    key=cls.key("synch_device"),
                     use_ttk_buttons=True,
                 ),
                 sg.Push(),
             ],
             [
                 sg.Push(),
-                sg.Text("Synch", key="synch_device_txt", enable_events=True),
+                sg.Text("Synch", key=cls.key("synch_device_txt"), enable_events=True),
                 sg.Push(),
             ],
             [
                 sg.Push(),
-                sg.Text("Device", key="synch_device_txt", enable_events=True),
+                sg.Text("Device", key=cls.key("synch_device_txt"), enable_events=True),
                 sg.Push(),
             ],
         ]
@@ -217,8 +217,7 @@ class EnrolmentMenuWindow(BaseGUIWindow):
             [sg.VPush()],
             cls.navigation_pane(next_icon="next_disabled"),
         ]
-        window = sg.Window("Enrolment Window", layout, **cls.window_init_dict())
-        return window
+        return layout
 
     @classmethod
     def loop(
@@ -246,49 +245,49 @@ class EnrolmentMenuWindow(BaseGUIWindow):
                 return True
             loop_count.append("Done")
 
-        if event in ("back", "home"):
+        if event in (cls.key("back"), cls.key("home")):
             window_dispatch.dispatch.open_window("HomeWindow")
             return True
         if event in (
-            "staff_enrolment",
-            "staff_enrolment_txt",
-            "staff_enrolment_txt_2",
+            cls.key("staff_enrolment"),
+            cls.key("staff_enrolment_txt"),
+            cls.key("staff_enrolment_txt_2"),
         ):
             window_dispatch.dispatch.open_window("StaffEnrolmentWindow")
             return True
         if event in (
-            "student_enrolment",
-            "student_enrolment_txt",
-            "student_enrolment_txt_2",
+            cls.key("student_enrolment"),
+            cls.key("student_enrolment_txt"),
+            cls.key("student_enrolment_txt_2"),
         ):
             window_dispatch.dispatch.open_window("StudentEnrolmentWindow")
             return True
         if event in (
-            "staff_enrolment_update",
-            "staff_enrolment_update_txt",
-            "staff_enrolment_update_txt_2",
-            "staff_enrolment_update_txt_3",
+            cls.key("staff_enrolment_update"),
+            cls.key("staff_enrolment_update_txt"),
+            cls.key("staff_enrolment_update_txt_2"),
+            cls.key("staff_enrolment_update_txt_3"),
         ):
-            window_dispatch.dispatch.open_window("StaffEnrolmentUpdateIDSearch")
+            window_dispatch.dispatch.open_window("StaffEnrolmentUpdateIDSearchWindow")
             return True
         if event in (
-            "student_enrolment_update",
-            "student_enrolment_update_txt",
-            "student_enrolment_update_txt_2",
-            "student_enrolment_update_txt_3",
+            cls.key("student_enrolment_update"),
+            cls.key("student_enrolment_update_txt"),
+            cls.key("student_enrolment_update_txt_2"),
+            cls.key("student_enrolment_update_txt_3"),
         ):
             window_dispatch.dispatch.open_window(
-                "StudentEnrolmentUpdateIDSearch"
+                "StudentEnrolmentUpdateIDSearchWindow"
             )
             return True
         if event in (
-            "register_device",
-            "register_device_txt",
-            "register_device_txt_2",
+            cls.key("register_device"),
+            cls.key("register_device_txt"),
+            cls.key("register_device_txt_2"),
         ):
             window_dispatch.dispatch.open_window("NodeDeviceRegistrationWindow")
             return True
-        if event in ("synch_device", "synch_device_txt", "synch_device_txt_2"):
+        if event in (cls.key("synch_device"), cls.key("synch_device_txt"), cls.key("synch_device_txt_2")):
             window_dispatch.dispatch.open_window("NodeDeviceSynchWindow")
             return True
         return True

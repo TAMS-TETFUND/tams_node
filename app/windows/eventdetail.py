@@ -2,8 +2,8 @@ from typing import Any, Dict, Optional
 import PySimpleGUI as sg
 from datetime import datetime, timedelta
 
-from app.basegui import BaseGUIWindow
-from app.gui_utils import ValidationMixin
+from  app.basegui import BaseGUIWindow
+from app.guiutils import ValidationMixin
 import app.appconfigparser
 import app.windowdispatch
 from db.models import Course, Faculty, Department
@@ -12,7 +12,6 @@ from db.models import Course, Faculty, Department
 app_config = app.appconfigparser.AppConfigParser()
 window_dispatch = app.windowdispatch.WindowDispatch()
 
-
 class EventDetailWindow(ValidationMixin, BaseGUIWindow):
     """Window to for user to specify event deatils like: course,
     start date, and event duration"""
@@ -20,7 +19,7 @@ class EventDetailWindow(ValidationMixin, BaseGUIWindow):
     @classmethod
     def window(cls) -> sg.Window:
         """Construct layout/appearance of window."""
-        combo_props = {"size": 31}
+        combo_props = {"size": 30}
         field_label_props = {"size": 12}
         section1 = [
             [
@@ -29,7 +28,7 @@ class EventDetailWindow(ValidationMixin, BaseGUIWindow):
                     Faculty.get_all_faculties(),
                     default_value=cls.COMBO_DEFAULT,
                     enable_events=True,
-                    key="course_faculty",
+                    key=cls.key("course_faculty"),
                     expand_y=True,
                     **combo_props,
                 ),
@@ -40,7 +39,7 @@ class EventDetailWindow(ValidationMixin, BaseGUIWindow):
                     Department.get_departments(),
                     default_value=cls.COMBO_DEFAULT,
                     enable_events=True,
-                    key="course_department",
+                    key=cls.key("course_department"),
                     expand_y=True,
                     **combo_props,
                 ),
@@ -59,27 +58,27 @@ class EventDetailWindow(ValidationMixin, BaseGUIWindow):
                     ),
                     default_value=cls.COMBO_DEFAULT,
                     enable_events=True,
-                    key="selected_course",
+                    key=cls.key("selected_course"),
                     expand_y=True,
-                    size=32,
+                    size=31,
                 ),
             ],
             [
                 sg.Image(
                     data=cls.get_icon("up_arrow", 0.25),
-                    k="filter_courses_img",
+                    k=cls.key("filter_courses_img"),
                     enable_events=True,
                 ),
                 sg.Text(
                     "Filter Courses",
                     enable_events=True,
-                    k="filter_courses",
+                    k=cls.key("filter_courses"),
                     text_color=cls.UI_COLORS["dull_yellow"],
                 ),
             ],
             [
                 sg.pin(
-                    sg.Column(section1, k="sec1", visible=False, expand_y=True)
+                    sg.Column(section1, k=cls.key("sec1"), visible=False, expand_y=True)
                 )
             ],
             [sg.HorizontalSeparator()],
@@ -89,24 +88,24 @@ class EventDetailWindow(ValidationMixin, BaseGUIWindow):
                     values=[str(a).zfill(2) for a in range(0, 24)],
                     initial_value="08",
                     expand_y=True,
-                    key="start_hour",
+                    key=cls.key("start_hour"),
                 ),
                 sg.Spin(
                     values=[str(a).zfill(2) for a in range(0, 60)],
                     initial_value="00",
                     expand_y=True,
-                    key="start_minute",
+                    key=cls.key("start_minute"),
                 ),
                 sg.Input(
                     default_text=datetime.strftime(datetime.now(), "%d-%m-%Y"),
-                    key="start_date",
-                    size=(20, 1),
+                    key=cls.key("start_date"),
+                    size=(19, 1),
                     expand_y=True,
                 ),
                 sg.Button(
                     image_data=cls.get_icon("calendar", 0.25),
                     button_color=cls.ICON_BUTTON_COLOR,
-                    key="pick_date",
+                    key=cls.key("pick_date"),
                     expand_y=True,
                 ),
             ],
@@ -116,11 +115,11 @@ class EventDetailWindow(ValidationMixin, BaseGUIWindow):
                     values=[str(a).zfill(2) for a in range(0, 12)],
                     initial_value="01",
                     expand_y=True,
-                    key="duration",
+                    key=cls.key("duration"),
                 ),
                 sg.Text("Hour(s)"),
             ],
-            [sg.Button("Submit", key="submit")],
+            [sg.Button("Submit", key=cls.key("submit"))],
             [sg.VPush()],
             cls.navigation_pane(back_icon="back_disabled"),
         ]
@@ -134,90 +133,85 @@ class EventDetailWindow(ValidationMixin, BaseGUIWindow):
                     expand_y=True,
                     expand_x=True,
                     pad=(0, 0),
-                    key="main_column",
+                    key=cls.key("main_column"),
                 )
             ]
         ]
-
-        window = sg.Window(
-            "Event Details",
-            scrolled_layout,
-            return_keyboard_events=True,
-            **cls.window_init_dict(),
-        )
-        return window
+        return scrolled_layout
 
     @classmethod
     def loop(
         cls, window: sg.Window, event: str, values: Dict[str, Any]
     ) -> bool:
         """Track user interaction with window."""
-        if event.startswith("filter_courses"):
-            window["filter_courses_img"].update(
+        if event.startswith(''.join([cls.key_prefix(), "filter_courses"])):
+            window[cls.key("filter_courses_img")].update(
                 data=EventDetailWindow.get_icon("down_arrow", 0.25)
             )
-            window["sec1"].update(visible=True)
+            window[cls.key("sec1")].update(visible=True)
             window.refresh()
-            window["main_column"].contents_changed()
+            window[cls.key("main_column")].contents_changed()
 
-        if event == "course_faculty":
-            if values["course_faculty"] in (cls.COMBO_DEFAULT, None):
-                window["course_department"].update(
+        if event == cls.key("course_faculty"):
+            if values[cls.key("course_faculty")] in (cls.COMBO_DEFAULT, None):
+                window[cls.key("course_department")].update(
                     values=Department.get_departments(), value=cls.COMBO_DEFAULT
                 )
             else:
-                window["course_department"].update(
-                    values=Department.get_departments(values["course_faculty"]),
+                window[cls.key("course_department")].update(
+                    values=Department.get_departments(values[cls.key("course_faculty")]),
                     value=cls.COMBO_DEFAULT,
                 )
-                window["selected_course"].update(
+                window[cls.key("selected_course")].update(
                     values=Course.get_courses(
                         semester=app_config.cp.get("DEFAULT", "semester"),
-                        faculty=values["course_faculty"],
+                        faculty=values[cls.key("course_faculty")],
                     ),
                     value=cls.COMBO_DEFAULT,
                 )
-        if event == "course_department":
-            if values["course_department"] in (cls.COMBO_DEFAULT, None):
-                window["selected_course"].update(
+        if event == cls.key("course_department"):
+            if values[cls.key("course_department")] in (cls.COMBO_DEFAULT, None):
+                window[cls.key("selected_course")].update(
                     values=Course.get_courses(
                         semester=app_config.cp.get("DEFAULT", "semester")
                     ),
                     value=cls.COMBO_DEFAULT,
                 )
             else:
-                window["selected_course"].update(
+                window[cls.key("selected_course")].update(
                     values=Course.get_courses(
                         semester=app_config.cp.get("DEFAULT", "semester"),
-                        department=values["course_department"],
+                        department=values[cls.key("course_department")],
                     ),
                     value=cls.COMBO_DEFAULT,
                 )
-        if event == "pick_date":
+        if event == cls.key("pick_date"):
             event_date = sg.popup_get_date(
                 close_when_chosen=True, no_titlebar=False
             )
             if event_date is None:
                 return True
             else:
-                window["start_date"].update(
+                window[cls.key("start_date")].update(
                     value=f"{event_date[1]}-{event_date[0]}-{event_date[2]}"
                 )
             window.force_focus()
-        if event in ("next", "submit"):
+        if event in (cls.key("next"), cls.key("submit")):
             if cls.validate(values, window) is not None:
                 window.refresh()
-                window["main_column"].contents_changed()
+                window[cls.key("main_column")].contents_changed()
                 return True
 
-            app_config.cp["new_event"]["course"] = values["selected_course"]
+            app_config.cp["new_event"]["course"] = values[cls.key("selected_course")]
             app_config.cp["new_event"]["start_time"] = (
-                values["start_hour"] + ":" + values["start_minute"]
+                values[cls.key("start_hour")] + ":" + values[cls.key("start_minute")]
             )
-            app_config.cp["new_event"]["start_date"] = values["start_date"]
-            app_config.cp["new_event"]["duration"] = values["duration"]
+            app_config.cp["new_event"]["start_date"] = values[cls.key("start_date")]
+            app_config.cp["new_event"]["duration"] = values[cls.key("duration")]
+            app_config.cp.save()
+
             window_dispatch.dispatch.open_window("NewEventSummaryWindow")
-        if event == "home":
+        if event == cls.key("home"):
             app_config.cp.remove_section("new_event")
             window_dispatch.dispatch.open_window("HomeWindow")
 
@@ -230,37 +224,37 @@ class EventDetailWindow(ValidationMixin, BaseGUIWindow):
         """Validate values supplied by user in the window input fields."""
 
         required_fields = [
-            (values["selected_course"], "selected course"),
-            (values["start_hour"], "start time"),
-            (values["start_date"], "start time"),
-            (values["duration"], "duration"),
+            (values[cls.key("selected_course")], "selected course"),
+            (values[cls.key("start_hour")], "start time"),
+            (values[cls.key("start_date")], "start time"),
+            (values[cls.key("duration")], "duration"),
         ]
         validation_val = cls.validate_required_fields(required_fields, window)
         if validation_val is not None:
             return True
 
-        if Course.str_to_course(values["selected_course"]) is None:
+        if Course.str_to_course(values[cls.key("selected_course")]) is None:
             cls.display_message("Invalid course selected", window)
             return True
 
         for val_check in (
-            cls.validate_int_field(values["start_hour"], "start time"),
-            cls.validate_int_field(values["start_minute"], "start time"),
+            cls.validate_int_field(values[cls.key("start_hour")], "start time"),
+            cls.validate_int_field(values[cls.key("start_minute")], "start time"),
         ):
             if val_check is not None:
                 cls.display_message(val_check, window)
                 return True
 
         if (
-            cls.validate_int_field(values["duration"], "duration") is not None
-            or int(values["duration"]) <= 0
+            cls.validate_int_field(values[cls.key("duration")], "duration") is not None
+            or int(values[cls.key("duration")]) <= 0
         ):
             cls.display_message("Invalid value in duration", window)
             return True
 
         start_datetime = (
-            f'{values["start_date"]} '
-            f'{values["start_hour"]}:{values["start_minute"]}'
+            f'{values[cls.key("start_date")]} '
+            f'{values[cls.key("start_hour")]}:{values[cls.key("start_minute")]}'
         )
         try:
             start_date = datetime.strptime(start_datetime, "%d-%m-%Y %H:%M")

@@ -28,16 +28,13 @@ class FingerprintGenericWindow(BaseGUIWindow):
                 sg.Button(
                     image_data=cls.get_icon("cancel", 0.6),
                     button_color=cls.ICON_BUTTON_COLOR,
-                    key="cancel",
+                    key=cls.key("cancel"),
                     use_ttk_buttons=True,
                 ),
                 sg.Push(),
             ],
         ]
-        window = sg.Window(
-            "Fingerprint Verification", layout, **cls.window_init_dict()
-        )
-        return window
+        return layout
 
     @classmethod
     def get_camera_button(cls) -> Any:
@@ -50,7 +47,7 @@ class FingerprintGenericWindow(BaseGUIWindow):
                 sg.Button(
                     image_data=cls.get_icon("camera", 0.6),
                     button_color=cls.ICON_BUTTON_COLOR,
-                    key="camera",
+                    key=cls.key("camera"),
                     visible=True,
                     use_ttk_buttons=True,
                 )
@@ -60,7 +57,7 @@ class FingerprintGenericWindow(BaseGUIWindow):
                 sg.Button(
                     image_data=cls.get_icon("camera", 0.6),
                     button_color=cls.ICON_BUTTON_COLOR,
-                    key="camera",
+                    key=cls.key("camera"),
                     visible=False,
                     use_ttk_buttons=True,
                 )

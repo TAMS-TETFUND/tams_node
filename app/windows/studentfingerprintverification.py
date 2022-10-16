@@ -4,7 +4,7 @@ import PySimpleGUI as sg
 from app.attendancelogger import AttendanceLogger
 from app.fingerprint import FingerprintScanner
 from app.windows.basefingerprint import FingerprintGenericWindow
-from app.gui_utils import StudentRegNumberInputRouterMixin
+from app.guiutils import StudentRegNumberInputRouterMixin
 import app.appconfigparser
 import app.windowdispatch
 from app.opmodes import OperationalMode
@@ -25,12 +25,12 @@ class StudentFingerprintVerificationWindow(
         cls, window: sg.Window, event: str, values: Dict[str, Any]
     ) -> bool:
         """Track user interaction with window."""
-        if event == "cancel":
+        if event == cls.key("cancel"):
             window_dispatch.dispatch.open_window(
                 "AttendanceSessionLandingWindow"
             )
             return True
-        if event == "camera":
+        if event == cls.key("camera"):
             if not OperationalMode.check_camera():
                 cls.popup_auto_close_error("Camera not connected")
             else:

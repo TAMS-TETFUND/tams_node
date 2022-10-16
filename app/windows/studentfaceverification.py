@@ -4,7 +4,7 @@ import PySimpleGUI as sg
 from app.attendancelogger import AttendanceLogger
 from app.windows.basecamera import FaceCameraWindow
 import app.appconfigparser
-from app.gui_utils import StudentRegNumberInputRouterMixin
+from app.guiutils import StudentRegNumberInputRouterMixin
 from app.facerec import FaceRecognition
 import app.windowdispatch
 from db.models import str_to_face_enc
@@ -70,17 +70,17 @@ class StudentFaceVerificationWindow(
     @classmethod
     def window_title(cls) -> List[Any]:
         """Title to GUI window."""
-        course = app_config.cp["current_attendance_session"]["course"].split(
+        course = app_config.cp.get("current_attendance_session", "course", fallback="").split(
             ":"
         )
-        event = app_config.cp["current_attendance_session"]["type"]
-        student_fname = app_config.cp["tmp_student"]["first_name"]
-        student_lname = app_config.cp["tmp_student"]["last_name"]
-        student_reg_number = app_config.cp["tmp_student"]["reg_number"]
+        event = app_config.cp.get("current_attendance_session", "type", fallback="")
+        student_fname = app_config.cp.get("tmp_student", "first_name", fallback="first_name")
+        student_lname = app_config.cp.get("tmp_student", "last_name", fallback="")
+        student_reg_number = app_config.cp.get("tmp_student", "reg_number", fallback="")
         return [
             [
                 sg.Push(),
-                sg.Text(f"{course[0]} {event.capitalize()} Attendance"),
+                sg.Text(f"{course[0]} {event.capitalize()} Attendance", key=cls.key("course")),
                 sg.Push(),
             ],
             [
@@ -88,10 +88,24 @@ class StudentFaceVerificationWindow(
                 sg.Image(data=cls.get_icon("face_scanner", 0.3)),
                 sg.Text(
                     f"Face Verification for: {student_fname[0]}. {student_lname} ({student_reg_number})",
+                    key=cls.key("student_name")
                 ),
                 sg.Push(),
             ],
         ]
+
+    @classmethod
+    def refresh_dynamic_fields(cls, window: sg.Window) -> None:
+        course = app_config.cp.get("current_attendance_session", "course", fallback="").split(
+            ":"
+        )
+        event = app_config.cp.get("current_attendance_session", "type", fallback="")
+        student_fname = app_config.cp.get("tmp_student", "first_name", fallback="first_name")
+        student_lname = app_config.cp.get("tmp_student", "last_name", fallback="")
+        student_reg_number = app_config.cp.get("tmp_student", "reg_number", fallback="")
+
+        window[cls.key("course")].update(f"{course[0]} {event.capitalize()} Attendance")
+        window[cls.key("student_name")].update(f"Face Verification for: {student_fname[0]}. {student_lname} ({student_reg_number})")
 
     @staticmethod
     def open_fingerprint() -> None:

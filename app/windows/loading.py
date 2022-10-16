@@ -12,30 +12,28 @@ class LoadingWindow(BaseGUIWindow):
     @classmethod
     def window(cls) -> sg.Window:
         """Construct layout/appearance of window."""
-        return sg.Window(
-            title="Loading window",
-            layout=[
-                [sg.VPush()],
-                [
-                    sg.Push(),
-                    sg.Image(
-                        data=cls.get_icon("ring_lines", 2),
-                        enable_events=True,
-                        key="loading_image",
-                    ),
-                    sg.Push(),
-                ],
-                [sg.Push(), sg.Text("Loading..."), sg.Push()],
-                [sg.VPush()],
-                cls.navigation_pane(next_icon="next_disabled")
+        layout=[
+            [sg.VPush()],
+            [
+                sg.Push(),
+                sg.Image(
+                    data=cls.get_icon("ring_lines", 2),
+                    enable_events=True,
+                    key="loading_image",
+                ),
+                sg.Push(),
             ],
-            **cls.window_init_dict()
-        )
+            [sg.Push(), sg.Text("Loading..."), sg.Push()],
+            [sg.VPush()],
+            cls.navigation_pane(next_icon="next_disabled")
+        ]
+        return layout
 
     @classmethod
     def loop(
         cls, window: sg.Window, event: str, values: Dict[str, Any]
     ) -> bool:
         """Track user interaction with window."""
-        if event in ("home", "back"):
+        if event in (cls.key("home"), cls.key("back")):
             window_dispatch.dispatch.open_window("HomeWindow")
+        return True

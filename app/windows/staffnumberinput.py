@@ -2,7 +2,7 @@ from typing import Any, Dict, Optional
 import PySimpleGUI as sg
 
 from app.basegui import BaseGUIWindow
-from app.gui_utils import StaffBiometricVerificationRouterMixin, ValidationMixin
+from app.guiutils import StaffBiometricVerificationRouterMixin, ValidationMixin
 import app.appconfigparser
 import app.windowdispatch
 from db.models import Staff
@@ -23,26 +23,26 @@ class StaffNumberInputWindow(
         INPUT_BUTTON_SIZE = (8, 2)
         column1 = [
             [
-                sg.Button("1", s=INPUT_BUTTON_SIZE),
-                sg.Button("2", s=INPUT_BUTTON_SIZE),
-                sg.Button("3", s=INPUT_BUTTON_SIZE),
-                sg.Button("0", s=INPUT_BUTTON_SIZE),
+                sg.Button("1", s=INPUT_BUTTON_SIZE, k=cls.key("1")),
+                sg.Button("2", s=INPUT_BUTTON_SIZE, k=cls.key("2")),
+                sg.Button("3", s=INPUT_BUTTON_SIZE, k=cls.key("3")),
+                sg.Button("0", s=INPUT_BUTTON_SIZE, k=cls.key("0")),
             ],
             [
-                sg.Button("4", s=INPUT_BUTTON_SIZE),
-                sg.Button("5", s=INPUT_BUTTON_SIZE),
-                sg.Button("6", s=INPUT_BUTTON_SIZE),
-                sg.Button("/", s=INPUT_BUTTON_SIZE),
+                sg.Button("4", s=INPUT_BUTTON_SIZE, k=cls.key("4")),
+                sg.Button("5", s=INPUT_BUTTON_SIZE, k=cls.key("5")),
+                sg.Button("6", s=INPUT_BUTTON_SIZE, k=cls.key("6")),
+                sg.Button("/", s=INPUT_BUTTON_SIZE, k=cls.key("/")),
             ],
             [
-                sg.Button("7", s=INPUT_BUTTON_SIZE),
-                sg.Button("8", s=INPUT_BUTTON_SIZE),
-                sg.Button("9", s=INPUT_BUTTON_SIZE),
-                sg.Button("AC", key="clear", s=INPUT_BUTTON_SIZE),
+                sg.Button("7", s=INPUT_BUTTON_SIZE, k=cls.key("7")),
+                sg.Button("8", s=INPUT_BUTTON_SIZE, k=cls.key("8")),
+                sg.Button("9", s=INPUT_BUTTON_SIZE, k=cls.key("9")),
+                sg.Button("AC", s=INPUT_BUTTON_SIZE, k=cls.key("clear")),
             ],
             [
                 sg.Push(),
-                sg.Button("Submit", key="submit", s=INPUT_BUTTON_SIZE),
+                sg.Button("Submit", key=cls.key("submit"), s=INPUT_BUTTON_SIZE),
                 sg.Push(),
             ],
         ]
@@ -56,7 +56,7 @@ class StaffNumberInputWindow(
                 sg.Input(
                     size=(15, 1),
                     justification="left",
-                    key="staff_number_input",
+                    key=cls.key("staff_number_input"),
                     focus=True,
                 ),
                 sg.Push(),
@@ -72,15 +72,11 @@ class StaffNumberInputWindow(
                     scrollable=True,
                     vertical_scroll_only=True,
                     expand_y=True,
-                    key="main_column",
+                    key=cls.key("main_column"),
                 )
             ]
         ]
-
-        window = sg.Window(
-            "Staff Number Input", scrolled_layout, **cls.window_init_dict()
-        )
-        return window
+        return scrolled_layout
 
     @classmethod
     def loop(
@@ -92,35 +88,42 @@ class StaffNumberInputWindow(
             return True
 
         keys_pressed = None
-        if event in "0123456789":
-            keys_pressed = values["staff_number_input"]
-            keys_pressed += event
-            window["staff_number_input"].update(keys_pressed)
+        if event in (
+            cls.key("0"), 
+            cls.key("1"), 
+            cls.key("2"), 
+            cls.key("3"), 
+            cls.key("4"),
+            cls.key("5"), 
+            cls.key("6"), 
+            cls.key("7"), 
+            cls.key("8"), 
+            cls.key("9")
+        ):
+            keys_pressed = values[cls.key("staff_number_input")]
+            keys_pressed += event.strip(cls.key_prefix())
+            window[cls.key("staff_number_input")].update(keys_pressed)
             return True
 
         elif event == "clear":
-            window["staff_number_input"].update("")
+            window[cls.key("staff_number_input")].update("")
             cls.hide_message_display_field(window)
             cls.resize_column(window)
             return True
 
-        elif event in ("submit", "next"):
+        elif event in (cls.key("submit"), "next"):
             if cls.validate(values, window) is not None:
-                cls.resize_column(window)
                 return True
-
-            keys_pressed = values["staff_number_input"]
+            keys_pressed = values[cls.key("staff_number_input")]
             staff_number_entered = "SS." + keys_pressed
-
             staff = Staff.objects.filter(staff_number=staff_number_entered)
 
             if not staff.exists():
-                cls.display_message(
+                cls.popup_auto_close_error(
                     "No staff found with given staff ID. "
                     "\nEnsure you have been duly registered on the system.",
-                    window,
+                    duration=5
                 )
-                cls.resize_column(window)
                 return True
             cls.process_staff(staff)
         return True
@@ -132,20 +135,20 @@ class StaffNumberInputWindow(
         """Validate values supplied by user in the window input fields."""
         for val_check in (
             cls.validate_required_field(
-                (values["staff_number_input"], "staff number")
+                (values[cls.key("staff_number_input")], "staff number")
             ),
-            cls.validate_staff_number("SS." + values["staff_number_input"]),
+            cls.validate_staff_number("SS." + values[cls.key("staff_number_input")]),
         ):
             if val_check is not None:
-                cls.display_message(val_check, window)
+                cls.popup_auto_close_error(val_check)
                 return True
         return None
 
-    @staticmethod
-    def resize_column(window: sg.Window) -> None:
+    @classmethod
+    def resize_column(cls, window: sg.Window) -> None:
         """Refresh GUI when adding/removing message display field."""
         window.refresh()
-        window["main_column"].contents_changed()
+        window[cls.key("main_column")].contents_changed()
 
     @classmethod
     def process_staff(cls, staff: Staff) -> None:

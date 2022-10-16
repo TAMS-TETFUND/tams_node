@@ -5,7 +5,7 @@ import app.appconfigparser
 from app.basegui import BaseGUIWindow
 import app.windowdispatch
 from app.serverconnection import ServerConnection
-from app.gui_utils import ValidationMixin
+from app.guiutils import ValidationMixin
 from app.nodedeviceinit import DeviceRegistration
 
 app_config = app.appconfigparser.AppConfigParser()
@@ -29,21 +29,17 @@ class NodeDeviceRegistrationWindow(ValidationMixin, BaseGUIWindow):
             [cls.message_display_field()],
             [
                 sg.Text("Admin Username:", **field_label_props),
-                sg.InputText(key="admin_username", **input_props),
+                sg.InputText(key=cls.key("admin_username"), **input_props),
             ],
             [
                 sg.Text("Initial Password:", **field_label_props),
-                sg.InputText(key="password", password_char="*", **input_props),
+                sg.InputText(key=cls.key("password"), password_char="*", **input_props),
             ],
-            [sg.Button("Submit", key="submit")],
+            [sg.Button("Submit", key=cls.key("submit"))],
             [sg.VPush()],
             cls.navigation_pane(),
         ]
-
-        window = sg.Window(
-            "Node Registration Window", layout, **cls.window_init_dict()
-        )
-        return window
+        return layout
 
     @classmethod
     def loop(
@@ -55,14 +51,14 @@ class NodeDeviceRegistrationWindow(ValidationMixin, BaseGUIWindow):
             window_dispatch.dispatch.open_window("HomeWindow")
             return True
 
-        if event in ("home", "back"):
+        if event in (cls.key("home"), cls.key("back")):
             window_dispatch.dispatch.open_window("HomeWindow")
             return True
 
-        if event in ("submit", "next"):
+        if event in (cls.key("submit"), cls.key("next")):
             required_fields = [
-                (values["admin_username"], "Admin Username"),
-                (values["password"], "Password"),
+                (values[cls.key("admin_username")], "Admin Username"),
+                (values[cls.key("password")], "Password"),
             ]
             if (
                 cls.validate_required_fields(required_fields, window)
@@ -73,8 +69,8 @@ class NodeDeviceRegistrationWindow(ValidationMixin, BaseGUIWindow):
             conn = ServerConnection()
             try:
                 conn.token_authentication(
-                    username=values["admin_username"],
-                    password=values["password"],
+                    username=values[cls.key("admin_username")],
+                    password=values[cls.key("password")],
                 )
             except Exception as e:
                 cls.display_message("%s. %s" % (e, conn.server_url), window)

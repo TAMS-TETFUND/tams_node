@@ -3,7 +3,7 @@ import PySimpleGUI as sg
 
 from app.fingerprint import FingerprintScanner
 from app.windows.basefingerprint import FingerprintGenericWindow
-from app.gui_utils import (
+from app.guiutils import (
     StaffBiometricVerificationRouterMixin,
     StaffIDInputRouterMixin,
 )
@@ -30,7 +30,7 @@ class StaffFingerprintVerificationWindow(
         cls, window: sg.Window, event: str, values: Dict[str, Any]
     ) -> bool:
         """Track user interaction with window."""
-        if event == "cancel":
+        if event == cls.key("cancel"):
             if app_config.cp.has_option(
                 "current_attendance_session", "initiator_id"
             ):
@@ -42,7 +42,7 @@ class StaffFingerprintVerificationWindow(
                 window_dispatch.dispatch.open_window("NewEventSummaryWindow")
             return True
 
-        if event == "camera":
+        if event == cls.key("camera"):
             if not OperationalMode.check_camera():
                 cls.popup_auto_close_error("Camera not connected")
             else:

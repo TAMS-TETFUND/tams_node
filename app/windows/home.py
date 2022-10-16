@@ -26,19 +26,19 @@ class HomeWindow(BaseGUIWindow):
                 sg.Button(
                     image_data=cls.get_icon("new", 0.9),
                     button_color=cls.ICON_BUTTON_COLOR,
-                    key="new_event",
+                    key=cls.key("new_event"),
                     use_ttk_buttons=True,
                 ),
                 sg.Push(),
             ],
             [
                 sg.Push(),
-                sg.Text("New", key="new_event_txt", enable_events=True),
+                sg.Text("New", key=cls.key("new_event_txt"), enable_events=True),
                 sg.Push(),
             ],
             [
                 sg.Push(),
-                sg.Text("Event", key="new_event_txt", enable_events=True),
+                sg.Text("Event", key=cls.key("new_event_txt"), enable_events=True),
                 sg.Push(),
             ],
         ]
@@ -48,7 +48,7 @@ class HomeWindow(BaseGUIWindow):
                 sg.Button(
                     image_data=cls.get_icon("right_arrow"),
                     button_color=cls.ICON_BUTTON_COLOR,
-                    key="continue_attendance",
+                    key=cls.key("continue_attendance"),
                     use_ttk_buttons=True,
                 ),
                 sg.Push(),
@@ -57,7 +57,7 @@ class HomeWindow(BaseGUIWindow):
                 sg.Push(),
                 sg.Text(
                     "Continue",
-                    key="continue_attendance_txt",
+                    key=cls.key("continue_attendance_txt"),
                     enable_events=True,
                 ),
                 sg.Push(),
@@ -66,7 +66,7 @@ class HomeWindow(BaseGUIWindow):
                 sg.Push(),
                 sg.Text(
                     "Attendance",
-                    key="continue_attendance_txt_2",
+                    key=cls.key("continue_attendance_txt_2"),
                     enable_events=True,
                 ),
                 sg.Push(),
@@ -78,20 +78,20 @@ class HomeWindow(BaseGUIWindow):
                 sg.Button(
                     image_data=cls.get_icon("schedule"),
                     button_color=cls.ICON_BUTTON_COLOR,
-                    key="schedule",
+                    key=cls.key("schedule"),
                     use_ttk_buttons=True,
                 ),
                 sg.Push(),
             ],
             [
                 sg.Push(),
-                sg.Text("Scheduled &", key="schedule_txt", enable_events=True),
+                sg.Text("Scheduled &", key=cls.key("schedule_txt"), enable_events=True),
                 sg.Push(),
             ],
             [
                 sg.Push(),
                 sg.Text(
-                    "Recurring Events", key="schedule_txt_2", enable_events=True
+                    "Recurring Events", key=cls.key("schedule_txt_2"), enable_events=True
                 ),
                 sg.Push(),
             ],
@@ -102,15 +102,15 @@ class HomeWindow(BaseGUIWindow):
                 sg.Button(
                     image_data=cls.get_icon("settings", 0.5),
                     button_color=cls.ICON_BUTTON_COLOR,
-                    key="settings",
+                    key=cls.key("settings"),
                     use_ttk_buttons=True,
                 ),
-                sg.Button(
-                    image_data=cls.get_icon("power", 0.5),
-                    button_color=cls.ICON_BUTTON_COLOR,
-                    use_ttk_buttons=True,
-                    key="quit",
-                ),
+                # sg.Button(
+                #     image_data=cls.get_icon("power", 0.5),
+                #     button_color=cls.ICON_BUTTON_COLOR,
+                #     use_ttk_buttons=True,
+                #     key="quit",
+                # ),
             ],
             [sg.VPush()],
             [
@@ -124,33 +124,27 @@ class HomeWindow(BaseGUIWindow):
             [sg.HorizontalSeparator()],
             [sg.Push(), sg.Text("TAMS© 2022"), sg.Push()],
         ]
-
-        window = sg.Window(
-            "Home Window",
-            layout,
-            return_keyboard_events=True,
-            **cls.window_init_dict(),
-        )
-        return window
+        return layout
 
     @classmethod
     def loop(
         cls, window: sg.Window, event: str, values: Dict[str, Any]
     ) -> bool:
         """Track user interaction with window."""
-        if event in ("new_event", "new_event_txt"):
+        if event in (cls.key("new_event"), cls.key("new_event_txt")):
             if not DeviceRegistration.is_registered():
                 cls.popup_auto_close_warn(
                     "Device setup incomplete. Contact admin"
                 )
                 return True
             window_dispatch.dispatch.open_window("EventMenuWindow")
+            return True
         if event in (
-            "continue_attendance",
-            "continue_attendance_txt",
-            "continue_attendance_txt_2",
+            cls.key("continue_attendance"),
+            cls.key("continue_attendance_txt"),
+            cls.key("continue_attendance_txt_2"),
         ):
-            if app_config.cp.has_section("current_attendance_session"):
+            if app_config.cp.has_section("current_attendance_session") and app_config.cp["current_attendance_session"].items() != app_config.cp["DEFAULT"].items():
                 current_att_session = app_config.cp[
                     "current_attendance_session"
                 ]
@@ -214,26 +208,14 @@ class HomeWindow(BaseGUIWindow):
                     title="No Event",
                     keep_on_top=True,
                 )
-        if event in ("schedule", "schedule_txt", "schedule_txt_2"):
+            return True
+        if event in (cls.key("schedule"), cls.key("schedule_txt"), cls.key("schedule_txt_2")):
             window_dispatch.dispatch.open_window("ScheduledEventsWindow")
             return True
-        if event == "settings":
+        if event == cls.key("settings"):
             window_dispatch.dispatch.open_window("EnrolmentMenuWindow")
-        if event == "quit":
+            return True
+        if event == cls.key("quit"):
             return HomeWindow.confirm_exit()
 
-        return True
-
-    @staticmethod
-    def confirm_exit() -> bool:
-        """Confirm user wants to exit application."""
-        clicked = sg.popup_ok_cancel(
-            "System will shutdown. Do you want to continue?",
-            title="Shutdown",
-            keep_on_top=True,
-        )
-        if clicked == "OK":
-            return False
-        if clicked in ("Cancel", None):
-            return True
         return True

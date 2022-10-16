@@ -3,7 +3,7 @@ import time
 
 import PySimpleGUI as sg
 from app.basegui import BaseGUIWindow
-from app.gui_utils import ValidationMixin
+from app.guiutils import ValidationMixin
 from app.networkinterface import WLANInterface
 from app.serverconnection import ServerConnection
 from app.nodedevicedatasynch import NodeDataSynch
@@ -39,7 +39,7 @@ class ServerConnectionDetailsWindow(ValidationMixin, BaseGUIWindow):
             [
                 sg.Text("Server IP adress:", **field_label_props),
                 sg.InputText(
-                    key="server_ip_address",
+                    key=cls.key("server_ip_address"),
                     default_text=server_details["server_ip_address"]
                     if server_details
                     else "127.0.0.1",
@@ -49,7 +49,7 @@ class ServerConnectionDetailsWindow(ValidationMixin, BaseGUIWindow):
             [
                 sg.Text("Server Port:", **field_label_props),
                 sg.InputText(
-                    key="server_port",
+                    key=cls.key("server_port"),
                     default_text=server_details["server_port"]
                     if server_details
                     else "8080",
@@ -63,7 +63,7 @@ class ServerConnectionDetailsWindow(ValidationMixin, BaseGUIWindow):
                     default_value=server_details["connection_type"]
                     if server_details
                     else "WiFi",
-                    key="connection_type",
+                    key=cls.key("connection_type"),
                     enable_events=True,
                     **combo_props,
                 ),
@@ -71,7 +71,7 @@ class ServerConnectionDetailsWindow(ValidationMixin, BaseGUIWindow):
             [
                 sg.Text("WLAN Name (SSID):", **field_label_props),
                 sg.Combo(
-                    key="ssid",
+                    key=cls.key("ssid"),
                     default_value=server_details["ssid"]
                     if server_details
                     else "",
@@ -82,7 +82,7 @@ class ServerConnectionDetailsWindow(ValidationMixin, BaseGUIWindow):
             [
                 sg.Text("WLAN Password:", **field_label_props),
                 sg.InputText(
-                    key="wlan_password",
+                    key=cls.key("wlan_password"),
                     default_text=server_details["wlan_password"]
                     if server_details
                     else "",
@@ -90,15 +90,11 @@ class ServerConnectionDetailsWindow(ValidationMixin, BaseGUIWindow):
                     **input_props,
                 ),
             ],
-            [sg.Button("Submit", key="submit")],
+            [sg.Button("Submit", key=cls.key("submit"))],
             [sg.VPush()],
             cls.navigation_pane(),
         ]
-
-        window = sg.Window(
-            "Server Details Window", layout, **cls.window_init_dict()
-        )
-        return window
+        return layout
 
     @classmethod
     def loop(
@@ -117,22 +113,22 @@ class ServerConnectionDetailsWindow(ValidationMixin, BaseGUIWindow):
                 window_dispatch.dispatch.open_window("HomeWindow")
             return True
 
-        if event in ("home", "back"):
+        if event in (cls.key("home"), cls.key("back")):
             window_dispatch.dispatch.open_window("HomeWindow")
             return True
 
-        if event == "connection_type":
-            if values["connection_type"] != "WiFi":
-                window["ssid"].disabled = True
-                window["wlan_password"].disabled = True
+        if event == cls.key("connection_type"):
+            if values[cls.key("connection_type")] != "WiFi":
+                window[cls.key("ssid")].disabled = True
+                window[cls.key("wlan_password")].disabled = True
             else:
-                window["ssid"].disabled = False
-                window["wlan_password"].disabled = False
+                window[cls.key("ssid")].disabled = False
+                window[cls.key("wlan_password")].disabled = False
 
-        if event in ("submit", "next"):
+        if event in (cls.key("submit"), cls.key("next")):
             required_fields = [
-                (values["server_ip_address"], "Server IP address"),
-                (values["server_port"], "Server port"),
+                (values[cls.key("server_ip_address")], "Server IP address"),
+                (values[cls.key("server_port")], "Server port"),
             ]
 
             # TODO: not validating all required fields. Only validating the first field
@@ -143,17 +139,17 @@ class ServerConnectionDetailsWindow(ValidationMixin, BaseGUIWindow):
                 return True
 
             app_config.cp["server_details"] = {
-                "server_ip_address": values["server_ip_address"],
-                "server_port": values["server_port"],
-                "connection_type": values["connection_type"],
-                "ssid": values["ssid"],
-                "wlan_password": values["wlan_password"],
+                "server_ip_address": values[cls.key("server_ip_address")],
+                "server_port": values[cls.key("server_port")],
+                "connection_type": values[cls.key("connection_type")],
+                "ssid": values[cls.key("ssid")],
+                "wlan_password": values[cls.key("wlan_password")],
             }
 
             server_details = app_config.cp["server_details"]
-            if values["connection_type"] == "WiFi":
+            if values[cls.key("connection_type")] == "WiFi":
                 # check if server address is the local device.
-                if values["server_ip_address"].lower() in (
+                if values[cls.key("server_ip_address")].lower() in (
                     "localhost",
                     "127.0.0.1",
                 ):
@@ -175,8 +171,8 @@ class ServerConnectionDetailsWindow(ValidationMixin, BaseGUIWindow):
                     return True
 
                 conn = ServerConnection()
-                conn.server_address = values["server_ip_address"]
-                conn.server_port = values["server_port"]
+                conn.server_address = values[cls.key("server_ip_address")]
+                conn.server_port = values[cls.key("server_port")]
 
                 if not conn.test_connection():
                     cls.display_message(

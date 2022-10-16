@@ -16,14 +16,14 @@ class AttendanceSignOutWindow(BaseGUIWindow):
     @classmethod
     def window(cls) -> sg.Window:
         """Construct layout/appearance of window."""
-        event_dict = dict(app_config.cp["current_attendance_session"])
-        student_dict = dict(app_config.cp["tmp_student"])
-        student_attendance = AttendanceRecord.objects.filter(
-            attendance_session_id=app_config.cp.get(
-                "current_attendance_session", "session_id"
-            ),
-            student_id=student_dict["reg_number"],
-        )
+        event_dict = app_config.cp["current_attendance_session"]
+        student_dict = app_config.cp["tmp_student"]
+        # student_attendance = AttendanceRecord.objects.filter(
+        #     attendance_session_id=app_config.cp.get(
+        #         "current_attendance_session", "session_id"
+        #     ),
+        #     student_id=student_dict["reg_number"],
+        # )
         layout = [
             [sg.VPush()],
             [sg.Text("Student Attendance Details")],
@@ -31,24 +31,24 @@ class AttendanceSignOutWindow(BaseGUIWindow):
             [
                 sg.Text("STATUS: SIGNED IN!"),
             ],
-            [sg.Text(f"Course: {event_dict['course']}")],
+            [sg.Text(f"Course: {event_dict.get('course', '')}")],
             [
                 sg.Text(
-                    f"Student Name: {student_dict['first_name']} {student_dict['last_name']}"
+                    f"Student Name: {student_dict.get('first_name', '')} {student_dict.get('last_name', '')}"
                 )
             ],
-            [sg.Text(f"Registration Number: {student_dict['reg_number']} ")],
-            [sg.Text(f"Sign In Time: {student_attendance[0].check_in_by}")],
+            [sg.Text(f"Registration Number: {student_dict.get('reg_number', '')} ")],
+            # [sg.Text(f"Sign In Time: {student_attendance[0].check_in_by}")],
             [sg.VPush()],
             [
                 sg.Button(
                     "Sign Out",
-                    k="sign_out",
+                    k=cls.key("sign_out"),
                     **cls.cancel_button_kwargs(),
                 ),
                 sg.Button(
                     "Back",
-                    k="back",
+                    k=cls.key("back"),
                 ),
             ],
             [sg.HorizontalSeparator()],
@@ -56,21 +56,17 @@ class AttendanceSignOutWindow(BaseGUIWindow):
                 back_icon="back_disabled", next_icon="next_disabled"
             ),
         ]
-
-        window = sg.Window(
-            "Student Attendance Session Page", layout, **cls.window_init_dict()
-        )
-        return window
+        return layout
 
     @classmethod
     def loop(
         cls, window: sg.Window, event: str, values: Dict[str, Any]
     ) -> bool:
         """Track user interaction with window"""
-        if event in ("home", "back"):
+        if event in (cls.key("home"), cls.key("back")):
             window_dispatch.dispatch.open_window("HomeWindow")
             return True
-        if event == "sign_out":
+        if event == cls.key("sign_out"):
             # TODO: implement this
             window_dispatch.dispatch.open_window(
                 "StudentFaceVerificationWindow"

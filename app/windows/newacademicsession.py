@@ -5,7 +5,7 @@ from django.db.utils import IntegrityError
 import PySimpleGUI as sg
 
 from app.basegui import BaseGUIWindow
-from app.gui_utils import ValidationMixin
+from app.guiutils import ValidationMixin
 import app.appconfigparser
 import app.windowdispatch
 from db.models import AcademicSession
@@ -33,7 +33,7 @@ class NewAcademicSessionWindow(ValidationMixin, BaseGUIWindow):
                 sg.Spin(
                     values=allowed_yrs,
                     initial_value=current_year,
-                    k="session_start",
+                    k=cls.key("session_start"),
                     expand_x=True,
                     enable_events=True,
                 ),
@@ -41,7 +41,7 @@ class NewAcademicSessionWindow(ValidationMixin, BaseGUIWindow):
                 sg.Spin(
                     values=allowed_yrs[1:],
                     initial_value=(current_year + 1),
-                    k="session_end",
+                    k=cls.key("session_end"),
                     expand_x=True,
                     enable_events=True,
                 ),
@@ -51,32 +51,27 @@ class NewAcademicSessionWindow(ValidationMixin, BaseGUIWindow):
                 sg.Push(),
                 sg.Button(
                     "Create",
-                    k="create_session",
+                    k=cls.key("create_session"),
                     font="Helvetica 12",
                 ),
             ],
             [sg.VPush()],
             cls.navigation_pane(next_icon="next_disabled"),
         ]
-        window = sg.Window(
-            "New Academic Session",
-            layout,
-            **cls.window_init_dict(),
-        )
-        return window
+        return layout
 
     @classmethod
     def loop(
         cls, window: sg.Window, event: str, values: Dict[str, Any]
     ) -> bool:
         """Track user interaction with window."""
-        if event == "back":
+        if event == cls.key("back"):
             window_dispatch.dispatch.open_window("AcademicSessionDetailsWindow")
-        if event == "home":
+        if event == cls.key("home"):
             window_dispatch.dispatch.open_window("HomeWindow")
 
-        if event == "create_session":
-            for val in ("session_start", "session_end"):
+        if event == cls.key("create_session"):
+            for val in (cls.key("session_start"), cls.key("session_end")):
                 try:
                     val_int = int(values[val])
                 except ValueError:
@@ -87,11 +82,11 @@ class NewAcademicSessionWindow(ValidationMixin, BaseGUIWindow):
                     return True
 
                 new_session = (
-                    str(values["session_start"])
+                    str(values[cls.key("session_start")])
                     + "/"
-                    + str(values["session_end"])
+                    + str(values[cls.key("session_end")])
                 )
-                is_current_session = values["is_current_session"]
+                is_current_session = values[cls.key("is_current_session")]
                 val_check = cls.validate_academic_session(new_session)
                 if val_check is not None:
                     cls.display_message(val_check, window)
@@ -108,7 +103,6 @@ class NewAcademicSessionWindow(ValidationMixin, BaseGUIWindow):
                         " session that already exists",
                         window,
                     )
-                    print(e)
                     return True
 
                 cls.popup_auto_close_success(
@@ -119,7 +113,7 @@ class NewAcademicSessionWindow(ValidationMixin, BaseGUIWindow):
 
         if event == "session_start":
             try:
-                session_start_int = int(values["session_start"])
+                session_start_int = int(values[cls.key("session_start")])
             except ValueError:
                 cls.display_message(
                     "Enter numeric values for Academic Session", window
@@ -127,14 +121,14 @@ class NewAcademicSessionWindow(ValidationMixin, BaseGUIWindow):
                 return True
             else:
                 if session_start_int > 0:
-                    window["session_end"].update(value=session_start_int + 1)
+                    window[cls.key("session_end")].update(value=session_start_int + 1)
                 else:
-                    window["session_end"].update(value=0)
+                    window[cls.key("session_end")].update(value=0)
                 return True
 
-        if event == "session_end":
+        if event == cls.key("session_end"):
             try:
-                session_end_int = int(values["session_end"])
+                session_end_int = int(values[cls.key("session_end")])
             except ValueError:
                 cls.display_message(
                     "Enter numeric values for Academic Session", window
@@ -142,8 +136,8 @@ class NewAcademicSessionWindow(ValidationMixin, BaseGUIWindow):
                 return True
             else:
                 if session_end_int > 0:
-                    window["session_start"].update(value=session_end_int - 1)
+                    window[cls.key("session_start")].update(value=session_end_int - 1)
                 else:
-                    window["session_start"].update(value=0)
+                    window[cls.key("session_start")].update(value=0)
                 return True
         return True

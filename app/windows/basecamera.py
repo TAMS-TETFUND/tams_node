@@ -23,7 +23,7 @@ class CameraWindow(BaseGUIWindow):
             [sg.Push(), sg.Column(cls.window_title()), sg.Push()],
             [
                 sg.Push(),
-                sg.Image(filename="", key="image_display", enable_events=True),
+                sg.Image(filename="", key=cls.key("image_display"), enable_events=True),
                 sg.Push(),
             ],
             [
@@ -31,7 +31,7 @@ class CameraWindow(BaseGUIWindow):
                 sg.Button(
                     image_data=cls.get_icon("camera", 0.6),
                     button_color=cls.ICON_BUTTON_COLOR,
-                    key="capture",
+                    key=cls.key("capture"),
                     use_ttk_buttons=True,
                 ),
                 cls.get_fingerprint_button(),
@@ -39,14 +39,13 @@ class CameraWindow(BaseGUIWindow):
                 sg.Button(
                     image_data=cls.get_icon("cancel", 0.6),
                     button_color=cls.ICON_BUTTON_COLOR,
-                    key="cancel",
+                    key=cls.key("cancel"),
                     use_ttk_buttons=True,
                 ),
                 sg.Push(),
             ],
         ]
-        window = sg.Window("Camera", layout, **cls.window_init_dict())
-        return window
+        return layout
 
     @classmethod
     def get_keyboard_button(cls) -> Any:
@@ -59,7 +58,7 @@ class CameraWindow(BaseGUIWindow):
                 sg.Button(
                     image_data=cls.get_icon("keyboard", 0.6),
                     button_color=cls.ICON_BUTTON_COLOR,
-                    key="keyboard",
+                    key=cls.key("keyboard"),
                     visible=True,
                     use_ttk_buttons=True,
                 )
@@ -69,7 +68,7 @@ class CameraWindow(BaseGUIWindow):
                 sg.Button(
                     image_data=cls.get_icon("keyboard", 0.6),
                     button_color=cls.ICON_BUTTON_COLOR,
-                    key="keyboard",
+                    key=cls.key("keyboard"),
                     visible=False,
                     use_ttk_buttons=True,
                 )
@@ -85,7 +84,7 @@ class CameraWindow(BaseGUIWindow):
                 sg.Button(
                     image_data=cls.get_icon("fingerprint", 0.6),
                     button_color=cls.ICON_BUTTON_COLOR,
-                    key="fingerprint",
+                    key=cls.key("fingerprint"),
                     visible=True,
                     use_ttk_buttons=True,
                 )
@@ -95,7 +94,7 @@ class CameraWindow(BaseGUIWindow):
                 sg.Button(
                     image_data=cls.get_icon("fingerprint", 0.6),
                     button_color=cls.ICON_BUTTON_COLOR,
-                    key="fingerprint",
+                    key=cls.key("fingerprint"),
                     visible=False,
                     disabled=True,
                     use_ttk_buttons=True,
@@ -120,11 +119,11 @@ class FaceCameraWindow(CameraWindow):
             while True:
                 event, values = window.read(timeout=20)
 
-                if event == "cancel":
+                if event == cls.key("cancel"):
                     cls.cancel_camera()
                     return True
 
-                if event == "fingerprint":
+                if event == cls.key("fingerprint"):
                     if not OperationalMode.check_fingerprint():
                         cls.popup_auto_close_error(
                             "Fingerprint scanner not connected"
@@ -134,7 +133,7 @@ class FaceCameraWindow(CameraWindow):
                     return True
 
                 if (
-                    event in ("capture", "image_display")
+                    event in (cls.key("capture"), cls.key("image_display"))
                     and cam_facerec.deque_not_empty()
                 ):
                     cam_facerec.load_facerec_attrs()
@@ -152,7 +151,7 @@ class FaceCameraWindow(CameraWindow):
                         cls.process_image(captured_encodings, window)
                         return True
 
-                window["image_display"].update(
+                window[cls.key("image_display")].update(
                     data=Camera.feed_to_bytes(cam_facerec.img_bbox)
                 )
 
@@ -199,7 +198,7 @@ class BarcodeCameraWindow(CameraWindow):
                 img = cam.feed()
                 barcodes = Barcode.decode_image(img)
                 event, values = window.read(timeout=20)
-                if event in ("capture", "image_display"):
+                if event in (cls.key("capture"), cls.key("image_display")):
                     if len(barcodes) == 0:
                         cls.popup_auto_close_error("No ID detected")
                     else:
@@ -208,11 +207,11 @@ class BarcodeCameraWindow(CameraWindow):
                         )
                         return True
 
-                if event == "keyboard":
+                if event == cls.key("keyboard"):
                     cls.launch_keypad()
                     return True
 
-                if event == "cancel":
+                if event == cls.key("cancel"):
                     cls.cancel_camera()
                     return True
 
@@ -222,7 +221,7 @@ class BarcodeCameraWindow(CameraWindow):
                     )
                     return True
                 img_bnw = cam.image_to_grayscale(img)
-                window["image_display"].update(data=cam.feed_to_bytes(img_bnw))
+                window[cls.key("image_display")].update(data=cam.feed_to_bytes(img_bnw))
         return True
 
     @classmethod

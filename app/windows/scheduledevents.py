@@ -1,5 +1,5 @@
 from datetime import datetime, timezone
-from typing import Any, Dict
+from typing import Any, Dict, Iterable, Optional
 
 import PySimpleGUI as sg
 
@@ -19,6 +19,153 @@ class ScheduledEventsWindow(BaseGUIWindow):
     @classmethod
     def window(cls) -> sg.Window:
         """Layout/appearance of GUI window."""
+        
+        table_headings = ["S/N", "Event", "Time", "Duration(H)"]
+        table_rows = cls.get_table_rows()
+        layout = [
+            [sg.Push(), sg.Text("Scheduled Events (Today)"), sg.Push()],
+            [
+                sg.Push(),
+                sg.Table(
+                    table_rows["scheduled"],
+                    headings=table_headings,
+                    k=cls.key("scheduled_events"),
+                    enable_click_events=True,
+                    justification="center",
+                    pad=(1, 1)
+
+                ),
+                sg.Push(),
+            ],
+            [sg.HorizontalSeparator()],
+            [sg.Push(), sg.Text("Weekly Events"), sg.Push()],
+            [
+                sg.Table(
+                    table_rows["weekly"],
+                    headings=table_headings,
+                    k=cls.key("weekly_events"),
+                    enable_click_events=True,
+                    justification="center",
+                    pad=(1, 1)
+                )
+            ],
+            cls.navigation_pane(next_icon="next_disabled"),
+        ]
+        scrolled_layout = [
+            [
+                sg.Column(
+                    layout,
+                    scrollable=True,
+                    vertical_scroll_only=True,
+                    expand_y=True,
+                    expand_x=False,
+                    pad=(0, 0),
+                    key=cls.key("main_column"),
+                )
+            ]
+        ]
+        return scrolled_layout
+    
+
+    @classmethod
+    def adjust_input_field_size(cls, window: sg.Window, input_fields: Iterable[Optional[str]] = ...) -> None:
+        return super().adjust_input_field_size(window, input_fields)
+
+    @classmethod
+    def loop(
+        cls, window: sg.Window, event: str, values: Dict[str, Any]
+    ) -> bool:
+        """Track user interaction with the window."""
+        if event in (cls.key("home"), cls.key("back")):
+            window_dispatch.dispatch.open_window("HomeWindow")
+            return True
+        if cls.key("scheduled_events") in event and event[2][0] is not None:
+            event_id = app_config.cp["scheduled_events"][str(event[2][0])]
+            event_obj = AttendanceSession.objects.get(id=event_id)
+            if event_obj.start_time.hour < datetime.now().hour - 1:
+                cls.popup_auto_close_error("Event Time Expired")
+                return True
+
+            confirm_start = sg.popup_yes_no(
+                "Starting scheduled event %s. Continue?"
+                % event_obj.course.code,
+                title="Start Event",
+                keep_on_top=True,
+            )
+            if confirm_start != "Yes":
+                return True
+
+            event_detail_dict = {
+                "course": f"{event_obj.course.code} : {event_obj.course.title}",
+                "type": EventTypeChoices(event_obj.event_type).label,
+                "recurring": event_obj.recurring,
+                "start_time": event_obj.start_time.strftime("%H:%M"),
+                "start_date": event_obj.start_time.strftime("%d-%m-%Y"),
+                "duration": str(event_obj.duration).split(":")[0],
+                "session_id": event_obj.id,
+            }
+            app_config.cp["new_event"] = event_detail_dict
+            app_config.cp.save()
+            window_dispatch.dispatch.open_window("NewEventSummaryWindow")
+            return True
+        if cls.key("weekly_events") in event and event[2][0] is not None:
+            existing_event_id = app_config.cp["weekly_events"][str(event[2][0])]
+            existing_obj = AttendanceSession.objects.get(id=existing_event_id)
+            if existing_obj.start_time.hour < datetime.now().hour - 1:
+                cls.popup_auto_close_error("Event Time Expired.")
+                return True
+
+            confirm_start = sg.popup_yes_no(
+                "Starting weekly event %s. Continue?"
+                % existing_obj.course.code,
+                title="Start Event",
+                keep_on_top=True,
+            )
+            if confirm_start != "Yes":
+                return True
+
+            # There is need to create a new AttendanceSession obj
+            # using data from the existing event like: course,
+            today = datetime.now()
+            new_event_dict = {
+                "course": existing_obj.course,
+                "event_type": existing_obj.event_type,
+                "recurring": existing_obj.recurring,
+                "start_time": datetime(
+                    year=today.year,
+                    month=today.month,
+                    day=today.day,
+                    hour=existing_obj.start_time.hour,
+                    minute=existing_obj.start_time.minute,
+                    tzinfo=timezone.utc,
+                ),
+                "duration": existing_obj.duration,
+                "node_device": existing_obj.node_device,
+                "session": existing_obj.session,
+            }
+            try:
+                new_event_obj, _ = AttendanceSession.objects.get_or_create(
+                    **new_event_dict
+                )
+            except Exception as e:
+                cls.popup_auto_close_error(e)
+                return True
+            event_detail_dict = {
+                "course": f"{new_event_obj.course.code} : {new_event_obj.course.title}",
+                "type": EventTypeChoices(new_event_obj.event_type).label,
+                "recurring": new_event_obj.recurring,
+                "start_time": new_event_obj.start_time.strftime("%H:%M"),
+                "start_date": new_event_obj.start_time.strftime("%d-%m-%Y"),
+                "duration": str(new_event_obj.duration).split(":")[0],
+                "session_id": new_event_obj.id,
+            }
+            app_config.cp["new_event"] = event_detail_dict
+            window_dispatch.dispatch.open_window("NewEventSummaryWindow")
+            return True
+        return True
+
+    @classmethod
+    def get_table_rows(cls):
         # Django day of week are numbered 1-7 (sunday to saturday)
         # while Python's day of week are numbered 0-6
         # (Monday to saturday). A mapping is introduced to fix
@@ -33,10 +180,11 @@ class ScheduledEventsWindow(BaseGUIWindow):
             6: (1, "SUNDAY"),
         }
         today = datetime.now()
-        table_headings = ["S/N", "Event", "Time", "Duration(H)"]
         weekday_events = AttendanceSession.objects.filter(
             event_type__in=(EventTypeChoices.LECTURE, EventTypeChoices.LAB),
             start_time__week_day=weekday_mapping[today.weekday()][0],
+            start_time__date__lt=today,
+            initiator__isnull=False
         )
         scheduled_events = AttendanceSession.objects.filter(
             start_time__day=today.day,
@@ -111,140 +259,11 @@ class ScheduledEventsWindow(BaseGUIWindow):
                     record["duration"],
                 ]
             )
-
-        layout = [
-            [sg.Push(), sg.Text("Scheduled Events (Today)"), sg.Push()],
-            [
-                sg.Push(),
-                sg.Table(
-                    scheduled_event_rows,
-                    headings=table_headings,
-                    k="scheduled_events",
-                    enable_click_events=True,
-                    justification="center",
-                ),
-                sg.Push(),
-            ],
-            [sg.HorizontalSeparator()],
-            [sg.Push(), sg.Text("Weekly Events"), sg.Push()],
-            [
-                sg.Table(
-                    weekly_event_rows,
-                    headings=table_headings,
-                    k="weekly_events",
-                    enable_click_events=True,
-                    justification="center",
-                )
-            ],
-            cls.navigation_pane(next_icon="next_disabled"),
-        ]
-        scrolled_layout = [
-            [
-                sg.Column(
-                    layout,
-                    scrollable=True,
-                    vertical_scroll_only=True,
-                    expand_y=True,
-                    expand_x=False,
-                    pad=(0, 0),
-                    key="main_column",
-                )
-            ]
-        ]
-        window = sg.Window(
-            "Scheduled Events", scrolled_layout, **cls.window_init_dict()
-        )
-        window["main_column"].expand(expand_x=True)
-        return window
+        return {"scheduled": scheduled_event_rows, "weekly": weekly_event_rows}
 
     @classmethod
-    def loop(
-        cls, window: sg.Window, event: str, values: Dict[str, Any]
-    ) -> bool:
-        """Track user interaction with the window."""
-        if event in ("home", "back"):
-            window_dispatch.dispatch.open_window("HomeWindow")
-            return True
-        if "scheduled_events" in event and event[2][0] is not None:
-            event_id = app_config.cp["scheduled_events"][str(event[2][0])]
-            event_obj = AttendanceSession.objects.get(id=event_id)
-            if event_obj.start_time.hour < datetime.now().hour - 1:
-                cls.popup_auto_close_error("Event Time Expired")
-                return True
-
-            confirm_start = sg.popup_yes_no(
-                "Starting scheduled event %s. Continue?"
-                % event_obj.course.code,
-                title="Start Event",
-                keep_on_top=True,
-            )
-            if confirm_start != "Yes":
-                return True
-
-            event_detail_dict = {
-                "course": f"{event_obj.course.code} : {event_obj.course.title}",
-                "type": EventTypeChoices(event_obj.event_type).label,
-                "recurring": event_obj.recurring,
-                "start_time": event_obj.start_time.strftime("%H:%M"),
-                "start_date": event_obj.start_time.strftime("%d-%m-%Y"),
-                "duration": str(event_obj.duration).split(":")[0],
-                "session_id": event_obj.id,
-            }
-            app_config.cp["new_event"] = event_detail_dict
-            window_dispatch.dispatch.open_window("NewEventSummaryWindow")
-            return True
-        if "weekly_events" in event and event[2][0] is not None:
-            existing_event_id = app_config.cp["weekly_events"][str(event[2][0])]
-            existing_obj = AttendanceSession.objects.get(id=existing_event_id)
-            if existing_obj.start_time.hour < datetime.now().hour - 1:
-                cls.popup_auto_close_error("Event Time Expired.")
-                return True
-
-            confirm_start = sg.popup_yes_no(
-                "Starting weekly event %s. Continue?"
-                % existing_obj.course.code,
-                title="Start Event",
-                keep_on_top=True,
-            )
-            if confirm_start != "Yes":
-                return True
-
-            # There is need to create a new AttendanceSession obj
-            # using data from the existing event like: course,
-            today = datetime.now()
-            new_event_dict = {
-                "course": existing_obj.course,
-                "event_type": existing_obj.event_type,
-                "recurring": existing_obj.recurring,
-                "start_time": datetime(
-                    year=today.year,
-                    month=today.month,
-                    day=today.day,
-                    hour=existing_obj.start_time.hour,
-                    minute=existing_obj.start_time.minute,
-                    tzinfo=timezone.utc,
-                ),
-                "duration": existing_obj.duration,
-                "node_device": existing_obj.node_device,
-                "session": existing_obj.session,
-            }
-            try:
-                new_event_obj, _ = AttendanceSession.objects.get_or_create(
-                    **new_event_dict
-                )
-            except Exception as e:
-                cls.popup_auto_close_error(e)
-                return True
-            event_detail_dict = {
-                "course": f"{new_event_obj.course.code} : {new_event_obj.course.title}",
-                "type": EventTypeChoices(new_event_obj.event_type).label,
-                "recurring": new_event_obj.recurring,
-                "start_time": new_event_obj.start_time.strftime("%H:%M"),
-                "start_date": new_event_obj.start_time.strftime("%d-%m-%Y"),
-                "duration": str(new_event_obj.duration).split(":")[0],
-                "session_id": new_event_obj.id,
-            }
-            app_config.cp["new_event"] = event_detail_dict
-            window_dispatch.dispatch.open_window("NewEventSummaryWindow")
-            return True
-        return True
+    def refresh_dynamic_fields(cls, window: sg.Window) -> None:
+        cls.adjust_input_field_size(window, ["scheduled_events", "weekly_events"])
+        table_rows = cls.get_table_rows()
+        window[cls.key("scheduled_events")].update(table_rows["scheduled"])
+        window[cls.key("weekly_events")].update(table_rows["weekly"])

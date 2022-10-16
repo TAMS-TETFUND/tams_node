@@ -3,7 +3,7 @@ import PySimpleGUI as sg
 from datetime import datetime, timedelta
 
 from app.basegui import BaseGUIWindow
-from app.gui_utils import (
+from app.guiutils import (
     StaffIDInputRouterMixin,
 )
 import app.appconfigparser
@@ -32,50 +32,51 @@ class NewEventSummaryWindow(StaffIDInputRouterMixin, BaseGUIWindow):
         layout = [
             [
                 sg.Push(),
+                sg.Text("New Event: "),
                 sg.Text(
-                    "New {} Event".format(new_event_dict["type"].capitalize())
+                    "({})".format(new_event_dict.get("type", "").capitalize()),
+                    key=cls.key("window_title")
                 ),
                 sg.Push(),
             ],
             [sg.HorizontalSeparator()],
             [sg.VPush()],
             [cls.message_display_field()],
-            [sg.Text(f"Course: {new_event_dict['course']}")],
+            [sg.Text(f"Course: {new_event_dict.get('course','')}", key=cls.key("course"))],
             [
                 sg.Text(
-                    f"Session Details: {new_event_dict['session']} "
-                    f"{new_event_dict['semester']}"
+                    f"Session Details: {new_event_dict.get('session', '')} "
+                    f"{new_event_dict.get('semester', '')}",
+                    key=cls.key("session_details")
                 )
             ],
             [
                 sg.Text(
-                    f"Start Time: {new_event_dict['start_date']} "
-                    f"{new_event_dict['start_time']}"
+                    f"Start Time: {new_event_dict.get('start_date', '')} "
+                    f"{new_event_dict.get('start_time', '')}",
+                    key=cls.key("start_date_time")
                 )
             ],
-            [sg.Text(f"Duration: {new_event_dict['duration']} Hours")],
+            [sg.Text(f"Duration: {new_event_dict.get('duration', '')} Hours", key=cls.key("duration"))],
             [sg.VPush()],
             [
-                sg.Button("Start Event", k="start_event"),
-                sg.Button("Schedule Event", k="schedule_event"),
-                sg.Button("Edit Details", k="edit"),
+                sg.Button("Start Event", k=cls.key("start_event")),
+                sg.Button("Schedule Event", k=cls.key("schedule_event")),
+                sg.Button("Edit Details", k=cls.key("edit")),
             ],
             [sg.HorizontalSeparator()],
             cls.navigation_pane(
                 back_icon="back_disabled", next_icon="next_disabled"
             ),
         ]
-        window = sg.Window(
-            "New Event Summary", layout, **cls.window_init_dict()
-        )
-        return window
+        return layout
 
     @classmethod
     def loop(
         cls, window: sg.Window, event: str, values: Dict[str, Any]
     ) -> bool:
         """Track user interaction with window."""
-        if event in ("start_event", "schedule_event"):
+        if event in (cls.key("start_event"), cls.key("schedule_event")):
             new_event = dict(app_config.cp["new_event"])
             attendance_session_model_kwargs = {
                 "course_id": Course.str_to_course(new_event["course"]),
@@ -125,10 +126,10 @@ class NewEventSummaryWindow(StaffIDInputRouterMixin, BaseGUIWindow):
                 window_dispatch.dispatch.open_window("ActiveEventSummaryWindow")
                 return True
 
-            if event == "start_event":
+            if event == cls.key("start_event"):
                 cls.staff_id_input_window()
 
-            if event == "schedule_event":
+            if event == cls.key("schedule_event"):
                 sg.popup(
                     "Event saved to scheduled events",
                     title="Event saved",
@@ -136,7 +137,24 @@ class NewEventSummaryWindow(StaffIDInputRouterMixin, BaseGUIWindow):
                 )
                 window_dispatch.dispatch.open_window("HomeWindow")
 
-        if event == "home":
+        if event == cls.key("home"):
             app_config.cp.remove_section("new_event")
             window_dispatch.dispatch.open_window("HomeWindow")
         return True
+    
+    @classmethod
+    def refresh_dynamic_fields(cls, window: sg.Window) -> None:
+        new_event_dict = app_config.cp["new_event"]
+        window[cls.key("window_title")].update(new_event_dict.get("type", fallback=""))
+        window[cls.key("course")].update(f"Course: {new_event_dict.get('course','')}")
+        window[cls.key("session_details")].update(
+            f"Session Details: {new_event_dict.get('session', '')} "
+            f"{new_event_dict.get('semester', '')}"
+        )
+        window[cls.key("start_date_time")].update(
+            f"Start Time: {new_event_dict.get('start_date', '')} "
+            f"{new_event_dict.get('start_time', '')}"
+        )
+        window[cls.key("duration")].update(
+            f"Duration: {new_event_dict.get('duration', '')} Hours"
+        )

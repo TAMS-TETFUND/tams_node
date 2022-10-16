@@ -2,7 +2,7 @@ from typing import Any, Dict
 import PySimpleGUI as sg
 
 from app.basegui import BaseGUIWindow
-from app.gui_utils import StudentRegNumberInputRouterMixin
+from app.guiutils import StudentRegNumberInputRouterMixin
 import app.appconfigparser
 import app.windowdispatch
 from db.models import (
@@ -30,32 +30,32 @@ class AttendanceSessionLandingWindow(
             [sg.VPush()],
             [sg.Text("Attendance Session Details")],
             [sg.HorizontalSeparator()],
-            [sg.Text(f"Course: {event_dict['course']}")],
+            [sg.Text(f"Course: {event_dict.get('course', '')}")],
             [
                 sg.Text(
-                    f"Session Details: {event_dict['session']} {event_dict['semester']}"
+                    f"Session Details: {event_dict.get('session', '')} {event_dict.get('semester', '')}"
                 )
             ],
             [
                 sg.Text(
-                    f"Start Time: {event_dict['start_date']} {event_dict['start_time']}"
+                    f"Start Time: {event_dict.get('start_date', '')} {event_dict.get('start_time', '')}"
                 )
             ],
-            [sg.Text(f"Duration: {event_dict['duration']} Hour(s)")],
+            [sg.Text(f"Duration: {event_dict.get('duration', '')} Hour(s)")],
             [
                 sg.Text(f"Number of valid check-ins: "),
                 sg.Text(
-                    "{}".format(cls.valid_check_in_count()), k="valid_checks"
+                    "{}".format(cls.valid_check_in_count()), k=cls.key("valid_checks")
                 ),
                 sg.Push(),
-                sg.Button("Attendance List", k="attendance_list"),
+                sg.Button("Attendance List", k=cls.key("attendance_list")),
             ],
             [sg.VPush()],
             [
-                sg.Button("Take Attendance", k="start_attendance"),
+                sg.Button("Take Attendance", k=cls.key("start_attendance")),
                 sg.Button(
                     "End Attendance",
-                    k="end_attendance",
+                    k=cls.key("end_attendance"),
                     **cls.cancel_button_kwargs(),
                 ),
             ],
@@ -64,18 +64,14 @@ class AttendanceSessionLandingWindow(
                 back_icon="back_disabled", next_icon="next_disabled"
             ),
         ]
-
-        window = sg.Window(
-            "Attendance Session Page", layout, **cls.window_init_dict()
-        )
-        return window
+        return layout
 
     @classmethod
     def loop(
         cls, window: sg.Window, event: str, values: Dict[str, Any]
     ) -> bool:
         """Track user interaction with window"""
-        if event == "home":
+        if event == cls.key("home"):
             confirm = sg.popup_yes_no(
                 "Leaving attendance-taking. Do you wish to continue?",
                 title="Go back?",
@@ -85,12 +81,12 @@ class AttendanceSessionLandingWindow(
                 window_dispatch.dispatch.open_window("HomeWindow")
             return True
 
-        if event == "attendance_list":
+        if event == cls.key("attendance_list"):
             window_dispatch.dispatch.open_window("AttendanceViewerWindow")
-        if event == "start_attendance":
+        if event == cls.key("start_attendance"):
             cls.student_reg_number_input_window()
 
-        if event == "end_attendance":
+        if event == cls.key("end_attendance"):
             confirm = sg.popup_yes_no(
                 "This will permanently end attendance-taking for this event. "
                 "Do you wish to continue?",
@@ -115,9 +111,12 @@ class AttendanceSessionLandingWindow(
     @staticmethod
     def valid_check_in_count() -> int:
         """Count of students that have logged attendance for current event."""
-        return AttendanceRecord.objects.filter(
-            attendance_session=app_config.cp.get(
-                "current_attendance_session", "session_id"
-            ),
-            record_type=RecordTypesChoices.SIGN_IN,
-        ).count()
+        if app_config.cp.has_option("current_attendance_session", "session_id"):
+            return AttendanceRecord.objects.filter(
+                attendance_session=app_config.cp.get(
+                    "current_attendance_session", "session_id"
+                ),
+                record_type=RecordTypesChoices.SIGN_IN,
+            ).count()
+        else:
+            return 0
