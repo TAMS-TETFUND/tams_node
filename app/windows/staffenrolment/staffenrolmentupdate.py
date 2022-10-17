@@ -41,7 +41,7 @@ class StaffEnrolmentUpdateWindow(StaffEnrolmentWindow):
                     key=cls.key("staff_number_input"),
                     disabled=True,
                     **input_props,
-                    default_text=staff["staff_number"],
+                    default_text=staff.get("staff_number", ""),
                 ),
             ],
             [
@@ -51,14 +51,14 @@ class StaffEnrolmentUpdateWindow(StaffEnrolmentWindow):
                     focus=True,
                     key=cls.key("staff_first_name"),
                     **input_props,
-                    default_text=staff["first_name"],
+                    default_text=staff.get("first_name", ""),
                 ),
             ],
             [
                 sg.Text("Last Name:", **field_label_props),
                 sg.Input(
                     justification="left",
-                    default_text=staff["last_name"],
+                    default_text=staff.get("last_name", ""),
                     key=cls.key("staff_last_name"),
                     **input_props,
                 ),
@@ -67,7 +67,7 @@ class StaffEnrolmentUpdateWindow(StaffEnrolmentWindow):
                 sg.Text("Other Names:", **field_label_props),
                 sg.Input(
                     justification="left",
-                    default_text=staff["other_names"],
+                    default_text=staff.get("other_names", ""),
                     key=cls.key("staff_other_names"),
                     **input_props,
                 ),
@@ -85,7 +85,7 @@ class StaffEnrolmentUpdateWindow(StaffEnrolmentWindow):
                 sg.Text("Faculty:", **field_label_props),
                 sg.Combo(
                     values=Faculty.get_all_faculties(),
-                    default_value=staff["department__faculty__name"],
+                    default_value=staff.get("department__faculty__name",""),
                     enable_events=True,
                     key=cls.key("staff_faculty"),
                     **combo_props,
@@ -95,7 +95,7 @@ class StaffEnrolmentUpdateWindow(StaffEnrolmentWindow):
                 sg.Text("Department:", **field_label_props),
                 sg.Combo(
                     values=Department.get_departments(),
-                    default_value=staff["department__name"],
+                    default_value=staff.get("department__name", ""),
                     enable_events=True,
                     key=cls.key("staff_department"),
                     **combo_props,
