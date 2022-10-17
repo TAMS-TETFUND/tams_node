@@ -38,7 +38,8 @@ class OperationalMode:
         on the node device (computer).
         """
         cam_present = cls.check_camera()
-        fp_present = cls.check_fingerprint()
+        # fp_present = cls.check_fingerprint()
+        fp_present = False
 
         if cam_present and fp_present:
             return OpModes.BIMODAL.value
