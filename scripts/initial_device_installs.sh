@@ -26,7 +26,7 @@ sudo apt-get install -y zip
 # sudo pip install --upgrade -y picamera[array]
 # sudo pip install -r ../requirements.txt
 
-su#do touch /etc/dphys-swapfile
+#sudo touch /etc/dphys-swapfile
 
 #sudo sed -i s'/CONF_SWAPSIZE=100/CONF_SWAPSIZE=1024/' /etc/dphys-swapfile
 
