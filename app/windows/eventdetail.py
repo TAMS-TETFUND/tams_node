@@ -55,7 +55,7 @@ class EventDetailWindow(ValidationMixin, BaseGUIWindow):
                 sg.Text("Select Course:", **field_label_props),
                 sg.Combo(
                     Course.get_courses(
-                        semester=app_config.cp.get("DEFAULT", "semester")
+                        semester=app_config.cp.get("DEFAULT", "semester", fallback="")
                     ),
                     default_value=cls.COMBO_DEFAULT,
                     enable_events=True,
@@ -172,7 +172,7 @@ class EventDetailWindow(ValidationMixin, BaseGUIWindow):
                 )
                 window[cls.key("selected_course")].update(
                     values=Course.get_courses(
-                        semester=app_config.cp.get("DEFAULT", "semester"),
+                        semester=app_config.cp.get("DEFAULT", "semester", fallback=""),
                         faculty=values[cls.key("course_faculty")],
                     ),
                     value=cls.COMBO_DEFAULT,
@@ -184,14 +184,14 @@ class EventDetailWindow(ValidationMixin, BaseGUIWindow):
             ):
                 window[cls.key("selected_course")].update(
                     values=Course.get_courses(
-                        semester=app_config.cp.get("DEFAULT", "semester")
+                        semester=app_config.cp.get("DEFAULT", "semester", fallback="")
                     ),
                     value=cls.COMBO_DEFAULT,
                 )
             else:
                 window[cls.key("selected_course")].update(
                     values=Course.get_courses(
-                        semester=app_config.cp.get("DEFAULT", "semester"),
+                        semester=app_config.cp.get("DEFAULT", "semester", fallback=""),
                         department=values[cls.key("course_department")],
                     ),
                     value=cls.COMBO_DEFAULT,
