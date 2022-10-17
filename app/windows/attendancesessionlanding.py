@@ -21,27 +21,36 @@ class AttendanceSessionLandingWindow(
     StudentRegNumberInputRouterMixin, BaseGUIWindow
 ):
     """This is the landing window for the active attendance session."""
-
+    @classmethod
+    def refresh_dynamic_fields(cls, window: sg.Window) -> None:
+        event_dict = app_config.cp["current_attendance_session"]
+        window[cls.key("course")].update(f"Course: {event_dict.get('course', '')}")
+        window[cls.key("session_details")].update(f"Session Details: {event_dict.get('session', '')} {event_dict.get('semester', '')}")
+        window[cls.key("start_time")].update(f"Start Time: {event_dict.get('start_date', '')} {event_dict.get('start_time', '')}")
+        window[cls.key("duration")].update(f"Duration: {event_dict.get('duration', '')} Hour(s)")
+        window[cls.key("valid_checks")].update("{}".format(cls.valid_check_in_count()))
     @classmethod
     def window(cls) -> sg.Window:
         """Construct layout/appearance of window."""
-        event_dict = dict(app_config.cp["current_attendance_session"])
+        event_dict = app_config.cp["current_attendance_session"]
         layout = [
             [sg.VPush()],
             [sg.Text("Attendance Session Details")],
             [sg.HorizontalSeparator()],
-            [sg.Text(f"Course: {event_dict.get('course', '')}")],
+            [sg.Text(f"Course: {event_dict.get('course', '')}", key=cls.key("course"))],
             [
                 sg.Text(
-                    f"Session Details: {event_dict.get('session', '')} {event_dict.get('semester', '')}"
+                    f"Session Details: {event_dict.get('session', '')} {event_dict.get('semester', '')}",
+                    key=cls.key("session_details")
                 )
             ],
             [
                 sg.Text(
-                    f"Start Time: {event_dict.get('start_date', '')} {event_dict.get('start_time', '')}"
+                    f"Start Time: {event_dict.get('start_date', '')} {event_dict.get('start_time', '')}",
+                    key = cls.key("start_time")
                 )
             ],
-            [sg.Text(f"Duration: {event_dict.get('duration', '')} Hour(s)")],
+            [sg.Text(f"Duration: {event_dict.get('duration', '')} Hour(s)", key=cls.key("duration"))],
             [
                 sg.Text(f"Number of valid check-ins: "),
                 sg.Text(
