@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Any, Dict
+from typing import Any, Dict, List
 from django.db.utils import IntegrityError
 
 import PySimpleGUI as sg
@@ -17,9 +17,10 @@ window_dispatch = app.windowdispatch.WindowDispatch()
 
 class NewAcademicSessionWindow(ValidationMixin, BaseGUIWindow):
     """Window to create a new academic session."""
+    __slots__ = ()
 
     @classmethod
-    def window(cls) -> sg.Window:
+    def window(cls) -> List[Any]:
         """Construct layout/appearance of window."""
         current_year = datetime.now().year
         allowed_yrs = [x for x in range(current_year, current_year + 4)]

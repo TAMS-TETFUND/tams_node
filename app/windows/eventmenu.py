@@ -1,4 +1,4 @@
-from typing import Any, Dict
+from typing import Any, Dict, List
 
 import PySimpleGUI as sg
 from app.basegui import BaseGUIWindow
@@ -16,9 +16,10 @@ class EventMenuWindow(BaseGUIWindow):
     A window which presents options for the user to choose the
     event type for the attendance session.
     """
+    __slots__ = ()
 
     @classmethod
-    def window(cls) -> sg.Window:
+    def window(cls) -> List[Any]:
         """Construct layout/appearance of window."""
         layout = [
             [

@@ -13,6 +13,7 @@ window_dispatch = app.windowdispatch.WindowDispatch()
 
 class StaffFaceVerificationWindow(FaceCameraWindow):
     """This class is responsible for staff face verification and initiates attendance session."""
+    __slots__ = ()
 
     @classmethod
     def process_image(

@@ -1,5 +1,5 @@
 import json
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 import PySimpleGUI as sg
 
@@ -15,9 +15,10 @@ window_dispatch = app.windowdispatch.WindowDispatch()
 
 class StaffEnrolmentWindow(ValidationMixin, BaseGUIWindow):
     """The GUI window for enrolment of staff biodata"""
+    __slots__ = ()
 
     @classmethod
-    def window(cls) -> sg.Window:
+    def window(cls) -> List[Any]:
         """Construct layout/appearance of window."""
         field_label_props = {"size": 16}
         combo_props = {"size": 25}
@@ -110,16 +111,6 @@ class StaffEnrolmentWindow(ValidationMixin, BaseGUIWindow):
                 )
             ]
         ]
-        # for key in (
-        #     "staff_number_input",
-        #     "staff_first_name",
-        #     "staff_last_name",
-        #     "staff_other_names",
-        #     "staff_sex",
-        #     "staff_faculty",
-        #     "staff_department",
-        # ):
-        #     window[key].expand(expand_x=True)
         return scrolled_layout
 
     @classmethod
@@ -212,7 +203,6 @@ class StaffEnrolmentWindow(ValidationMixin, BaseGUIWindow):
     def next_window(cls) -> None:
         """Open next window when processing of submitted data is complete."""
         window_dispatch.dispatch.open_window("StaffPasswordSettingWindow")
-
 
     @classmethod
     def refresh_dynamic_fields(cls, window: sg.Window) -> None:

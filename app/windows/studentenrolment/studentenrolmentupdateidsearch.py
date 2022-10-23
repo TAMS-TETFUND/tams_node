@@ -1,4 +1,4 @@
-from typing import Any, Dict
+from typing import Any, Dict, List
 
 import PySimpleGUI as sg
 
@@ -14,9 +14,10 @@ window_dispatch = app.windowdispatch.WindowDispatch()
 
 class StudentEnrolmentUpdateIDSearchWindow(StudentRegNumInputWindow):
     """Window for finding student by reg number for bio data update."""
+    __slots__ = ()
 
     @classmethod
-    def window(cls) -> sg.Window:
+    def window(cls) -> List[Any]:
         """Construct layout/appearance of window."""
         return super().window()
 
@@ -46,4 +47,10 @@ class StudentEnrolmentUpdateIDSearchWindow(StudentRegNumInputWindow):
             ).first()
         )
         window_dispatch.dispatch.open_window("StudentEnrolmentUpdateWindow")
+        return
+
+    @staticmethod
+    def back_nav_key_handler() -> None:
+        """Handle user pressing back button in nav pane."""
+        window_dispatch.dispatch.open_window("HomeWindow")
         return

@@ -1,5 +1,5 @@
 import json
-from typing import Any, Dict
+from typing import Any, Dict, List
 
 import PySimpleGUI as sg
 
@@ -15,9 +15,10 @@ app_config = app.appconfigparser.AppConfigParser()
 
 class EnrolmentMenuWindow(BaseGUIWindow):
     """This window provides links to student and staff enrolment."""
+    __slots__ = ()
 
     @classmethod
-    def window(cls) -> sg.Window:
+    def window(cls) -> List[Any]:
         """Construct layout/appearance of window."""
 
         column1 = [

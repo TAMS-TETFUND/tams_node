@@ -1,5 +1,3 @@
-import time
-import json
 from typing import List
 
 import PySimpleGUI as sg
@@ -16,6 +14,7 @@ window_dispatch = app.windowdispatch.WindowDispatch()
 
 class StudentFingerprintEnrolmentWindow(FingerprintEnrolmentWindow):
     """This class provides methods tailored to student fingerprint enrolment."""
+    __slots__ = ()
 
     @classmethod
     def process_fingerprint(cls, fingerprint_data: List[int]) -> None:

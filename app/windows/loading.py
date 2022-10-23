@@ -1,4 +1,4 @@
-from typing import Any, Dict
+from typing import Any, Dict, List
 import PySimpleGUI as sg
 
 from app.basegui import BaseGUIWindow
@@ -9,9 +9,9 @@ window_dispatch = app.windowdispatch.WindowDispatch()
 
 class LoadingWindow(BaseGUIWindow):
     """Window to display when an operation takes too long to complete."""
-
+    __slots__ = ()
     @classmethod
-    def window(cls) -> sg.Window:
+    def window(cls) -> List[Any]:
         """Construct layout/appearance of window."""
         layout = [
             [sg.VPush()],

@@ -1,4 +1,4 @@
-from typing import Any, Dict
+from typing import Any, Dict, List
 
 import PySimpleGUI as sg
 
@@ -14,9 +14,10 @@ window_dispatch = app.windowdispatch.WindowDispatch()
 
 class StudentEnrolmentUpdateWindow(StudentEnrolmentWindow):
     """A window for updating biodata of existing student."""
+    __slots__ = ()
 
     @classmethod
-    def window(cls) -> sg.Window:
+    def window(cls) -> List[Any]:
         """Construct layout/appearance of window."""
         student = app_config.cp["new_student"]
 

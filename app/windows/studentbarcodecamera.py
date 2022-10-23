@@ -24,6 +24,7 @@ class StudentBarcodeCameraWindow(
 ):
     """window responsible for processing student registration number
     from qr code during attendance marking"""
+    __slots__ = ()
 
     @classmethod
     def process_barcode(

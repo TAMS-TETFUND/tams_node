@@ -16,7 +16,8 @@ class FingerprintEnrolmentWindow(FingerprintGenericWindow):
     This class provides the loop method for capturing the fingerprint
     template for both staff and student enrolment.
     """
-
+    __slots__ = ()
+    
     @classmethod
     def loop(
         cls, window: sg.Window, event: str, values: Dict[str, Any]

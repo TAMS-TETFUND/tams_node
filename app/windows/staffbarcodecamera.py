@@ -17,7 +17,8 @@ class StaffBarcodeCameraWindow(
 ):
     """window responsible for processing staff number
     from qr code during attendance session initiation"""
-
+    __slots__ = ()
+    
     @classmethod
     def process_barcode(
         cls, identification_num: str, window: sg.Window

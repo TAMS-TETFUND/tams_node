@@ -1,4 +1,4 @@
-from typing import Any, Dict
+from typing import Any, Dict, List
 import PySimpleGUI as sg
 from datetime import datetime, timedelta
 
@@ -24,9 +24,10 @@ window_dispatch = app.windowdispatch.WindowDispatch()
 class NewEventSummaryWindow(StaffIDInputRouterMixin, BaseGUIWindow):
     """This window presents details selected by the user in the new
     attendance session about to be initiated."""
+    __slots__ = ()
 
     @classmethod
-    def window(cls) -> sg.Window:
+    def window(cls) -> List[Any]:
         """Construct layout/appearance of window."""
         new_event_dict = app_config.cp["new_event"]
         layout = [

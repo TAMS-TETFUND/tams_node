@@ -18,6 +18,7 @@ window_dispatch = app.windowdispatch.WindowDispatch()
 class StudentFaceEnrolmentWindow(FaceCameraWindow):
     """This window is used to capture face encodings for a new student
     being enrolled."""
+    __slots__ = ()
 
     @classmethod
     def process_image(

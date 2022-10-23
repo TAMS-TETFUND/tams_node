@@ -6,6 +6,7 @@ import app.appconfigparser
 import app.windowdispatch
 from app.opmodes import OperationalMode
 from .staffpasswordsetting import StaffPasswordSettingWindow
+from .utils import send_staff_data
 
 
 app_config = app.appconfigparser.AppConfigParser()
@@ -14,6 +15,8 @@ window_dispatch = app.windowdispatch.WindowDispatch()
 
 class StaffPasswordSettingUpdateWindow(StaffPasswordSettingWindow):
     """Update staff password"""
+    __slots__ = ()
+
     @classmethod
     def next_window(cls):
         if not OperationalMode.check_camera():

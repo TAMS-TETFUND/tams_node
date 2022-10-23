@@ -1,4 +1,4 @@
-from typing import Any, Dict
+from typing import Any, Dict, List
 import time
 
 import PySimpleGUI as sg
@@ -20,11 +20,10 @@ class ServerConnectionDetailsWindow(ValidationMixin, BaseGUIWindow):
     This window will be collect information (server address, SSID, password)
     that will enable connection to the server.
     """
-
-    next_window: str = ""
-
+    __slots__ = ()
+    
     @classmethod
-    def window(cls) -> sg.Window:
+    def window(cls) -> List[Any]:
         """Construct layout/appearance of window."""
         field_label_props = {"size": (22, 1)}
         input_props = {"size": (23, 1)}
@@ -191,3 +190,8 @@ class ServerConnectionDetailsWindow(ValidationMixin, BaseGUIWindow):
                     app_config.cp.remove_section("server_connection")
                     return True
         return True
+
+    @classmethod
+    def refresh_dynamic_fields(cls, window: sg.Window) -> None:
+        cls.hide_message_display_field(window)
+        return super().refresh_dynamic_fields(window)

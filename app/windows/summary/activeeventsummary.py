@@ -1,4 +1,4 @@
-from typing import Any, Dict
+from typing import Any, Dict, List
 import PySimpleGUI as sg
 
 from app.basegui import BaseGUIWindow
@@ -18,9 +18,10 @@ class ActiveEventSummaryWindow(
 ):
     """This window presents the details of an attendance session that
     has been initiated."""
+    __slots__ = ()
 
     @classmethod
-    def window(cls) -> sg.Window:
+    def window(cls) -> List[Any]:
         """Construct layout/appearance of window."""
         event_dict = app_config.cp["current_attendance_session"]
         try:

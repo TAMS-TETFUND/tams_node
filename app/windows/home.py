@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-from typing import Any, Dict
+from typing import Any, Dict, List
 
 import PySimpleGUI as sg
 from django.utils import timezone
@@ -16,9 +16,10 @@ window_dispatch = app.windowdispatch.WindowDispatch()
 
 class HomeWindow(BaseGUIWindow):
     """GUI Home Window for node devices."""
+    __slots__ = ()
 
     @classmethod
-    def window(cls) -> sg.Window:
+    def window(cls) -> List[Any]:
         """Construct layout/appearance of window."""
         column1 = [
             [
@@ -115,12 +116,6 @@ class HomeWindow(BaseGUIWindow):
                     key=cls.key("settings"),
                     use_ttk_buttons=True,
                 ),
-                # sg.Button(
-                #     image_data=cls.get_icon("power", 0.5),
-                #     button_color=cls.ICON_BUTTON_COLOR,
-                #     use_ttk_buttons=True,
-                #     key="quit",
-                # ),
             ],
             [sg.VPush()],
             [

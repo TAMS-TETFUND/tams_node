@@ -14,6 +14,7 @@ window_dispatch = app.windowdispatch.WindowDispatch()
 
 class StaffFingerprintEnrolmentWindow(FingerprintEnrolmentWindow):
     """This class provides methods tailored to staff fingerprint enrolement."""
+    __slots__ = ()
 
     @classmethod
     def process_fingerprint(cls, fingerprint_data: List[int]) -> None:

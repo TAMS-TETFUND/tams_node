@@ -1,4 +1,4 @@
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 import PySimpleGUI as sg
 
 from app.basegui import BaseGUIWindow
@@ -15,9 +15,10 @@ window_dispatch = app.windowdispatch.WindowDispatch()
 class AcademicSessionDetailsWindow(ValidationMixin, BaseGUIWindow):
     """Window to choose the academic session and academic semester for
     new attendance event."""
+    __slots__ = ()
 
     @classmethod
-    def window(cls) -> sg.Window:
+    def window(cls) -> List[Any]:
         """Construct layout/appearance of window."""
         all_academic_sessions = AcademicSession.get_all_academic_sessions()
         layout = [

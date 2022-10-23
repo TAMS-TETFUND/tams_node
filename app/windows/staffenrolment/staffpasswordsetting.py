@@ -1,5 +1,5 @@
 import time
-from typing import Any, Dict
+from typing import Any, Dict, List
 
 import PySimpleGUI as sg
 
@@ -16,9 +16,10 @@ window_dispatch = app.windowdispatch.WindowDispatch()
 class StaffPasswordSettingWindow(BaseGUIWindow):
     """This window is used for setting password for the new staff being
     enrolled."""
+    __slots__ = ()
 
     @classmethod
-    def window(cls) -> sg.Window:
+    def window(cls) -> List[Any]:
         """Construct layout/appearance of window."""
         field_label_props = {"size": 25}
         layout = [

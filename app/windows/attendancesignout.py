@@ -1,4 +1,4 @@
-from typing import Any, Dict
+from typing import Any, Dict, List
 import PySimpleGUI as sg
 
 from app.basegui import BaseGUIWindow
@@ -12,9 +12,10 @@ window_dispatch = app.windowdispatch.WindowDispatch()
 
 class AttendanceSignOutWindow(BaseGUIWindow):
     """Window for students to sign out from an active event."""
+    __slots__ = ()
 
     @classmethod
-    def window(cls) -> sg.Window:
+    def window(cls) -> List[Any]:
         """Construct layout/appearance of window."""
         event_dict = app_config.cp["current_attendance_session"]
         student_dict = app_config.cp["tmp_student"]

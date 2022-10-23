@@ -1,4 +1,4 @@
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 import PySimpleGUI as sg
 
 from app.basegui import BaseGUIWindow
@@ -8,7 +8,7 @@ from app.guiutils import (
     ValidationMixin,
     StudentBiometricVerificationRouterMixin,
 )
-from db.models import AttendanceRecord, Student, RecordTypesChoices
+from db.models import AttendanceRecord, Student
 
 app_config = app.appconfigparser.AppConfigParser()
 window_dispatch = app.windowdispatch.WindowDispatch()
@@ -19,29 +19,36 @@ class StudentRegNumInputWindow(
 ):
     """Window provides an interface for students to enter their registration
     numbers by button clicks."""
+    __slots__ = ()
 
     @classmethod
-    def window(cls) -> sg.Window:
+    def window(cls) -> List[Any]:
         """Construct layout/appearance of window."""
         INPUT_BUTTON_SIZE = (8, 2)
+        input_button_dict = {
+            "s": (7, 2),
+            "button_color": cls.BUTTON_COLOR,
+            "font": ('Any', 12, 'bold'),
+            "border_width": 0,
+        }
         column1 = [
             [
-                sg.Button("1", s=INPUT_BUTTON_SIZE, k=cls.key("1")),
-                sg.Button("2", s=INPUT_BUTTON_SIZE, k=cls.key("2")),
-                sg.Button("3", s=INPUT_BUTTON_SIZE, k=cls.key("3")),
-                sg.Button("0", s=INPUT_BUTTON_SIZE, k=cls.key("0")),
+                sg.Button("1", k=cls.key("1"), **input_button_dict),
+                sg.Button("2", k=cls.key("2"), **input_button_dict),
+                sg.Button("3", k=cls.key("3"), **input_button_dict),
+                sg.Button("0", k=cls.key("0"), **input_button_dict),
             ],
             [
-                sg.Button("4", s=INPUT_BUTTON_SIZE, k=cls.key("4")),
-                sg.Button("5", s=INPUT_BUTTON_SIZE, k=cls.key("5")),
-                sg.Button("6", s=INPUT_BUTTON_SIZE, k=cls.key("6")),
-                sg.Button("/", s=INPUT_BUTTON_SIZE, k=cls.key("/")),
+                sg.Button("4", k=cls.key("4"), **input_button_dict),
+                sg.Button("5", k=cls.key("5"), **input_button_dict),
+                sg.Button("6", k=cls.key("6"), **input_button_dict),
+                sg.Button("/", k=cls.key("/"), **input_button_dict),
             ],
             [
-                sg.Button("7", s=INPUT_BUTTON_SIZE, k=cls.key("7")),
-                sg.Button("8", s=INPUT_BUTTON_SIZE, k=cls.key("8")),
-                sg.Button("9", s=INPUT_BUTTON_SIZE, k=cls.key("9")),
-                sg.Button("AC", key=cls.key("clear"), s=INPUT_BUTTON_SIZE),
+                sg.Button("7", k=cls.key("7"), **input_button_dict),
+                sg.Button("8", k=cls.key("8"), **input_button_dict),
+                sg.Button("9", k=cls.key("9"), **input_button_dict),
+                sg.Button("AC", key=cls.key("clear"), **input_button_dict),
             ],
             [
                 sg.Push(),
@@ -57,7 +64,7 @@ class StudentRegNumInputWindow(
                 sg.Push(),
                 sg.Text("Registration Number:  "),
                 sg.Input(
-                    size=(25, 1),
+                    size=(15, 1),
                     justification="left",
                     key=cls.key("reg_num_input"),
                     focus=True,

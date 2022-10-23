@@ -1,4 +1,4 @@
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 import PySimpleGUI as sg
 from datetime import datetime, timedelta
 
@@ -16,9 +16,10 @@ window_dispatch = app.windowdispatch.WindowDispatch()
 class EventDetailWindow(ValidationMixin, BaseGUIWindow):
     """Window to for user to specify event deatils like: course,
     start date, and event duration"""
+    __slots__ = ()
 
     @classmethod
-    def window(cls) -> sg.Window:
+    def window(cls) -> List[Any]:
         """Construct layout/appearance of window."""
         combo_props = {"size": 30}
         field_label_props = {"size": 12}

@@ -15,6 +15,7 @@ window_dispatch = app.windowdispatch.WindowDispatch()
 
 class ScheduledEventsWindow(BaseGUIWindow):
     """Window for accessing scheduled events."""
+    __slots__ = ()
 
     @classmethod
     def window(cls) -> sg.Window:

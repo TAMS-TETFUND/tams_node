@@ -16,6 +16,8 @@ window_dispatch = app.windowdispatch.WindowDispatch()
 
 class StaffFaceEnrolmentUpdateWindow(StaffFaceEnrolmentWindow):
     """Update staff face capture."""
+    __slots__ = ()
+
     @classmethod
     def next_window(cls):
         if not OperationalMode.check_fingerprint():

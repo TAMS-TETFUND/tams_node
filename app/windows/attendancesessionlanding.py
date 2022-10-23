@@ -1,4 +1,4 @@
-from typing import Any, Dict
+from typing import Any, Dict, List
 import PySimpleGUI as sg
 
 from app.basegui import BaseGUIWindow
@@ -21,6 +21,8 @@ class AttendanceSessionLandingWindow(
     StudentRegNumberInputRouterMixin, BaseGUIWindow
 ):
     """This is the landing window for the active attendance session."""
+    __slots__ = ()
+
     @classmethod
     def refresh_dynamic_fields(cls, window: sg.Window) -> None:
         event_dict = app_config.cp["current_attendance_session"]
@@ -29,8 +31,9 @@ class AttendanceSessionLandingWindow(
         window[cls.key("start_time")].update(f"Start Time: {event_dict.get('start_date', '')} {event_dict.get('start_time', '')}")
         window[cls.key("duration")].update(f"Duration: {event_dict.get('duration', '')} Hour(s)")
         window[cls.key("valid_checks")].update("{}".format(cls.valid_check_in_count()))
+
     @classmethod
-    def window(cls) -> sg.Window:
+    def window(cls) -> List[Any]:
         """Construct layout/appearance of window."""
         event_dict = app_config.cp["current_attendance_session"]
         layout = [

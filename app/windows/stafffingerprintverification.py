@@ -24,7 +24,8 @@ class StaffFingerprintVerificationWindow(
 ):
     """This window provides an interface for verifying staff
     fingerprint during attendance initiation."""
-
+    __slots__ = ()
+    
     @classmethod
     def loop(
         cls, window: sg.Window, event: str, values: Dict[str, Any]

@@ -1,5 +1,5 @@
 import time
-from typing import Any, Dict, Iterable
+from typing import Any, Dict, Iterable, List
 
 import PySimpleGUI as sg
 
@@ -16,9 +16,10 @@ window_dispatch = app.windowdispatch.WindowDispatch()
 
 class StaffEnrolmentUpdateWindow(StaffEnrolmentWindow):
     """A window for updating biodata of existing staff."""
+    __slots__ = ()
 
     @classmethod
-    def window(cls) -> sg.Window:
+    def window(cls) -> List[Any]:
         """Construct layout/appearance of window."""
         staff = app_config.cp["edit_staff"]
 

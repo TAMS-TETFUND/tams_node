@@ -19,6 +19,7 @@ class StudentFaceVerificationWindow(
     """This class carries out student face verification and calls the
     uses the AttendanceLogger class to log attendance.
     """
+    __slots__ = ()
 
     @classmethod
     def process_image(

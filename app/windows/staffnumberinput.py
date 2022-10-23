@@ -1,4 +1,4 @@
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 import PySimpleGUI as sg
 
 from app.basegui import BaseGUIWindow
@@ -16,29 +16,36 @@ class StaffNumberInputWindow(
 ):
     """This window will provide an on-screen keypad for staff to enter
     their staff id/number by button clicks."""
+    __slots__ = ()
 
     @classmethod
-    def window(cls) -> sg.Window:
+    def window(cls) -> List[Any]:
         """Construct layout/appearance of window."""
         INPUT_BUTTON_SIZE = (8, 2)
+        input_button_dict = {
+            "s": (7, 2),
+            "button_color": cls.BUTTON_COLOR,
+            "font": ('Any', 12, 'bold'),
+            "border_width": 0,
+        }
         column1 = [
             [
-                sg.Button("1", s=INPUT_BUTTON_SIZE, k=cls.key("1")),
-                sg.Button("2", s=INPUT_BUTTON_SIZE, k=cls.key("2")),
-                sg.Button("3", s=INPUT_BUTTON_SIZE, k=cls.key("3")),
-                sg.Button("0", s=INPUT_BUTTON_SIZE, k=cls.key("0")),
+                sg.Button("1", k=cls.key("1"), **input_button_dict),
+                sg.Button("2", k=cls.key("2"), **input_button_dict),
+                sg.Button("3", k=cls.key("3"), **input_button_dict),
+                sg.Button("0", k=cls.key("0"), **input_button_dict),
             ],
             [
-                sg.Button("4", s=INPUT_BUTTON_SIZE, k=cls.key("4")),
-                sg.Button("5", s=INPUT_BUTTON_SIZE, k=cls.key("5")),
-                sg.Button("6", s=INPUT_BUTTON_SIZE, k=cls.key("6")),
-                sg.Button("/", s=INPUT_BUTTON_SIZE, k=cls.key("/")),
+                sg.Button("4", k=cls.key("4"), **input_button_dict),
+                sg.Button("5", k=cls.key("5"), **input_button_dict),
+                sg.Button("6", k=cls.key("6"), **input_button_dict),
+                sg.Button("/", k=cls.key("/"), **input_button_dict),
             ],
             [
-                sg.Button("7", s=INPUT_BUTTON_SIZE, k=cls.key("7")),
-                sg.Button("8", s=INPUT_BUTTON_SIZE, k=cls.key("8")),
-                sg.Button("9", s=INPUT_BUTTON_SIZE, k=cls.key("9")),
-                sg.Button("AC", s=INPUT_BUTTON_SIZE, k=cls.key("clear")),
+                sg.Button("7", k=cls.key("7"), **input_button_dict),
+                sg.Button("8", k=cls.key("8"), **input_button_dict),
+                sg.Button("9", k=cls.key("9"), **input_button_dict),
+                sg.Button("AC", k=cls.key("clear"), **input_button_dict),
             ],
             [
                 sg.Push(),
@@ -105,13 +112,16 @@ class StaffNumberInputWindow(
             window[cls.key("staff_number_input")].update(keys_pressed)
             return True
 
-        elif event == "clear":
+        elif event == cls.key("clear"):
             window[cls.key("staff_number_input")].update("")
             cls.hide_message_display_field(window)
             cls.resize_column(window)
             return True
 
-        elif event in (cls.key("submit"), "next"):
+        elif event in (cls.key("back"), cls.key("home")):
+            cls.back_nav_key_handler()
+
+        elif event in (cls.key("submit"), cls.key("next")):
             if cls.validate(values, window) is not None:
                 return True
             keys_pressed = values[cls.key("staff_number_input")]
@@ -173,9 +183,4 @@ class StaffNumberInputWindow(
     def back_nav_key_handler() -> None:
         """Handle user pressing back button in nav pane."""
         window_dispatch.dispatch.open_window("HomeWindow")
-        sg.popup(
-            "Event details saved.",
-            title="Event saved",
-            keep_on_top=True,
-        )
         return

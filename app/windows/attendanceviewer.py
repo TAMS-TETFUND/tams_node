@@ -1,4 +1,4 @@
-from typing import Any, Dict
+from typing import Any, Dict, List
 from app.basegui import BaseGUIWindow
 
 import PySimpleGUI as sg
@@ -13,9 +13,10 @@ window_dispatch = app.windowdispatch.WindowDispatch()
 
 class AttendanceViewerWindow(BaseGUIWindow):
     """Display Attendance Collected for active event."""
+    __slots__ = ()
 
     @classmethod
-    def window(cls) -> sg.Window:
+    def window(cls) -> List[Any]:
         current_attendance_session = app_config.cp["current_attendance_session"]
         if not app_config.cp.has_option(
             "current_attendance_session", "session"

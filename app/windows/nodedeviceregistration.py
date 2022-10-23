@@ -1,4 +1,4 @@
-from typing import Any, Dict
+from typing import Any, Dict, List
 import PySimpleGUI as sg
 
 import app.appconfigparser
@@ -16,9 +16,10 @@ class NodeDeviceRegistrationWindow(ValidationMixin, BaseGUIWindow):
     """
     This window will be collect information for node device registration
     """
+    __slots__ = ()
 
     @classmethod
-    def window(cls) -> sg.Window:
+    def window(cls) -> List[Any]:
         """Construct layout/appearance of window."""
         field_label_props = {"size": (22, 1)}
         input_props = {"size": (23, 1)}

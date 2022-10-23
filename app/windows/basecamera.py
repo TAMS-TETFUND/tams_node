@@ -15,9 +15,10 @@ window_dispatch = app.windowdispatch.WindowDispatch()
 class CameraWindow(BaseGUIWindow):
     """A base class. This window provides the general camera window
     layout."""
+    __slots__ = ()
 
     @classmethod
-    def window(cls) -> sg.Window:
+    def window(cls) -> List[Any]:
         """Construct layout/appearance of window."""
         layout = [
             [sg.Push(), sg.Column(cls.window_title()), sg.Push()],
@@ -113,6 +114,7 @@ class CameraWindow(BaseGUIWindow):
 
 class FaceCameraWindow(CameraWindow):
     """This is a base class. Implements facial recognition with camera."""
+    __slots__ = ()
 
     @classmethod
     def loop(
@@ -191,6 +193,7 @@ class FaceCameraWindow(CameraWindow):
 
 class BarcodeCameraWindow(CameraWindow):
     """Base class. This implements Barcode decoding with camera."""
+    __slots__ = ()
 
     @classmethod
     def loop(

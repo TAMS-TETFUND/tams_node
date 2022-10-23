@@ -17,6 +17,7 @@ window_dispatch = app.windowdispatch.WindowDispatch()
 class StaffFaceEnrolmentWindow(FaceCameraWindow):
     """This window is used to capture face encodings for a new staff
     being enrolled."""
+    __slots__ = ()
 
     @classmethod
     def process_image(
@@ -51,7 +52,6 @@ class StaffFaceEnrolmentWindow(FaceCameraWindow):
             window_dispatch.dispatch.open_window("StaffFingerprintEnrolmentWindow")
             return
         confirm = sg.popup_yes_no(
-            # "Staff details will be saved with no biometric data. Continue?",
             "Save changes?",
             keep_on_top=True,
         )

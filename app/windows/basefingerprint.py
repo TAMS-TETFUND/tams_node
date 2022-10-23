@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, List
 
 import PySimpleGUI as sg
 
@@ -8,9 +8,10 @@ from app.basegui import BaseGUIWindow
 class FingerprintGenericWindow(BaseGUIWindow):
     """Base window. Provides the layout for the fingerprint capture
     window for the application."""
+    __slots__ = ()
 
     @classmethod
-    def window(cls) -> sg.Window:
+    def window(cls) -> List[Any]:
         """Construct layout/appearance of window."""
         layout = [
             [sg.Push(), sg.Text(cls.window_title()), sg.Push()],
