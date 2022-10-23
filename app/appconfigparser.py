@@ -9,7 +9,6 @@ class AppConfigParser:
     """Implementation of a singleton to maintain the state of the
     parser across entire application.
     """
-
     __instance: Optional["AppConfigParser"] = None
     __initialized: bool = False
 
@@ -27,7 +26,6 @@ class AppConfigParser:
 
 class ModifiedConfigParser(configparser.ConfigParser):
     """An extension of the standard library's ConfigParser class."""
-
     CONFIG_FILE: str = os.path.join(
         Path(os.path.abspath(__file__)).parent,
         ("config.ini" if os.name != "posix" else ".config.ini"),

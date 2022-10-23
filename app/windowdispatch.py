@@ -1,3 +1,4 @@
+import time
 from collections import UserDict
 from importlib import import_module
 from typing import Any, Optional, Type, Callable
@@ -34,11 +35,16 @@ class WindowDict(UserDict):
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super(WindowDict, self).__init__(*args, **kwargs)
+        start = time.time()
         self.start_application()
+        end = time.time()
 
+        print("Startup time: ", (end - start) * 10**3, "ms")
+        
     def start_application(self):
         """Entry point for the application."""
         app_layout = []
+        
         for win_name, win in APP_WINDOWS.items():
             win_module = import_module(win)
             win_class = getattr(win_module, win_name)
