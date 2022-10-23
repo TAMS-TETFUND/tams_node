@@ -145,6 +145,8 @@ class NewEventSummaryWindow(StaffIDInputRouterMixin, BaseGUIWindow):
     
     @classmethod
     def refresh_dynamic_fields(cls, window: sg.Window) -> None:
+        cls.hide_message_display_field(window)
+        
         new_event_dict = app_config.cp["new_event"]
         window[cls.key("window_title")].update(new_event_dict.get("type", fallback=""))
         window[cls.key("course")].update(f"Course: {new_event_dict.get('course','')}")

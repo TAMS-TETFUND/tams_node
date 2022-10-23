@@ -86,3 +86,8 @@ class NodeDeviceRegistrationWindow(ValidationMixin, BaseGUIWindow):
             cls.popup_auto_close_success("Registered succesfully!")
             window_dispatch.dispatch.open_window("HomeWindow")
         return True
+
+    @classmethod
+    def refresh_dynamic_fields(cls, window: sg.Window) -> None:
+        cls.hide_message_display_field(window)
+        return super().refresh_dynamic_fields(window)

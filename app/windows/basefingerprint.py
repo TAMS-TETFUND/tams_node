@@ -68,3 +68,8 @@ class FingerprintGenericWindow(BaseGUIWindow):
     def window_title(cls) -> str:
         """Title of GUI window."""
         return "Fingerprint Scan"
+
+    @classmethod
+    def refresh_dynamic_fields(cls, window: sg.Window) -> None:
+        cls.hide_message_display_field(window)
+        return super().refresh_dynamic_fields(window)

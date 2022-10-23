@@ -116,6 +116,7 @@ class ActiveEventSummaryWindow(
 
     @classmethod
     def refresh_dynamic_fields(cls, window: sg.Window) -> None:
+        cls.hide_message_display_field(window)
         event_dict = app_config.cp["current_attendance_session"]
         try:
             initiator = Staff.objects.get(pk=event_dict.get("initiator_id"))

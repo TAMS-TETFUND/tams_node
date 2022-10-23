@@ -90,6 +90,7 @@ class StudentRegNumInputWindow(
 
     @classmethod
     def refresh_dynamic_fields(cls, window: sg.Window) -> None:
+        cls.hide_message_display_field(window)
         cls.adjust_input_field_size(window, ("reg_num_input", "column1"))
         window.refresh()
 
