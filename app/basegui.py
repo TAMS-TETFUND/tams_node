@@ -8,6 +8,7 @@ from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Type
 from PIL import Image
 import PySimpleGUI as sg
 
+
 # set application-wide theme
 sg.theme("DarkGrey")
 
@@ -17,6 +18,7 @@ class BaseGUIWindow:
 
     Contains methods that are commonly used in application windows.
     """
+    __slots__ = ()
 
     COMBO_DEFAULT: str = "--select--"
     SCREEN_SIZE: Tuple[int, int] = (480, 320)
@@ -25,7 +27,7 @@ class BaseGUIWindow:
         sg.theme_background_color(),
         sg.theme_background_color(),
     )
-    BUTTON_COLOR: Tuple[str, str] = ("#004f00", "#004f00")
+    BUTTON_COLOR: str = "#606060"
     UI_COLORS: Dict[str, str] = {
         "red": "#fc2323",
         "yellow": "#fffb08",
@@ -37,7 +39,7 @@ class BaseGUIWindow:
     }
 
     @classmethod
-    def window(cls) -> Exception:
+    def window(cls) -> List[Any]:
         """For defining the layout of the window.
 
         Implemented only in concrete child classes.
@@ -48,7 +50,7 @@ class BaseGUIWindow:
     @classmethod
     def loop(
         cls, window: sg.Window, event: str, values: Dict[str, Any]
-    ) -> Exception:
+    ) -> bool:
         """For handling events and user inputs.
 
         Implemented only in concrete window child classes.
