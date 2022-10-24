@@ -139,7 +139,12 @@ class HomeWindow(BaseGUIWindow):
         """Track user interaction with window."""
         if initial_iteration == []:
             if not DeviceRegistration.is_registered():
-                window_dispatch.dispatch.open_window("NodeDeviceRegistrationWindow")
+                app_config.cp["server_connection"] = {
+                    "next_window": "NodeDeviceRegistrationWindow"
+                }
+                window_dispatch.dispatch.open_window(
+                    "ServerConnectionDetailsWindow"
+                )
                 return True
             initial_iteration.append("First iteration donw")
 

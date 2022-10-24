@@ -155,12 +155,17 @@ class ServerConnection(metaclass=SingletonType):
         endpoint: str,
         data: Optional[Any] = None,
         headers: Dict[str, str] = {},
+        use_headers = True,
         get: bool = False,
         put: bool = False,
     ) -> requests.Response:
         """Make a request to the server."""
         url = "".join([self.server_url, "/", endpoint])
-        headers = headers if headers else self.request_header
+        if use_headers:
+            headers = headers if headers else self.request_header
+        else:
+            headers = None
+
         try:
             if get:
                 res = requests.get(url, headers=headers)

@@ -250,16 +250,7 @@ class EnrolmentMenuWindow(BaseGUIWindow):
 
         if loop_count == []:
             conn = ServerConnection()
-            try:
-                conn_test = conn.test_connection()
-            except Exception:
-                app_config.cp["server_connection"] = {
-                    "next_window": "EnrolmentMenuWindow"
-                }
-                window_dispatch.dispatch.open_window(
-                    "ServerConnectionDetailsWindow"
-                )
-                return True
+            conn_test = conn.test_connection()
             if not conn_test:
                 app_config.cp["server_connection"] = {
                     "next_window": "EnrolmentMenuWindow"
@@ -268,7 +259,7 @@ class EnrolmentMenuWindow(BaseGUIWindow):
                     "ServerConnectionDetailsWindow"
                 )
                 return True
-            loop_count.append("Done")
+            loop_count.append("Frist Iteraction Done")
 
         if event in (cls.key("back"), cls.key("home")):
             window_dispatch.dispatch.open_window("HomeWindow")

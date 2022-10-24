@@ -40,7 +40,6 @@ class NodeDeviceRegistrationWindow(ValidationMixin, BaseGUIWindow):
             ],
             [sg.Button("Submit", key=cls.key("submit"))],
             [sg.VPush()],
-            cls.navigation_pane(),
         ]
         return layout
 
@@ -54,11 +53,7 @@ class NodeDeviceRegistrationWindow(ValidationMixin, BaseGUIWindow):
             window_dispatch.dispatch.open_window("HomeWindow")
             return True
 
-        if event in (cls.key("home"), cls.key("back")):
-            window_dispatch.dispatch.open_window("HomeWindow")
-            return True
-
-        if event in (cls.key("submit"), cls.key("next")):
+        if event == cls.key("submit"):
             required_fields = [
                 (values[cls.key("admin_username")], "Admin Username"),
                 (values[cls.key("password")], "Password"),
