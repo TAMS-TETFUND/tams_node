@@ -134,9 +134,16 @@ class HomeWindow(BaseGUIWindow):
 
     @classmethod
     def loop(
-        cls, window: sg.Window, event: str, values: Dict[str, Any]
+        cls, window: sg.Window, event: str, values: Dict[str, Any], initial_iteration=[]
     ) -> bool:
         """Track user interaction with window."""
+        if initial_iteration == []:
+            if not DeviceRegistration.is_registered():
+                window_dispatch.dispatch.open_window("NodeDeviceRegistrationWindow")
+                return True
+            initial_iteration.append("First iteration donw")
+
+
         if event in (cls.key("new_event"), cls.key("new_event_txt")):
             if not DeviceRegistration.is_registered():
                 cls.popup_auto_close_warn(
@@ -233,10 +240,3 @@ class HomeWindow(BaseGUIWindow):
             return HomeWindow.confirm_exit()
 
         return True
-
-    @classmethod
-    def refresh_dynamic_fields(cls, window: sg.Window) -> None:
-        print("got here")
-        if not DeviceRegistration.is_registered():
-            print("got here")
-            window_dispatch.dispatch.open_window("NodeDeviceRegistrationWindow")
