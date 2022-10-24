@@ -3,7 +3,7 @@ import json
 import os
 from pathlib import Path
 import base64
-from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Type
+from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple
 
 from PIL import Image
 import PySimpleGUI as sg
