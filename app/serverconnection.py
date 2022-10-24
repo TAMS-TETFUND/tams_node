@@ -144,7 +144,7 @@ class ServerConnection(metaclass=SingletonType):
         """Check if server is reachable with provided information."""
         try:
             response = self.request("", get=True)
-        except Exception:
+        except Exception as e:
             return False
         if response.status_code == 200:
             return True

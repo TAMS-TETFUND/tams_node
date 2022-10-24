@@ -133,9 +133,14 @@ class HomeWindow(BaseGUIWindow):
 
     @classmethod
     def loop(
-        cls, window: sg.Window, event: str, values: Dict[str, Any]
+        cls, window: sg.Window, event: str, values: Dict[str, Any], inital_iteration=[]
     ) -> bool:
         """Track user interaction with window."""
+        if inital_iteration:
+            if not DeviceRegistration.is_registered():
+                window_dispatch.dispatch.open_window("NodeDeviceRegistration")
+            inital_iteration.append("Done")
+
         if event in (cls.key("new_event"), cls.key("new_event_txt")):
             if not DeviceRegistration.is_registered():
                 cls.popup_auto_close_warn(
