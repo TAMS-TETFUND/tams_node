@@ -3,12 +3,13 @@ from typing import Any, Dict, List
 
 import PySimpleGUI as sg
 from django.utils import timezone
+
 from app.basegui import BaseGUIWindow
 import app.appconfigparser
 import app.windowdispatch
 from app.nodedeviceinit import DeviceRegistration
-
 from db.models import AttendanceSession, AttendanceSessionStatusChoices
+
 
 app_config = app.appconfigparser.AppConfigParser()
 window_dispatch = app.windowdispatch.WindowDispatch()
@@ -235,5 +236,7 @@ class HomeWindow(BaseGUIWindow):
 
     @classmethod
     def refresh_dynamic_fields(cls, window: sg.Window) -> None:
+        print("got here")
         if not DeviceRegistration.is_registered():
+            print("got here")
             window_dispatch.dispatch.open_window("NodeDeviceRegistrationWindow")
