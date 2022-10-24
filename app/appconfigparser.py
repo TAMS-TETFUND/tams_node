@@ -30,11 +30,15 @@ class ModifiedConfigParser(configparser.ConfigParser):
         Path(os.path.abspath(__file__)).parent,
         ("config.ini" if os.name != "posix" else ".config.ini"),
     )
+    INITIAL_CONFIG_FILE = os.path.join(Path(os.path.abspath(__file__)).parent, ("initial_config.ini"))
 
     def __init__(self, file_path: Optional[str] = None):
         super(ModifiedConfigParser, self).__init__()
         self.config_file = file_path or self.CONFIG_FILE
-        self.read(self.config_file)
+        if os.path.exists(self.config_file):
+            self.read(self.config_file)
+        else:
+            self.read(self.INITIAL_CONFIG_FILE)
 
     def __setitem__(self, key: str, value: Mapping[str, str]) -> None:
         """Set the value of an option in the configparser."""
